@@ -1,0 +1,2475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Esport - Admin Control Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <style>
+        /* ═══════════════════════════════════════════
+           ROOT VARIABLES — NEON CYBER THEME
+           ═══════════════════════════════════════════ */
+        :root {
+            --neon: #00ff9c;
+            --neon-dim: #00cc7a;
+            --neon-glow: rgba(0,255,156,0.35);
+            --neon-glow-soft: rgba(0,255,156,0.12);
+            --neon-glow-ultra: rgba(0,255,156,0.6);
+            --danger: #ff003c;
+            --danger-dim: #cc0030;
+            --danger-glow: rgba(255,0,60,0.35);
+            --cyan: #00eaff;
+            --cyan-glow: rgba(0,234,255,0.25);
+            --purple: #a855f7;
+            --yellow: #facc15;
+            --orange: #f97316;
+            --blue: #3b82f6;
+            --bg-deepblack: #0b0f14;
+            --bg-dark: #111827;
+            --bg-card: rgba(17,24,39,0.7);
+            --bg-card-solid: #141c2b;
+            --bg-input: #0d1320;
+            --bg-sidebar: #0a0e15;
+            --border: rgba(0,255,156,0.08);
+            --border-subtle: rgba(255,255,255,0.04);
+            --border-neon: rgba(0,255,156,0.2);
+            --text: #e2e8f0;
+            --text-dim: #94a3b8;
+            --text-muted: #475569;
+            --glass: rgba(15,23,42,0.6);
+            --glass-border: rgba(0,255,156,0.1);
+            --sidebar-w: 260px;
+        }
+
+        /* ═══════════════════════════════════════════
+           RESET & BASE
+           ═══════════════════════════════════════════ */
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-deepblack);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        h1,h2,h3,h4,h5,h6,.font-orbitron { font-family: 'Orbitron', sans-serif; }
+
+        /* ═══════════════════════════════════════════
+           CUSTOM SCROLLBAR
+           ═══════════════════════════════════════════ */
+        ::-webkit-scrollbar { width:6px; height:6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb {
+            background: var(--neon-dim);
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover { background: var(--neon); }
+
+        /* ═══════════════════════════════════════════
+           ANIMATIONS
+           ═══════════════════════════════════════════ */
+        @keyframes fadeSlideIn {
+            from { opacity:0; transform:translateY(18px); }
+            to { opacity:1; transform:translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity:0; }
+            to { opacity:1; }
+        }
+        @keyframes pulseGlow {
+            0%,100% { box-shadow: 0 0 6px var(--neon-glow); }
+            50% { box-shadow: 0 0 22px var(--neon-glow-ultra); }
+        }
+        @keyframes pulseDot {
+            0%,100% { opacity:1; transform:scale(1); }
+            50% { opacity:.4; transform:scale(.85); }
+        }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        @keyframes neonFlicker {
+            0%,100% { text-shadow: 0 0 8px var(--neon-glow), 0 0 20px var(--neon-glow-soft); }
+            50% { text-shadow: 0 0 4px var(--neon-glow-soft); }
+        }
+        @keyframes borderGlow {
+            0%,100% { border-color: rgba(0,255,156,0.25); }
+            50% { border-color: rgba(0,255,156,0.5); }
+        }
+        @keyframes slideInLeft {
+            from { transform:translateX(-100%); opacity:0; }
+            to { transform:translateX(0); opacity:1; }
+        }
+        @keyframes modalIn {
+            from { opacity:0; transform:scale(.92) translateY(10px); }
+            to { opacity:1; transform:scale(1) translateY(0); }
+        }
+
+        .anim-fade { animation: fadeSlideIn .5s ease-out both; }
+        .anim-fade-d1 { animation-delay:.05s; }
+        .anim-fade-d2 { animation-delay:.1s; }
+        .anim-fade-d3 { animation-delay:.15s; }
+        .anim-fade-d4 { animation-delay:.2s; }
+
+        /* ═══════════════════════════════════════════
+           GLASSMORPHISM CARD
+           ═══════════════════════════════════════════ */
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px;
+            transition: all .3s ease;
+        }
+        .glass-card:hover {
+            border-color: rgba(0,255,156,0.25);
+            box-shadow: 0 4px 30px rgba(0,255,156,0.06);
+        }
+
+        /* ═══════════════════════════════════════════
+           SIDEBAR
+           ═══════════════════════════════════════════ */
+        .sidebar {
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            width: var(--sidebar-w);
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            z-index: 30;
+            display: flex;
+            flex-direction: column;
+            transition: transform .35s cubic-bezier(.4,0,.2,1);
+        }
+        @media (max-width:1023px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+        }
+
+        .sidebar-brand {
+            padding: 22px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .sidebar-brand-icon {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--neon), var(--neon-dim));
+            display: flex; align-items: center; justify-content: center;
+            color: #000; font-size: 18px;
+            box-shadow: 0 0 20px var(--neon-glow);
+        }
+        .sidebar-brand h2 {
+            font-size: 13px; font-weight: 800;
+            color: var(--neon);
+            letter-spacing: 2px;
+            line-height: 1.2;
+        }
+        .sidebar-brand p { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 12px 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .sidebar-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 10px 6px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all .25s ease;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 14px;
+            position: relative;
+            border: 1px solid transparent;
+        }
+        .nav-link i { width: 18px; text-align: center; font-size: 14px; transition: all .25s; }
+        .nav-link:hover:not(.active) {
+            background: var(--neon-glow-soft);
+            color: var(--neon);
+            border-color: rgba(0,255,156,0.08);
+        }
+        .nav-link:hover:not(.active) i { color: var(--neon); }
+        .nav-link.active {
+            background: linear-gradient(135deg, rgba(0,255,156,0.15), rgba(0,255,156,0.05));
+            color: var(--neon);
+            border-color: rgba(0,255,156,0.2);
+            box-shadow: 0 0 20px rgba(0,255,156,0.08), inset 0 0 20px rgba(0,255,156,0.03);
+        }
+        .nav-link.active::before {
+            content:'';
+            position:absolute;
+            left: 0; top: 20%; bottom: 20%;
+            width: 3px;
+            background: var(--neon);
+            border-radius: 0 4px 4px 0;
+            box-shadow: 0 0 10px var(--neon-glow);
+        }
+        .nav-link.active i { color: var(--neon); filter: drop-shadow(0 0 4px var(--neon-glow)); }
+
+        .nav-badge {
+            margin-left: auto;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 20px;
+            line-height: 1.4;
+            letter-spacing: .5px;
+        }
+
+        .sidebar-footer {
+            padding: 16px 18px;
+            border-top: 1px solid var(--border);
+        }
+        .sidebar-footer .admin-email {
+            font-size: 11px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 10px;
+        }
+        .sidebar-footer .status-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .status-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: var(--neon);
+            box-shadow: 0 0 8px var(--neon-glow);
+            animation: pulseDot 2s infinite;
+        }
+        .logout-btn {
+            background: none; border: none;
+            color: var(--danger);
+            font-family: 'Rajdhani',sans-serif;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all .2s;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+        .logout-btn:hover {
+            background: rgba(255,0,60,0.1);
+            text-shadow: 0 0 8px var(--danger-glow);
+        }
+
+        /* ═══════════════════════════════════════════
+           HAMBURGER MENU
+           ═══════════════════════════════════════════ */
+        .hamburger {
+            display: none;
+            position: fixed;
+            top: 14px; left: 14px;
+            z-index: 40;
+            width: 42px; height: 42px;
+            border-radius: 10px;
+            background: var(--bg-card-solid);
+            border: 1px solid var(--border-neon);
+            color: var(--neon);
+            font-size: 18px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            transition: all .2s;
+            box-shadow: 0 0 15px rgba(0,0,0,.4);
+        }
+        .hamburger:hover { box-shadow: 0 0 20px var(--neon-glow-soft); }
+        @media (max-width:1023px) { .hamburger { display:flex; } }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 25;
+            background: rgba(0,0,0,.7);
+            backdrop-filter: blur(3px);
+        }
+        .sidebar-overlay.show { display:block; }
+
+        /* ═══════════════════════════════════════════
+           MAIN CONTENT
+           ═══════════════════════════════════════════ */
+        .main-content {
+            margin-left: var(--sidebar-w);
+            min-height: 100vh;
+            position: relative;
+        }
+        @media (max-width:1023px) { .main-content { margin-left:0; } }
+
+        /* Top header bar */
+        .top-bar {
+            position: sticky;
+            top: 0; z-index: 15;
+            height: 56px;
+            background: rgba(11,15,20,0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px 0 60px;
+        }
+        @media (min-width:1024px) { .top-bar { padding-left:24px; } }
+        .top-bar-title {
+            font-family: 'Orbitron',sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-dim);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .top-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .admin-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--neon);
+            font-weight: 600;
+        }
+        .top-logout {
+            background: none;
+            border: 1px solid rgba(255,0,60,0.3);
+            color: var(--danger);
+            font-family: 'Rajdhani',sans-serif;
+            font-weight: 700;
+            font-size: 12px;
+            padding: 5px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all .25s;
+            letter-spacing: .5px;
+        }
+        .top-logout:hover {
+            background: rgba(255,0,60,0.1);
+            border-color: var(--danger);
+            box-shadow: 0 0 15px var(--danger-glow);
+        }
+
+        /* ═══════════════════════════════════════════
+           SECTION PAGES
+           ═══════════════════════════════════════════ */
+        .page-section {
+            display: none;
+            padding: 24px;
+            animation: fadeSlideIn .4s ease-out both;
+        }
+        .page-section.active { display:block; }
+        @media (max-width:640px) { .page-section { padding: 16px; } }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-family: 'Orbitron',sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--neon);
+            text-shadow: 0 0 20px var(--neon-glow-soft);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .section-title .count-badge {
+            font-family: 'Rajdhani',sans-serif;
+            font-size: 12px;
+            font-weight: 800;
+            padding: 3px 10px;
+            border-radius: 20px;
+        }
+
+        /* ═══════════════════════════════════════════
+           STAT CARDS
+           ═══════════════════════════════════════════ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2,1fr);
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+        @media (min-width:1024px) { .stats-grid { grid-template-columns: repeat(4,1fr); } }
+
+        .stat-card {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px;
+            transition: all .35s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::after {
+            content:'';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--neon), transparent);
+            opacity: 0;
+            transition: opacity .3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-neon);
+            box-shadow: 0 8px 32px rgba(0,255,156,0.08);
+        }
+        .stat-card:hover::after { opacity:1; }
+        .stat-card .stat-icon {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+        .stat-card .stat-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+        .stat-card .stat-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1;
+        }
+
+        /* ═══════════════════════════════════════════
+           BUTTONS
+           ═══════════════════════════════════════════ */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-family: 'Rajdhani',sans-serif;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: all .25s ease;
+            border-radius: 10px;
+            letter-spacing: .3px;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn:active { transform: scale(.96); }
+        .btn:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+
+        .btn-neon {
+            background: linear-gradient(135deg, var(--neon), var(--neon-dim));
+            color: #000;
+            padding: 10px 22px;
+            font-size: 14px;
+            box-shadow: 0 0 15px var(--neon-glow-soft);
+        }
+        .btn-neon:hover:not(:disabled) {
+            box-shadow: 0 0 30px var(--neon-glow);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), var(--danger-dim));
+            color: #fff;
+            padding: 10px 22px;
+            font-size: 14px;
+        }
+        .btn-danger:hover { box-shadow: 0 0 25px var(--danger-glow); }
+
+        .btn-ghost {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            padding: 10px 22px;
+            font-size: 14px;
+        }
+        .btn-ghost:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.1);
+            color: var(--text);
+        }
+
+        /* Small action buttons */
+        .btn-xs {
+            padding: 5px 12px;
+            font-size: 12px;
+            border-radius: 8px;
+            font-weight: 700;
+        }
+        .btn-xs-neon { background: var(--neon); color:#000; }
+        .btn-xs-neon:hover { box-shadow: 0 0 14px var(--neon-glow); }
+        .btn-xs-red { background: var(--danger); color:#fff; }
+        .btn-xs-red:hover { box-shadow: 0 0 14px var(--danger-glow); }
+        .btn-xs-blue { background: var(--blue); color:#fff; }
+        .btn-xs-blue:hover { box-shadow: 0 0 14px rgba(59,130,246,0.4); }
+        .btn-xs-yellow { background: var(--yellow); color:#000; }
+        .btn-xs-yellow:hover { box-shadow: 0 0 14px rgba(250,204,21,0.4); }
+        .btn-xs-purple { background: var(--purple); color:#fff; }
+        .btn-xs-purple:hover { box-shadow: 0 0 14px rgba(168,85,247,0.4); }
+        .btn-xs-ghost { background: rgba(255,255,255,0.06); color: var(--text-dim); border: 1px solid var(--border); }
+
+        /* ═══════════════════════════════════════════
+           INPUTS
+           ═══════════════════════════════════════════ */
+        .neon-input {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-family: 'Rajdhani',sans-serif;
+            font-size: 15px;
+            font-weight: 500;
+            transition: all .3s;
+            outline: none;
+        }
+        .neon-input:focus {
+            border-color: var(--neon);
+            box-shadow: 0 0 12px var(--neon-glow-soft), inset 0 0 6px rgba(0,255,156,0.03);
+        }
+        .neon-input::placeholder { color: var(--text-muted); }
+        textarea.neon-input { resize:vertical; min-height:80px; }
+        select.neon-input { cursor:pointer; }
+
+        .form-label {
+            display:block;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-dim);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: .8px;
+        }
+
+        /* ═══════════════════════════════════════════
+           TOGGLE SWITCH
+           ═══════════════════════════════════════════ */
+        .toggle {
+            position: relative;
+            width: 44px; height: 24px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .toggle input { opacity:0; width:0; height:0; position:absolute; }
+        .toggle-track {
+            position: absolute; inset:0;
+            background: #1e293b;
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            transition: .3s;
+        }
+        .toggle-track::before {
+            content:'';
+            position:absolute;
+            width:18px; height:18px;
+            left:2px; top:2px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            transition: .3s;
+        }
+        .toggle input:checked + .toggle-track {
+            background: rgba(0,255,156,0.2);
+            border-color: var(--neon-dim);
+        }
+        .toggle input:checked + .toggle-track::before {
+            transform: translateX(20px);
+            background: var(--neon);
+            box-shadow: 0 0 8px var(--neon-glow);
+        }
+
+        /* ═══════════════════════════════════════════
+           TABLE
+           ═══════════════════════════════════════════ */
+        .data-table-wrap {
+            overflow-x: auto;
+            max-height: 68vh;
+            overflow-y: auto;
+            border-radius: 14px;
+        }
+        table { width:100%; border-collapse:collapse; }
+        th {
+            text-align: left;
+            padding: 12px 16px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+            background: rgba(0,0,0,0.3);
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            backdrop-filter: blur(8px);
+        }
+        td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border-subtle);
+            font-size: 14px;
+            vertical-align: middle;
+        }
+        tr { transition: background .15s; }
+        tr:hover { background: rgba(0,255,156,0.02); }
+
+        /* ═══════════════════════════════════════════
+           BADGES
+           ═══════════════════════════════════════════ */
+        .badge {
+            font-size: 10px;
+            font-weight: 800;
+            padding: 3px 10px;
+            border-radius: 20px;
+            display: inline-block;
+            letter-spacing: .4px;
+        }
+        .badge-neon { background: rgba(0,255,156,0.12); color: var(--neon); border: 1px solid rgba(0,255,156,0.15); }
+        .badge-yellow { background: rgba(250,204,21,0.12); color: var(--yellow); border: 1px solid rgba(250,204,21,0.15); }
+        .badge-red { background: rgba(255,0,60,0.12); color: var(--danger); border: 1px solid rgba(255,0,60,0.15); }
+        .badge-blue { background: rgba(59,130,246,0.12); color: var(--blue); border: 1px solid rgba(59,130,246,0.15); }
+        .badge-purple { background: rgba(168,85,247,0.12); color: var(--purple); border: 1px solid rgba(168,85,247,0.15); }
+        .badge-cyan { background: rgba(0,234,255,0.12); color: var(--cyan); border: 1px solid rgba(0,234,255,0.15); }
+        .badge-gray { background: rgba(148,163,184,0.1); color: var(--text-dim); border: 1px solid rgba(148,163,184,0.1); }
+        .badge-orange { background: rgba(249,115,22,0.12); color: var(--orange); border: 1px solid rgba(249,115,22,0.15); }
+
+        /* ═══════════════════════════════════════════
+           FILTER TABS
+           ═══════════════════════════════════════════ */
+        .filter-bar { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+        .filter-tab {
+            font-family:'Rajdhani',sans-serif;
+            font-size:12px; font-weight:700;
+            padding: 6px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all .2s;
+            background: transparent;
+            color: var(--text-muted);
+        }
+        .filter-tab:hover:not(.active) { color: var(--neon); border-color: var(--border-neon); }
+        .filter-tab.active {
+            background: linear-gradient(135deg, rgba(0,255,156,0.15), rgba(0,255,156,0.05));
+            color: var(--neon);
+            border-color: rgba(0,255,156,0.3);
+            box-shadow: 0 0 12px rgba(0,255,156,0.08);
+        }
+
+        /* ═══════════════════════════════════════════
+           INFO BOX
+           ═══════════════════════════════════════════ */
+        .info-box {
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 12px;
+            color: var(--text-dim);
+            margin-bottom: 14px;
+            border: 1px solid;
+        }
+        .info-box-neon {
+            background: rgba(0,255,156,0.03);
+            border-color: rgba(0,255,156,0.1);
+        }
+        .info-box-purple {
+            background: rgba(168,85,247,0.03);
+            border-color: rgba(168,85,247,0.1);
+        }
+
+        /* ═══════════════════════════════════════════
+           MODAL OVERLAY
+           ═══════════════════════════════════════════ */
+        .modal-overlay {
+            position: fixed; inset:0; z-index:50;
+            display: flex; align-items:center; justify-content:center;
+            background: rgba(0,0,0,.85);
+            backdrop-filter: blur(8px);
+            transition: opacity .3s, visibility .3s;
+            padding: 16px;
+        }
+        .modal-overlay.hidden { opacity:0; visibility:hidden; pointer-events:none; }
+        .modal-box {
+            background: var(--bg-card-solid);
+            border: 1px solid var(--border-neon);
+            border-radius: 16px;
+            width: 100%;
+            max-height: 88vh;
+            overflow-y: auto;
+            box-shadow: 0 0 60px rgba(0,255,156,0.06), 0 20px 60px rgba(0,0,0,.5);
+            animation: modalIn .3s ease-out;
+        }
+
+        /* ═══════════════════════════════════════════
+           LIVE STATUS
+           ═══════════════════════════════════════════ */
+        .status-live { animation: pulseGlow 2s infinite; }
+
+        /* ═══════════════════════════════════════════
+           CONTENT GRID
+           ═══════════════════════════════════════════ */
+        .content-grid {
+            display: grid;
+            gap: 16px;
+        }
+        .content-grid-2 { grid-template-columns: 1fr; }
+        @media (min-width:1024px) { .content-grid-2 { grid-template-columns: 1fr 1fr; } }
+
+        /* ═══════════════════════════════════════════
+           DASHBOARD FEED ITEM
+           ═══════════════════════════════════════════ */
+        .feed-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--border-subtle);
+            transition: all .2s;
+        }
+        .feed-item:hover {
+            background: rgba(0,255,156,0.02);
+            border-color: var(--border-neon);
+        }
+
+        /* ═══════════════════════════════════════════
+           UTILITY HELPERS
+           ═══════════════════════════════════════════ */
+        .hidden { display:none!important; }
+        .text-neon { color: var(--neon); }
+        .text-danger { color: var(--danger); }
+        .text-dim { color: var(--text-dim); }
+        .text-muted { color: var(--text-muted); }
+        .fw-800 { font-weight:800; }
+        .gap-2 { gap:8px; }
+        .gap-3 { gap:12px; }
+        .gap-4 { gap:16px; }
+        .mb-2 { margin-bottom:8px; }
+        .mb-3 { margin-bottom:12px; }
+        .mb-4 { margin-bottom:16px; }
+        .mt-3 { margin-top:12px; }
+        .mt-4 { margin-top:16px; }
+        .p-4 { padding:16px; }
+        .p-5 { padding:20px; }
+        .p-6 { padding:24px; }
+        .w-full { width:100%; }
+        .flex { display:flex; }
+        .flex-col { flex-direction:column; }
+        .items-center { align-items:center; }
+        .justify-between { justify-content:space-between; }
+        .flex-1 { flex:1; }
+        .flex-wrap { flex-wrap:wrap; }
+        .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        .text-xs { font-size:12px; }
+        .text-sm { font-size:14px; }
+        .text-center { text-align:center; }
+        .font-mono { font-family: monospace; }
+        .truncate { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .max-h-64 { max-height:16rem; overflow-y:auto; }
+        .space-y-2 > *+* { margin-top:8px; }
+        .space-y-3 > *+* { margin-top:12px; }
+        .space-y-4 > *+* { margin-top:16px; }
+        .inline-block { display:inline-block; }
+        .relative { position:relative; }
+
+        /* ═══════════════════════════════════════════
+           LOGIN SCREEN
+           ═══════════════════════════════════════════ */
+        .login-screen {
+            position: fixed; inset:0; z-index:60;
+            display: flex; align-items:center; justify-content:center;
+            background: var(--bg-deepblack);
+            overflow: hidden;
+        }
+        .login-screen::before {
+            content:'';
+            position:absolute;
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(0,255,156,0.08) 0%, transparent 70%);
+            top: 50%; left: 50%;
+            transform: translate(-50%,-50%);
+            pointer-events: none;
+        }
+        .login-screen::after {
+            content:'';
+            position:absolute;
+            inset:0;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0,234,255,0.04) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(168,85,247,0.04) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        .login-card {
+            position: relative; z-index:1;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border-neon);
+            border-radius: 20px;
+            padding: 40px 32px;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 20px;
+            box-shadow: 0 0 80px rgba(0,255,156,0.05), 0 20px 60px rgba(0,0,0,.4);
+            animation: fadeSlideIn .6s ease-out;
+        }
+        .login-icon {
+            width: 64px; height: 64px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(0,255,156,0.15), rgba(0,255,156,0.05));
+            border: 1px solid rgba(0,255,156,0.2);
+            display: flex; align-items:center; justify-content:center;
+            margin: 0 auto 16px;
+            font-size: 28px;
+            color: var(--neon);
+            box-shadow: 0 0 30px var(--neon-glow-soft);
+        }
+
+        /* ═══════════════════════════════════════════
+           LOADING SCREEN
+           ═══════════════════════════════════════════ */
+        .loading-screen {
+            position:fixed; inset:0; z-index:55;
+            display:flex; flex-direction:column;
+            align-items:center; justify-content:center;
+            background: var(--bg-deepblack);
+        }
+        .spinner {
+            width:48px; height:48px;
+            border: 3px solid transparent;
+            border-top-color: var(--neon);
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+            margin-bottom: 16px;
+            box-shadow: 0 0 20px var(--neon-glow-soft);
+        }
+
+        /* ═══════════════════════════════════════════
+           TOAST
+           ═══════════════════════════════════════════ */
+        .toast {
+            position: fixed;
+            bottom: 24px; right: 24px;
+            z-index: 70;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-family: 'Rajdhani',sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            box-shadow: 0 8px 32px rgba(0,0,0,.4);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all .35s cubic-bezier(.4,0,.2,1);
+            max-width: 360px;
+            border: 1px solid;
+        }
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .toast-success {
+            background: rgba(0,255,156,0.1);
+            border-color: rgba(0,255,156,0.3);
+            color: var(--neon);
+        }
+        .toast-error {
+            background: rgba(255,0,60,0.1);
+            border-color: rgba(255,0,60,0.3);
+            color: var(--danger);
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════ LOGIN ═══════════════════════════ -->
+<div id="loginScreen" class="login-screen">
+    <div class="login-card">
+        <div class="login-icon"><i class="fas fa-gamepad"></i></div>
+        <h1 class="font-orbitron text-center" style="font-size:20px;color:var(--neon);letter-spacing:3px;margin-bottom:4px;">MINI ESPORT</h1>
+        <p class="text-center text-muted text-sm mb-4" style="letter-spacing:1px;">Admin Control Center</p>
+        <form id="loginForm" class="space-y-3">
+            <div class="relative">
+                <i class="fas fa-envelope" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:13px;"></i>
+                <input type="email" id="loginEmail" class="neon-input" style="padding-left:36px;" placeholder="Admin Email" required>
+            </div>
+            <div class="relative">
+                <i class="fas fa-lock" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:13px;"></i>
+                <input type="password" id="loginPassword" class="neon-input" style="padding-left:36px;" placeholder="Password" required>
+            </div>
+            <div id="loginError" class="hidden" style="background:rgba(255,0,60,0.08);border:1px solid rgba(255,0,60,0.2);border-radius:10px;padding:10px;color:var(--danger);font-size:13px;"></div>
+            <button type="submit" class="btn btn-neon w-full" style="padding:12px;font-size:15px;letter-spacing:1px;">
+                <i class="fas fa-shield-alt"></i> ACCESS CONTROL CENTER
+            </button>
+        </form>
+        <p class="text-center text-muted text-xs mt-4"><i class="fas fa-lock" style="font-size:10px;margin-right:4px;"></i>Authorized Personnel Only</p>
+    </div>
+</div>
+
+<!-- ═══════════════════════════ LOADING ═══════════════════════════ -->
+<div id="loadingScreen" class="loading-screen hidden">
+    <div class="spinner"></div>
+    <p class="font-orbitron text-neon text-xs" style="letter-spacing:4px;">INITIALIZING...</p>
+</div>
+
+<!-- ═══════════════════════════ MAIN APP ═══════════════════════════ -->
+<div id="mainApp" class="hidden">
+
+    <!-- Hamburger -->
+    <button class="hamburger" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+    <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar">
+        <div class="sidebar-brand">
+            <div class="sidebar-brand-icon"><i class="fas fa-gamepad"></i></div>
+            <div>
+                <h2>MINI ESPORT</h2>
+                <p>Admin Panel</p>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-link active" onclick="showSection('dashboard',this)">
+                <i class="fas fa-chart-line"></i><span>Dashboard</span>
+            </div>
+            <div class="nav-link" onclick="showSection('profileVerification',this)">
+                <i class="fas fa-user-check"></i><span>Profile Verification</span>
+                <span id="profileBadge" class="nav-badge hidden" style="background:rgba(249,115,22,0.15);color:var(--orange);border:1px solid rgba(249,115,22,0.2);"></span>
+            </div>
+            <div class="nav-link" onclick="showSection('profileUpdates',this)">
+                <i class="fas fa-user-edit"></i><span>Profile Updates</span>
+                <span id="profileUpdateBadge" class="nav-badge hidden" style="background:rgba(168,85,247,0.15);color:var(--purple);border:1px solid rgba(168,85,247,0.2);"></span>
+            </div>
+            <div class="nav-link" onclick="showSection('users',this)">
+                <i class="fas fa-users"></i><span>Users</span>
+            </div>
+            <div class="nav-link" onclick="showSection('tournaments',this)">
+                <i class="fas fa-trophy"></i><span>Tournaments</span>
+            </div>
+            <div class="nav-link" onclick="showSection('joinRequests',this)">
+                <i class="fas fa-clipboard-check"></i><span>Join Requests</span>
+                <span id="joinBadge" class="nav-badge hidden" style="background:rgba(250,204,21,0.15);color:var(--yellow);border:1px solid rgba(250,204,21,0.2);"></span>
+            </div>
+            <div class="nav-link" onclick="showSection('wallets',this)">
+                <i class="fas fa-wallet"></i><span>Wallet Requests</span>
+                <span id="walletBadge" class="nav-badge hidden" style="background:rgba(0,255,156,0.15);color:var(--neon);border:1px solid rgba(0,255,156,0.2);"></span>
+            </div>
+            <div class="nav-link" onclick="showSection('teams',this)">
+                <i class="fas fa-user-friends"></i><span>Team Requests</span>
+                <span id="teamBadge" class="nav-badge hidden" style="background:rgba(0,234,255,0.15);color:var(--cyan);border:1px solid rgba(0,234,255,0.2);"></span>
+            </div>
+            <div class="nav-link" onclick="showSection('results',this)">
+                <i class="fas fa-bullseye"></i><span>Match Results</span>
+            </div>
+            <div class="sidebar-divider"></div>
+            <div class="nav-link" onclick="showSection('support',this)">
+                <i class="fas fa-headset"></i><span>Support Requests</span>
+                <span id="supportBadge" class="nav-badge hidden" style="background:rgba(168,85,247,0.15);color:var(--purple);border:1px solid rgba(168,85,247,0.2);"></span>
+            </div>
+            <div class="nav-link" onclick="showSection('notifications',this)">
+                <i class="fas fa-bell"></i><span>Notifications</span>
+            </div>
+            <div class="nav-link" onclick="showSection('settings',this)">
+                <i class="fas fa-cog"></i><span>Settings</span>
+            </div>
+        </nav>
+        <div class="sidebar-footer">
+            <p id="adminEmail" class="admin-email"></p>
+            <div class="status-row">
+                <div class="flex items-center gap-2">
+                    <div class="status-dot"></div>
+                    <span class="text-xs text-muted">Connected</span>
+                </div>
+                <button class="logout-btn" onclick="logoutAdmin()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="top-bar">
+            <span class="top-bar-title">Control Center</span>
+            <div class="top-bar-right">
+                <div class="admin-status"><div class="status-dot"></div> Online</div>
+                <button class="top-logout" onclick="logoutAdmin()"><i class="fas fa-power-off"></i> EXIT</button>
+            </div>
+        </div>
+
+        <!-- ═══ DASHBOARD ═══ -->
+        <div id="section-dashboard" class="page-section active">
+            <div class="section-header">
+                <h2 class="section-title"><i class="fas fa-chart-line"></i> DASHBOARD</h2>
+                <button onclick="refreshDashboard()" class="btn btn-neon btn-xs"><i class="fas fa-sync-alt"></i> Refresh</button>
+            </div>
+            <div class="stats-grid anim-fade">
+                <div class="stat-card anim-fade anim-fade-d1">
+                    <div class="stat-icon" style="color:var(--blue)"><i class="fas fa-users"></i></div>
+                    <div class="stat-label">Total Users</div>
+                    <div id="statTotalUsers" class="stat-value">0</div>
+                </div>
+                <div class="stat-card anim-fade anim-fade-d2">
+                    <div class="stat-icon" style="color:var(--yellow)"><i class="fas fa-trophy"></i></div>
+                    <div class="stat-label">Tournaments</div>
+                    <div id="statTournaments" class="stat-value">0</div>
+                </div>
+                <div class="stat-card anim-fade anim-fade-d3">
+                    <div class="stat-icon" style="color:var(--neon)"><i class="fas fa-wallet"></i></div>
+                    <div class="stat-label">Wallet Req</div>
+                    <div id="statWalletReq" class="stat-value">0</div>
+                </div>
+                <div class="stat-card anim-fade anim-fade-d4">
+                    <div class="stat-icon" style="color:var(--orange)"><i class="fas fa-user-check"></i></div>
+                    <div class="stat-label">Pending Profiles</div>
+                    <div id="statPendingProfiles" class="stat-value">0</div>
+                </div>
+            </div>
+            <div class="content-grid content-grid-2">
+                <div class="glass-card p-5">
+                    <h3 class="font-orbitron text-xs text-dim mb-3" style="letter-spacing:1.5px;">RECENT PROFILE REQUESTS</h3>
+                    <div id="recentProfiles" class="space-y-2 max-h-64"><p class="text-muted text-sm">Loading...</p></div>
+                </div>
+                <div class="glass-card p-5">
+                    <h3 class="font-orbitron text-xs text-dim mb-3" style="letter-spacing:1.5px;">ACTIVE TOURNAMENTS</h3>
+                    <div id="activeTournaments" class="space-y-2 max-h-64"><p class="text-muted text-sm">Loading...</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ PROFILE VERIFICATION ═══ -->
+        <div id="section-profileVerification" class="page-section">
+            <div class="section-header">
+                <div class="flex items-center gap-3">
+                    <h2 class="section-title">Profile Verification</h2>
+                    <span id="profilePendingCount" class="badge badge-orange">0</span>
+                </div>
+                <button onclick="loadProfileRequests()" class="btn btn-neon btn-xs"><i class="fas fa-sync-alt"></i> Refresh</button>
+            </div>
+            <div class="info-box info-box-neon"><i class="fas fa-info-circle text-neon" style="margin-right:6px;"></i><strong class="text-neon">Source:</strong> profileRequests node. Approve grants FULL access. Reject sets VIEW_ONLY mode.</div>
+            <div class="glass-card data-table-wrap">
+                <table>
+                    <thead><tr><th>IGN</th><th>FF UID</th><th>User UID</th><th>Created At</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody id="profileRequestsTable"><tr><td colspan="6" class="text-center text-muted" style="padding:40px;">Loading...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ═══ PROFILE UPDATES ═══ -->
+        <div id="section-profileUpdates" class="page-section">
+            <div class="section-header">
+                <div class="flex items-center gap-3">
+                    <h2 class="section-title">Profile Update Requests</h2>
+                    <span id="profileUpdatePendingCount" class="badge badge-purple">0</span>
+                </div>
+                <button onclick="loadProfileUpdateRequests()" class="btn btn-neon btn-xs"><i class="fas fa-sync-alt"></i> Refresh</button>
+            </div>
+            <div class="info-box info-box-purple"><i class="fas fa-info-circle" style="color:var(--purple);margin-right:6px;"></i><strong style="color:var(--purple);">Source:</strong> profileUpdateRequests node. Approve updates user profile. Reject requires reason.</div>
+            <div class="glass-card data-table-wrap">
+                <table>
+                    <thead><tr><th>IGN</th><th>FF UID</th><th>User UID</th><th>Requested At</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody id="profileUpdateRequestsTable"><tr><td colspan="6" class="text-center text-muted" style="padding:40px;">Loading...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ═══ USERS ═══ -->
+        <div id="section-users" class="page-section">
+            <div class="section-header">
+                <h2 class="section-title"><i class="fas fa-users"></i> Users Management</h2>
+            </div>
+            <div class="mb-4">
+                <input type="text" id="searchUser" class="neon-input" style="max-width:360px;" placeholder="Search by IGN or FF UID..." oninput="loadUsers()">
+            </div>
+            <div class="glass-card data-table-wrap">
+                <table>
+                    <thead><tr><th>IGN</th><th>FF UID</th><th>Balance</th><th>Access Mode</th><th>Approved</th><th>Actions</th></tr></thead>
+                    <tbody id="usersTable"><tr><td colspan="6" class="text-center text-muted" style="padding:40px;">Loading...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ═══ TOURNAMENTS ═══ -->
+        <div id="section-tournaments" class="page-section">
+            <div class="section-header">
+                <h2 class="section-title"><i class="fas fa-trophy"></i> Tournaments</h2>
+                <button onclick="openTournamentModal()" class="btn btn-neon"><i class="fas fa-plus"></i> Create Tournament</button>
+            </div>
+            <div class="filter-bar">
+                <button onclick="filterTournaments('all')" id="filterAll" class="filter-tab active">All</button>
+                <button onclick="filterTournaments('paid')" id="filterPaid" class="filter-tab"><i class="fas fa-money-bill-wave"></i> Paid</button>
+                <button onclick="filterTournaments('coin')" id="filterCoin" class="filter-tab"><i class="fas fa-coins"></i> Coin</button>
+                <button onclick="filterTournaments('special')" id="filterSpecial" class="filter-tab"><i class="fas fa-star"></i> Special</button>
+            </div>
+            <div class="info-box info-box-neon"><i class="fas fa-clock text-neon" style="margin-right:6px;"></i><strong class="text-neon">Auto-Status:</strong> Upcoming → Live (at match time) → Completed (after 20 min). Updates every 30s.</div>
+            <div class="glass-card data-table-wrap">
+                <table>
+                    <thead><tr><th>Tournament</th><th>Mode</th><th>Map</th><th>Entry</th><th>Fee</th><th>Prize</th><th>Slots</th><th>Match Time</th><th>Status</th><th>Room</th><th>Actions</th></tr></thead>
+                    <tbody id="tournamentsTable"><tr><td colspan="11" class="text-center text-muted" style="padding:40px;">Loading...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ═══ JOIN REQUESTS ═══ -->
+        <div id="section-joinRequests" class="page-section">
+            <div class="section-header">
+                <div class="flex items-center gap-3">
+                    <h2 class="section-title">Join Requests</h2>
+                    <span id="joinPendingCount" class="badge badge-yellow">0</span>
+                </div>
+                <button onclick="loadJoinRequests()" class="btn btn-neon btn-xs"><i class="fas fa-sync-alt"></i> Refresh</button>
+            </div>
+            <div class="glass-card data-table-wrap">
+                <table>
+                    <thead><tr><th>User</th><th>Tournament</th><th>Entry</th><th>Fee</th><th>Status</th><th>Time</th><th>Actions</th></tr></thead>
+                    <tbody id="joinRequestsTable"><tr><td colspan="7" class="text-center text-muted" style="padding:40px;">Loading...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ═══ WALLET REQUESTS ═══ -->
+        <div id="section-wallets" class="page-section">
+            <div class="section-header">
+                <div class="flex items-center gap-3">
+                    <h2 class="section-title">Wallet Requests</h2>
+                    <span id="walletPendingCount" class="badge badge-neon">0</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <select id="walletTypeFilter" class="neon-input" onchange="loadWalletRequests()" style="width:auto;min-width:120px;">
+                        <option value="all">All</option>
+                        <option value="add">Add Money</option>
+                        <option value="withdraw">Withdraw</option>
+                    </select>
+                    <button onclick="loadWalletRequests()" class="btn btn-neon btn-xs"><i class="fas fa-sync-alt"></i></button>
+                </div>
+            </div>
+            <div class="glass-card data-table-wrap">
+                <table>
+                    <thead><tr><th>UID</th><th>Type</th><th>Amount</th><th>Screenshot</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody id="walletRequestsTable"><tr><td colspan="6" class="text-center text-muted" style="padding:40px;">Loading...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ═══ TEAM REQUESTS ═══ -->
+        <div id="section-teams" class="page-section">
+            <div class="section-header">
+                <div class="flex items-center gap-3">
+                    <h2 class="section-title">Team Requests</h2>
+                    <span id="teamPendingCount" class="badge badge-cyan">0</span>
+                </div>
+                <button onclick="loadTeamRequests()" class="btn btn-neon btn-xs"><i class="fas fa-sync-alt"></i> Refresh</button>
+            </div>
+            <div class="glass-card data-table-wrap">
+                <table>
+                    <thead><tr><th>Owner</th><th>Type</th><th>Member</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody id="teamRequestsTable"><tr><td colspan="5" class="text-center text-muted" style="padding:40px;">Loading...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ═══ MATCH RESULTS ═══ -->
+        <div id="section-results" class="page-section">
+            <div class="section-header">
+                <h2 class="section-title"><i class="fas fa-bullseye"></i> Match Results</h2>
+            </div>
+            <div class="glass-card p-5 mb-4">
+                <label class="form-label">Select Tournament</label>
+                <select id="resultTournamentSelect" class="neon-input" onchange="loadTournamentParticipants()">
+                    <option value="">-- Select Tournament --</option>
+                </select>
+            </div>
+            <div id="resultsContainer" class="hidden">
+                <div class="glass-card p-5">
+                    <h3 class="font-orbitron text-xs text-dim mb-4" style="letter-spacing:1.5px;">PARTICIPANTS</h3>
+                    <div id="participantsList" class="space-y-3 mb-4"></div>
+                    <button onclick="saveResults()" class="btn btn-neon w-full" style="padding:14px;font-size:16px;">
+                        <i class="fas fa-save"></i> Save & Distribute Results
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══ SUPPORT ═══ -->
+        <div id="section-support" class="page-section">
+            <div class="section-header">
+                <div class="flex items-center gap-3">
+                    <h2 class="section-title">Support Requests</h2>
+                    <span id="supportPendingCount" class="badge badge-purple">0</span>
+                </div>
+                <button onclick="loadSupportRequests()" class="btn btn-neon btn-xs"><i class="fas fa-sync-alt"></i> Refresh</button>
+            </div>
+            <div class="filter-bar">
+                <button onclick="filterSupport('all')" id="supportFilterAll" class="filter-tab active">All</button>
+                <button onclick="filterSupport('pending')" id="supportFilterPending" class="filter-tab">Pending</button>
+                <button onclick="filterSupport('resolved')" id="supportFilterResolved" class="filter-tab">Resolved</button>
+            </div>
+            <div class="glass-card data-table-wrap">
+                <table>
+                    <thead><tr><th>Username</th><th>User ID</th><th>Message</th><th>Date & Time</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody id="supportTable"><tr><td colspan="6" class="text-center text-muted" style="padding:40px;">Loading...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ═══ NOTIFICATIONS ═══ -->
+        <div id="section-notifications" class="page-section">
+            <div class="section-header">
+                <h2 class="section-title"><i class="fas fa-bell"></i> Notification Center</h2>
+            </div>
+            <div class="content-grid content-grid-2 mb-4">
+                <div class="glass-card p-5">
+                    <h3 class="font-orbitron text-xs text-dim mb-3" style="letter-spacing:1px;"><i class="fas fa-globe" style="color:var(--blue);margin-right:6px;"></i>GLOBAL ANNOUNCEMENT</h3>
+                    <p class="text-xs text-muted mb-3">Sends to ALL users</p>
+                    <div class="space-y-3">
+                        <div><label class="form-label">Title *</label><input type="text" id="globalNotifTitle" class="neon-input" placeholder="e.g. Server Maintenance"></div>
+                        <div><label class="form-label">Message *</label><textarea id="globalNotifMessage" class="neon-input" placeholder="Enter announcement..."></textarea></div>
+                        <div><label class="form-label">Type</label>
+                            <select id="globalNotifType" class="neon-input">
+                                <option value="info">Info</option><option value="success">Success</option><option value="warning">Warning</option><option value="error">Alert</option>
+                            </select>
+                        </div>
+                        <button onclick="sendGlobalNotification()" class="btn btn-neon w-full"><i class="fas fa-paper-plane"></i> Send Global</button>
+                    </div>
+                </div>
+                <div class="glass-card p-5">
+                    <h3 class="font-orbitron text-xs text-dim mb-3" style="letter-spacing:1px;"><i class="fas fa-trophy" style="color:var(--yellow);margin-right:6px;"></i>MATCH NOTIFICATION</h3>
+                    <p class="text-xs text-muted mb-3">Sends to match participants</p>
+                    <div class="space-y-3">
+                        <div><label class="form-label">Tournament *</label><select id="notifTournamentSelect" class="neon-input"><option value="">-- Select --</option></select></div>
+                        <div><label class="form-label">Title *</label><input type="text" id="matchNotifTitle" class="neon-input" placeholder="e.g. Room Details Released"></div>
+                        <div><label class="form-label">Message *</label><textarea id="matchNotifMessage" class="neon-input" placeholder="Enter notification..."></textarea></div>
+                        <button onclick="sendMatchNotification()" class="btn btn-neon w-full"><i class="fas fa-paper-plane"></i> Send Match Notif</button>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-card p-5">
+                <h3 class="font-orbitron text-xs text-dim mb-3" style="letter-spacing:1px;">NOTIFICATION HISTORY</h3>
+                <div id="notifHistory" class="space-y-2 max-h-64"><p class="text-muted text-sm">Loading...</p></div>
+            </div>
+        </div>
+
+        <!-- ═══ SETTINGS ═══ -->
+        <div id="section-settings" class="page-section">
+            <div class="section-header">
+                <h2 class="section-title"><i class="fas fa-cog"></i> Settings</h2>
+            </div>
+            <div class="content-grid content-grid-2 mb-4">
+                <div class="glass-card p-5">
+                    <h3 class="font-orbitron text-xs text-dim mb-4" style="letter-spacing:1px;">PAYMENT SETTINGS</h3>
+                    <div class="space-y-3">
+                        <div><label class="form-label">UPI ID *</label><input type="text" id="settingUpiId" class="neon-input" placeholder="yourname@upi"></div>
+                        <div>
+                            <label class="form-label">UPI QR Code</label>
+                            <input type="file" id="settingUpiQr" class="hidden" accept="image/*" onchange="previewQrCode(event)">
+                            <div class="flex items-center gap-3">
+                                <button type="button" onclick="document.getElementById('settingUpiQr').click()" class="btn btn-neon btn-xs"><i class="fas fa-upload"></i> Upload QR</button>
+                                <span id="qrFileName" class="text-xs text-muted"></span>
+                            </div>
+                            <div id="qrPreviewContainer" class="hidden mt-3 relative inline-block">
+                                <img id="qrPreview" style="width:120px;height:120px;object-fit:contain;border-radius:10px;border:1px solid var(--border);">
+                                <button onclick="removeQrPreview()" style="position:absolute;top:-8px;right:-8px;width:24px;height:24px;border-radius:50%;background:var(--danger);color:#fff;border:none;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-times"></i></button>
+                            </div>
+                            <div id="existingQrContainer" class="hidden mt-3">
+                                <p class="text-xs text-muted mb-2">Current QR:</p>
+                                <img id="existingQr" style="width:120px;height:120px;object-fit:contain;border-radius:10px;border:1px solid var(--border);">
+                            </div>
+                        </div>
+                        <div><label class="form-label">Min Withdrawal (₹)</label><input type="number" id="settingMinWithdraw" class="neon-input" value="50"></div>
+                    </div>
+                </div>
+                <div class="glass-card p-5">
+                    <h3 class="font-orbitron text-xs text-dim mb-4" style="letter-spacing:1px;">GAME SETTINGS</h3>
+                    <div class="space-y-3">
+                        <div><label class="form-label">Kill Reward (₹)</label><input type="number" id="settingKillReward" class="neon-input" value="5"></div>
+                        <div><label class="form-label">Coins Per Ad</label><input type="number" id="settingCoinsPerAd" class="neon-input" value="10"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="saveSettings()" class="btn btn-neon"><i class="fas fa-save"></i> Save Settings</button>
+                <button onclick="loadSettings()" class="btn btn-ghost"><i class="fas fa-redo"></i> Reload</button>
+            </div>
+        </div>
+
+    </div><!-- /.main-content -->
+</div><!-- /#mainApp -->
+
+<!-- ═══════════════════════════ TOURNAMENT MODAL ═══════════════════════════ -->
+<div id="tournamentModal" class="modal-overlay hidden">
+    <div class="modal-box" style="max-width:520px;">
+        <div class="p-6">
+            <h3 id="modalTitle" class="font-orbitron text-neon mb-4" style="font-size:16px;font-weight:800;">Create Tournament</h3>
+            <form id="tournamentForm" class="space-y-3">
+                <input type="hidden" id="tournamentId">
+                <div><label class="form-label">Tournament Name *</label><input type="text" id="tName" class="neon-input" placeholder="e.g. Battle Royale Championship" required></div>
+                <div class="grid-2">
+                    <div><label class="form-label">Game Mode *</label>
+                        <select id="tGameMode" class="neon-input"><option value="solo">Solo</option><option value="duo">Duo</option><option value="squad">Squad</option></select>
+                    </div>
+                    <div><label class="form-label">Map *</label>
+                        <select id="tMap" class="neon-input"><option value="Bermuda">Bermuda</option><option value="Kalahari">Kalahari</option><option value="Purgatory">Purgatory</option></select>
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div><label class="form-label">Entry Type *</label>
+                        <select id="tEntryType" class="neon-input" onchange="onEntryTypeChange()"><option value="paid">Paid (₹)</option><option value="coin">Coin</option></select>
+                    </div>
+                    <div><label class="form-label">Entry Fee *</label><input type="number" id="tEntryFee" class="neon-input" value="10" min="1"></div>
+                </div>
+                <div id="entryTypeHint" class="info-box info-box-neon">
+                    <i class="fas fa-info-circle text-neon" style="margin-right:4px;"></i>
+                    <span>Paid tournaments appear in <strong class="text-neon">Solo/Duo/Squad</strong> sections</span>
+                </div>
+                <div class="grid-2">
+                    <div><label class="form-label">Prize Pool</label><input type="number" id="tPrizePool" class="neon-input" value="0" min="0"></div>
+                    <div><label class="form-label">Max Slots</label><input type="number" id="tMaxSlots" class="neon-input" value="12" min="1"></div>
+                </div>
+                <!-- Special Toggle -->
+                <div class="flex items-center justify-between" style="padding:12px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid var(--border);">
+                    <div>
+                        <p class="text-sm fw-800"><i class="fas fa-star" style="color:var(--yellow);margin-right:6px;"></i>Special Tournament</p>
+                        <p class="text-xs text-muted">Appears only in Special section</p>
+                    </div>
+                    <label class="toggle"><input type="checkbox" id="tIsSpecial"><span class="toggle-track"></span></label>
+                </div>
+                <div><label class="form-label">Match Date & Time *</label><input type="datetime-local" id="tMatchTime" class="neon-input" required>
+                    <p class="text-xs text-muted mt-2"><i class="fas fa-clock" style="color:var(--blue);margin-right:4px;"></i>Auto-status: <strong>Upcoming</strong> → <strong>Live</strong> → <strong>Completed</strong></p>
+                </div>
+                <!-- Room Credentials -->
+                <div style="padding:14px;border-radius:12px;background:rgba(255,0,60,0.02);border:1px solid rgba(255,0,60,0.08);">
+                    <p class="text-sm fw-800 mb-3"><i class="fas fa-lock text-danger" style="margin-right:6px;"></i>Room Credentials</p>
+                    <div class="grid-2 mb-3">
+                        <div><label class="form-label">Room ID</label><input type="text" id="tRoomId" class="neon-input" placeholder="Enter Room ID"></div>
+                        <div><label class="form-label">Room Password</label><input type="text" id="tRoomPass" class="neon-input" placeholder="Enter Password"></div>
+                    </div>
+                    <div class="flex items-center justify-between" style="padding:8px 10px;border-radius:8px;background:rgba(255,0,60,0.04);border:1px solid rgba(255,0,60,0.1);">
+                        <div>
+                            <p class="text-xs fw-800"><i class="fas fa-shield-alt text-danger" style="margin-right:4px;"></i>Lock Room Access</p>
+                            <p class="text-xs text-muted">Only joined users see credentials when Live</p>
+                        </div>
+                        <label class="toggle"><input type="checkbox" id="tRoomLocked" checked><span class="toggle-track"></span></label>
+                    </div>
+                </div>
+                <p class="text-xs text-muted"><i class="fas fa-eye-slash" style="margin-right:4px;"></i>Room details visible to joined users only when status = <strong>Live</strong></p>
+                <div class="flex gap-3" style="padding-top:8px;">
+                    <button type="submit" class="btn btn-neon flex-1"><i class="fas fa-save"></i> Save</button>
+                    <button type="button" onclick="closeTournamentModal()" class="btn btn-ghost flex-1">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════ USER EDIT MODAL ═══════════════════════════ -->
+<div id="userEditModal" class="modal-overlay hidden">
+    <div class="modal-box" style="max-width:460px;">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-orbitron text-neon" style="font-size:16px;font-weight:800;">User Details</h3>
+                <button onclick="closeUserEditModal()" style="background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="userEditContent" class="space-y-3"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════ SCREENSHOT MODAL ═══════════════════════════ -->
+<div id="screenshotModal" class="modal-overlay hidden" onclick="this.classList.add('hidden')">
+    <div class="text-center" style="padding:20px;" onclick="event.stopPropagation()">
+        <div id="screenshotInfo" style="color:#fff;margin-bottom:14px;"></div>
+        <img id="screenshotImg" style="max-width:100%;max-height:75vh;object-fit:contain;border-radius:14px;border:2px solid var(--border);margin:0 auto;">
+        <button onclick="document.getElementById('screenshotModal').classList.add('hidden')" class="btn btn-ghost mt-4"><i class="fas fa-times"></i> Close</button>
+    </div>
+</div>
+
+<!-- ═══════════════════════════ SUPPORT DETAIL MODAL ═══════════════════════════ -->
+<div id="supportDetailModal" class="modal-overlay hidden">
+    <div class="modal-box" style="max-width:460px;">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-orbitron text-neon" style="font-size:16px;font-weight:800;">Support Request</h3>
+                <button onclick="document.getElementById('supportDetailModal').classList.add('hidden')" style="background:none;border:none;color:var(--text-muted);font-size:18px;cursor:pointer;"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="supportDetailContent" class="space-y-3"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════ TOAST ═══════════════════════════ -->
+<div id="toast" class="toast toast-success"></div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     JAVASCRIPT — ALL LOGIC PRESERVED EXACTLY
+     ═══════════════════════════════════════════════════════════════ -->
+<script>
+// ================================================================
+// FIREBASE INIT
+// ================================================================
+const firebaseConfig = {
+    apiKey: "AIzaSyCc0VeTIfwYqOTfKEt3IfiKHvxNkgZnkPQ",
+    authDomain: "ff-tournament-app-93105.firebaseapp.com",
+    databaseURL: "https://ff-tournament-app-93105-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "ff-tournament-app-93105",
+    storageBucket: "ff-tournament-app-93105.firebasestorage.app",
+    messagingSenderId: "486362918198",
+    appId: "1:486362918198:web:ce5bd047fb584636bd5797"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const rtdb = firebase.database();
+const db = firebase.firestore();
+
+// ================================================================
+// GLOBAL STATE
+// ================================================================
+let pendingQrBase64 = null;
+let currentTournamentFilter = 'all';
+let currentSupportFilter = 'all';
+let statusTickerInterval = null;
+const LIVE_DURATION_MS = 20 * 60 * 1000;
+
+// ================================================================
+// AUTO STATUS
+// ================================================================
+function computeStatus(matchTime) {
+    if (!matchTime || matchTime === 0) return 'upcoming';
+    const now = Date.now();
+    if (now < matchTime) return 'upcoming';
+    if (now < matchTime + LIVE_DURATION_MS) return 'live';
+    return 'completed';
+}
+
+function formatMapName(map) {
+    if (!map) return 'Bermuda';
+    return map.charAt(0).toUpperCase() + map.slice(1).toLowerCase();
+}
+
+// ================================================================
+// TOURNAMENT DATA NORMALIZER
+// ================================================================
+function T(t) {
+    const matchTime = t.matchTime || 0;
+    return {
+        name: t.name || 'Unnamed',
+        gameMode: t.gameMode || t.type || 'solo',
+        entryType: t.entryType || 'paid',
+        entryFee: t.entryFee || t.entry || 0,
+        prizePool: t.prizePool || t.prize || 0,
+        map: formatMapName(t.map),
+        maxSlots: t.maxSlots || 12,
+        filledSlots: t.filledSlots || 0,
+        matchTime: matchTime,
+        status: computeStatus(matchTime),
+        roomId: t.roomId || '',
+        roomPassword: t.roomPassword || '',
+        roomLocked: t.roomLocked !== false,
+        isSpecial: t.isSpecial === true,
+        createdAt: t.createdAt || 0,
+        updatedAt: t.updatedAt || 0
+    };
+}
+
+// ================================================================
+// AUTH
+// ================================================================
+auth.onAuthStateChanged(async (user) => {
+    if (user) {
+        document.getElementById('loadingScreen').classList.remove('hidden');
+        document.getElementById('loginScreen').style.display = 'none';
+        try {
+            const adminSnap = await rtdb.ref('admins/' + user.uid).once('value');
+            if (adminSnap.exists()) {
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('mainApp').classList.remove('hidden');
+                document.getElementById('adminEmail').textContent = user.email;
+                initializeAdminPanel();
+            } else {
+                showLoginError('You are not authorized as admin.');
+                auth.signOut();
+                document.getElementById('loadingScreen').classList.add('hidden');
+                document.getElementById('loginScreen').style.display = 'flex';
+            }
+        } catch (e) {
+            showLoginError('Authorization check failed.');
+            auth.signOut();
+            document.getElementById('loadingScreen').classList.add('hidden');
+            document.getElementById('loginScreen').style.display = 'flex';
+        }
+    } else {
+        document.getElementById('mainApp').classList.add('hidden');
+        document.getElementById('loadingScreen').classList.add('hidden');
+        document.getElementById('loginScreen').style.display = 'flex';
+        if (statusTickerInterval) { clearInterval(statusTickerInterval); statusTickerInterval = null; }
+    }
+});
+
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+        document.getElementById('loginError').classList.add('hidden');
+        await auth.signInWithEmailAndPassword(
+            document.getElementById('loginEmail').value.trim(),
+            document.getElementById('loginPassword').value
+        );
+    } catch (err) { showLoginError(err.message); }
+});
+
+function showLoginError(msg) {
+    const el = document.getElementById('loginError');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+}
+
+function logoutAdmin() {
+    if (confirm('Logout from admin panel?')) auth.signOut();
+}
+
+// ================================================================
+// INITIALIZE
+// ================================================================
+function initializeAdminPanel() {
+    setupRealtimeListeners();
+    refreshDashboard();
+    loadProfileRequests();
+    loadProfileUpdateRequests();
+    loadUsers();
+    loadTournaments();
+    loadJoinRequests();
+    loadWalletRequests();
+    loadTeamRequests();
+    loadSupportRequests();
+    loadNotificationHistory();
+    loadSettings();
+    startStatusTicker();
+}
+
+// ================================================================
+// STATUS TICKER
+// ================================================================
+function startStatusTicker() {
+    if (statusTickerInterval) clearInterval(statusTickerInterval);
+    statusTickerInterval = setInterval(() => { syncTournamentStatuses(); }, 30000);
+}
+
+async function syncTournamentStatuses() {
+    try {
+        const snap = await rtdb.ref('tournaments').once('value');
+        if (!snap.exists()) return;
+        const updates = {};
+        let changed = false;
+        snap.forEach(c => {
+            const raw = c.val();
+            const computed = computeStatus(raw.matchTime || 0);
+            if ((raw.status || 'upcoming') !== computed) {
+                updates['tournaments/' + c.key + '/status'] = computed;
+                updates['tournaments/' + c.key + '/updatedAt'] = Date.now();
+                changed = true;
+            }
+        });
+        if (changed) { await rtdb.ref().update(updates); loadTournaments(); refreshDashboard(); }
+    } catch (e) { console.error('Status sync error:', e); }
+}
+
+// ================================================================
+// REALTIME LISTENERS
+// ================================================================
+function setupRealtimeListeners() {
+    rtdb.ref('profileRequests').on('value', (snap) => {
+        let count = 0;
+        if (snap.exists()) snap.forEach(c => { if (!c.val().status || c.val().status === 'pending') count++; });
+        updateBadge('profileBadge', count);
+        const pc = document.getElementById('profilePendingCount'); if (pc) pc.textContent = count;
+        const sp = document.getElementById('statPendingProfiles'); if (sp) sp.textContent = count;
+    });
+    rtdb.ref('profileUpdateRequests').on('value', (snap) => {
+        let count = 0;
+        if (snap.exists()) snap.forEach(c => { if (!c.val().status || c.val().status === 'pending') count++; });
+        updateBadge('profileUpdateBadge', count);
+        const pc = document.getElementById('profileUpdatePendingCount'); if (pc) pc.textContent = count;
+    });
+    rtdb.ref('joinRequests').on('value', (snap) => {
+        let count = 0;
+        if (snap.exists()) snap.forEach(c => { if (!c.val().status || c.val().status === 'pending') count++; });
+        updateBadge('joinBadge', count);
+        const jp = document.getElementById('joinPendingCount'); if (jp) jp.textContent = count;
+    });
+    rtdb.ref('addMoneyRequests').on('value', (snap) => {
+        let addCount = 0;
+        if (snap.exists()) snap.forEach(c => { if (!c.val().status || c.val().status === 'pending') addCount++; });
+        rtdb.ref('withdrawRequests').once('value').then(wSnap => {
+            let wCount = 0;
+            if (wSnap.exists()) wSnap.forEach(c => { if (!c.val().status || c.val().status === 'pending') wCount++; });
+            const total = addCount + wCount;
+            updateBadge('walletBadge', total);
+            const sw = document.getElementById('statWalletReq'); if (sw) sw.textContent = total;
+            const wp = document.getElementById('walletPendingCount'); if (wp) wp.textContent = total;
+        });
+    });
+    rtdb.ref('teamRequests').on('value', (snap) => {
+        let count = 0;
+        if (snap.exists()) snap.forEach(c => { if (!c.val().status || c.val().status === 'pending') count++; });
+        updateBadge('teamBadge', count);
+        const tp = document.getElementById('teamPendingCount'); if (tp) tp.textContent = count;
+    });
+    rtdb.ref('supportRequests').on('value', (snap) => {
+        let count = 0;
+        if (snap.exists()) snap.forEach(c => { if (!c.val().status || c.val().status === 'pending') count++; });
+        updateBadge('supportBadge', count);
+        const sp = document.getElementById('supportPendingCount'); if (sp) sp.textContent = count;
+    });
+}
+
+function updateBadge(id, count) {
+    const badge = document.getElementById(id);
+    if (!badge) return;
+    if (count > 0) { badge.textContent = count; badge.classList.remove('hidden'); }
+    else { badge.classList.add('hidden'); }
+}
+
+// ================================================================
+// DASHBOARD
+// ================================================================
+async function refreshDashboard() {
+    try {
+        const usersSnap = await rtdb.ref('users').once('value');
+        document.getElementById('statTotalUsers').textContent = usersSnap.numChildren();
+        const tSnap = await rtdb.ref('tournaments').once('value');
+        document.getElementById('statTournaments').textContent = tSnap.numChildren();
+
+        const profSnap = await rtdb.ref('profileRequests').limitToLast(5).once('value');
+        const recentDiv = document.getElementById('recentProfiles');
+        if (profSnap.exists()) {
+            let html = ''; const arr = [];
+            profSnap.forEach(c => arr.push({ key: c.key, ...c.val() }));
+            arr.reverse().forEach(r => {
+                const st = r.status || 'pending';
+                const cls = st === 'pending' ? 'badge-yellow' : st === 'approved' ? 'badge-neon' : 'badge-red';
+                html += '<div class="feed-item"><div><p class="text-sm fw-800">' + (r.ign || 'Unknown') + '</p><p class="text-xs text-muted">FF UID: ' + (r.ffUid || 'N/A') + '</p></div><span class="badge ' + cls + '">' + st.toUpperCase() + '</span></div>';
+            });
+            recentDiv.innerHTML = html;
+        } else { recentDiv.innerHTML = '<p class="text-muted text-sm">No profile requests</p>'; }
+
+        const activeDiv = document.getElementById('activeTournaments');
+        if (tSnap.exists()) {
+            let html = '', hasActive = false;
+            tSnap.forEach(c => {
+                const t = T(c.val());
+                if (t.status === 'upcoming' || t.status === 'live') {
+                    hasActive = true;
+                    const isLive = t.status === 'live';
+                    const gmLabel = t.gameMode.charAt(0).toUpperCase() + t.gameMode.slice(1);
+                    const entryLabel = t.entryType === 'coin' ? 'Coin' : 'Paid';
+                    const entryClr = t.entryType === 'coin' ? 'color:var(--yellow)' : 'color:var(--neon)';
+                    const sp = t.isSpecial ? ' ⭐' : '';
+                    html += '<div class="feed-item ' + (isLive ? 'status-live' : '') + '"><div><p class="text-sm fw-800">' + t.name + sp + '</p><p class="text-xs text-muted">' + gmLabel + ' · ' + t.map + ' · <span style="' + entryClr + '">' + entryLabel + '</span> · ₹' + t.prizePool + '</p></div><span class="badge ' + (isLive ? 'badge-red' : 'badge-neon') + '">' + t.status.toUpperCase() + '</span></div>';
+                }
+            });
+            activeDiv.innerHTML = hasActive ? html : '<p class="text-muted text-sm">No active tournaments</p>';
+        } else { activeDiv.innerHTML = '<p class="text-muted text-sm">No tournaments</p>'; }
+    } catch (e) { console.error('Dashboard error:', e); showToast('Dashboard refresh failed', true); }
+}
+
+// ================================================================
+// PROFILE VERIFICATION REQUESTS
+// ================================================================
+async function loadProfileRequests() {
+    try {
+        const snap = await rtdb.ref('profileRequests').once('value');
+        const tbody = document.getElementById('profileRequestsTable');
+        if (!snap.exists()) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted" style="padding:40px;">No profile requests</td></tr>'; return; }
+        const all = [];
+        snap.forEach(c => all.push({ requestId: c.key, data: c.val() }));
+        const pending = all.filter(r => !r.data.status || r.data.status === 'pending');
+        if (!pending.length) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted" style="padding:40px;">No pending requests</td></tr>'; return; }
+        pending.reverse();
+        let html = '';
+        for (let i = 0; i < pending.length; i++) {
+            const rid = pending[i].requestId, req = pending[i].data;
+            const uid = req.uid || req.userId || '';
+            const ign = req.ign || 'N/A', ffUid = req.ffUid || req.ffUID || 'N/A';
+            const dt = req.createdAt ? new Date(req.createdAt).toLocaleString() : 'N/A';
+            html += '<tr><td class="fw-800">' + ign + '</td><td class="text-dim">' + ffUid + '</td><td class="text-xs text-dim font-mono">' + (uid ? uid.substring(0,16) + '...' : 'N/A') + '</td><td class="text-xs text-muted">' + dt + '</td><td><span class="badge badge-yellow">Pending</span></td><td><button onclick="approveProfile(\'' + rid + '\')" class="btn btn-xs btn-xs-neon" style="margin-right:4px;"><i class="fas fa-check"></i> Approve</button><button onclick="rejectProfile(\'' + rid + '\')" class="btn btn-xs btn-xs-red"><i class="fas fa-times"></i> Reject</button></td></tr>';
+        }
+        tbody.innerHTML = html;
+    } catch (e) { console.error('[PROFILE] Error:', e); showToast('Failed to load profile requests', true); }
+}
+
+async function approveProfile(requestId) {
+    if (!confirm('Approve this profile and grant FULL access?')) return;
+    try {
+        const reqSnap = await rtdb.ref('profileRequests/' + requestId).once('value');
+        if (!reqSnap.exists()) { showToast('Request not found', true); return; }
+        const reqData = reqSnap.val();
+        if (reqData.status && reqData.status !== 'pending') { showToast('Already processed', true); loadProfileRequests(); return; }
+        const uid = reqData.uid || reqData.userId;
+        if (!uid) { showToast('User UID missing', true); return; }
+        const ign = reqData.ign || 'Player', ffUid = reqData.ffUid || reqData.ffUID || '';
+        const now = Date.now(), adminUid = auth.currentUser.uid;
+
+        await rtdb.ref('users/' + uid).update({
+            ign: ign, ffUid: ffUid, approved: true, accessMode: 'FULL',
+            profileUpdatePending: false, approvedAt: now, approvedBy: adminUid
+        });
+        if (ffUid) await rtdb.ref('ffUIDIndex/' + ffUid).set(uid);
+        await rtdb.ref('profileRequests/' + requestId).update({ status: 'approved', processedAt: now, processedBy: adminUid });
+        await rtdb.ref('users/' + uid + '/notifications').push({ title: 'Profile Approved!', message: 'You now have FULL access to all features.', type: 'success', read: false, timestamp: now });
+
+        showToast('Profile approved! User granted FULL access.');
+        await loadProfileRequests(); await loadUsers(); await refreshDashboard();
+    } catch (e) { console.error('[APPROVE_PROFILE] Error:', e); showToast('Approval failed: ' + e.message, true); }
+}
+
+async function rejectProfile(requestId) {
+    let reason = prompt('Enter rejection reason (leave empty for default):');
+    if (reason === null) return;
+    if (!reason || !reason.trim()) reason = 'IGN or FF UID does not match Free Fire records';
+    try {
+        const reqSnap = await rtdb.ref('profileRequests/' + requestId).once('value');
+        if (!reqSnap.exists()) { showToast('Request not found', true); return; }
+        const reqData = reqSnap.val();
+        const uid = reqData.uid || reqData.userId;
+        const now = Date.now(), adminUid = auth.currentUser.uid;
+
+        if (uid) await rtdb.ref('users/' + uid).update({ profileUpdatePending: false });
+        await rtdb.ref('profileRequests/' + requestId).update({ status: 'rejected', reason: reason.trim(), processedAt: now, processedBy: adminUid });
+        if (uid) await rtdb.ref('users/' + uid + '/notifications').push({ title: 'Profile Verification Failed', message: 'Reason: ' + reason.trim(), type: 'warning', read: false, timestamp: now });
+
+        showToast('Profile rejected.');
+        await loadProfileRequests(); await loadUsers(); await refreshDashboard();
+    } catch (e) { console.error('[REJECT_PROFILE] Error:', e); showToast('Rejection failed: ' + e.message, true); }
+}
+
+// ================================================================
+// PROFILE UPDATE REQUESTS
+// ================================================================
+async function loadProfileUpdateRequests() {
+    try {
+        const snap = await rtdb.ref('profileUpdateRequests').once('value');
+        const tbody = document.getElementById('profileUpdateRequestsTable');
+        if (!snap.exists()) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted" style="padding:40px;">No profile update requests</td></tr>'; return; }
+        const all = [];
+        snap.forEach(c => all.push({ id: c.key, ...c.val() }));
+        const pending = all.filter(r => !r.status || r.status === 'pending');
+        if (!pending.length) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted" style="padding:40px;">No pending requests</td></tr>'; return; }
+        pending.reverse();
+        let html = '';
+        for (let i = 0; i < pending.length; i++) {
+            const req = pending[i], rid = req.id;
+            const uid = req.uid || '', ign = req.ign || 'N/A', ffUid = req.ffUid || req.ffuid || 'N/A';
+            const dt = req.createdAt ? new Date(req.createdAt).toLocaleString() : 'N/A';
+            html += '<tr><td class="fw-800">' + ign + '</td><td class="text-dim">' + ffUid + '</td><td class="text-xs text-dim font-mono">' + (uid ? uid.substring(0,16) + '...' : 'N/A') + '</td><td class="text-xs text-muted">' + dt + '</td><td><span class="badge badge-yellow">Pending</span></td><td><button onclick="approveProfileUpdate(\'' + rid + '\')" class="btn btn-xs btn-xs-neon" style="margin-right:4px;"><i class="fas fa-check"></i> Approve</button><button onclick="rejectProfileUpdate(\'' + rid + '\')" class="btn btn-xs btn-xs-red"><i class="fas fa-times"></i> Reject</button></td></tr>';
+        }
+        tbody.innerHTML = html;
+    } catch (e) { console.error('[PROFILE_UPDATE] Error:', e); showToast('Failed to load', true); }
+}
+
+async function approveProfileUpdate(requestId) {
+    if (!confirm('Approve this profile update?')) return;
+    try {
+        const reqSnap = await rtdb.ref('profileUpdateRequests/' + requestId).once('value');
+        if (!reqSnap.exists()) { showToast('Not found', true); return; }
+        const req = reqSnap.val();
+        if (req.status && req.status !== 'pending') { showToast('Already processed', true); loadProfileUpdateRequests(); return; }
+        const uid = req.uid; if (!uid) { showToast('UID missing', true); return; }
+        const now = Date.now(), adminUid = auth.currentUser.uid;
+
+        await rtdb.ref('users/' + uid).update({ ign: req.ign || '', ffUid: req.ffUid || req.ffuid || '', approved: true, profileVerified: true, status: 'active' });
+        if (req.ffUid || req.ffuid) await rtdb.ref('ffUIDIndex/' + (req.ffUid || req.ffuid)).set(uid);
+        await rtdb.ref('profileUpdateRequests/' + requestId).update({ status: 'approved', processedAt: now, processedBy: adminUid });
+        await rtdb.ref('users/' + uid + '/notifications').push({ title: 'Profile Updated!', message: 'Your profile update has been approved.', type: 'success', read: false, timestamp: now });
+
+        showToast('Profile update approved!');
+        await loadProfileUpdateRequests(); await loadUsers();
+    } catch (e) { console.error('[APPROVE_UPDATE] Error:', e); showToast('Failed: ' + e.message, true); }
+}
+
+async function rejectProfileUpdate(requestId) {
+    let reason = prompt('Enter rejection reason:');
+    if (reason === null) return;
+    if (!reason || !reason.trim()) reason = 'Invalid IGN / UID';
+    try {
+        const reqSnap = await rtdb.ref('profileUpdateRequests/' + requestId).once('value');
+        if (!reqSnap.exists()) { showToast('Not found', true); return; }
+        const req = reqSnap.val(); const uid = req.uid;
+        const now = Date.now(), adminUid = auth.currentUser.uid;
+
+        await rtdb.ref('profileUpdateRequests/' + requestId).update({ status: 'rejected', reason: reason.trim(), processedAt: now, processedBy: adminUid });
+        if (uid) {
+            await rtdb.ref('users/' + uid).update({ approved: false, profileRequired: true });
+            await rtdb.ref('users/' + uid + '/notifications').push({ title: 'Profile Update Rejected', message: 'Reason: ' + reason.trim(), type: 'warning', read: false, timestamp: now });
+        }
+        showToast('Profile update rejected');
+        await loadProfileUpdateRequests(); await loadUsers();
+    } catch (e) { console.error('[REJECT_UPDATE] Error:', e); showToast('Failed: ' + e.message, true); }
+}
+
+// ================================================================
+// USERS
+// ================================================================
+async function loadUsers() {
+    try {
+        const snap = await rtdb.ref('users').once('value');
+        const tbody = document.getElementById('usersTable');
+        const search = (document.getElementById('searchUser').value || '').toLowerCase().trim();
+        if (!snap.exists()) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted" style="padding:40px;">No users</td></tr>'; return; }
+        let html = '';
+        snap.forEach(c => {
+            const u = c.val(), uid = c.key;
+            const ign = u.ign || u.name || 'N/A', ffUid = u.ffUid || u.ffUID || 'N/A';
+            if (search && !ign.toLowerCase().includes(search) && !ffUid.toLowerCase().includes(search)) return;
+            const dep = (u.realMoney && u.realMoney.deposited) || 0;
+            const win = (u.realMoney && u.realMoney.winnings) || 0;
+            const bal = dep + win;
+            const access = u.accessMode || 'VIEW_ONLY';
+            const approved = u.approved === true;
+            const accessBdg = access === 'FULL' ? '<span class="badge badge-neon">FULL</span>' : '<span class="badge badge-yellow">VIEW_ONLY</span>';
+            const appBdg = approved ? '<span class="badge badge-neon">Yes</span>' : '<span class="badge badge-red">No</span>';
+            html += '<tr><td class="fw-800">' + ign + '</td><td class="text-dim">' + ffUid + '</td><td class="text-neon fw-800">₹' + bal + '</td><td>' + accessBdg + '</td><td>' + appBdg + '</td><td><button onclick="openUserEditModal(\'' + uid + '\')" class="btn btn-xs btn-xs-blue"><i class="fas fa-pen"></i></button></td></tr>';
+        });
+        tbody.innerHTML = html || '<tr><td colspan="6" class="text-center text-muted" style="padding:40px;">No results</td></tr>';
+    } catch (e) { showToast('Failed to load users', true); }
+}
+
+async function openUserEditModal(uid) {
+    try {
+        const snap = await rtdb.ref('users/' + uid).once('value');
+        if (!snap.exists()) { showToast('User not found', true); return; }
+        const u = snap.val();
+        const ign = u.ign || 'N/A', ffUid = u.ffUid || u.ffUID || 'N/A';
+        const blocked = u.blocked === true, access = u.accessMode || 'VIEW_ONLY';
+        const dep = (u.realMoney && u.realMoney.deposited) || 0;
+        const win = (u.realMoney && u.realMoney.winnings) || 0;
+        const coins = u.coins || 0;
+        const matches = (u.stats && u.stats.matches) || 0;
+        const wins = (u.stats && u.stats.wins) || 0;
+        const kills = (u.stats && u.stats.kills) || 0;
+        const accessBdg = access === 'FULL' ? '<span class="badge badge-neon" style="font-size:12px;padding:4px 14px;">FULL ACCESS</span>' : '<span class="badge badge-yellow" style="font-size:12px;padding:4px 14px;">VIEW ONLY</span>';
+        const blockInfo = u.blockReason ? '<div style="padding:10px;border-radius:10px;background:rgba(255,0,60,0.06);border:1px solid rgba(255,0,60,0.12);"><p class="text-xs text-danger"><i class="fas fa-info-circle"></i> Block Reason: ' + u.blockReason + '</p></div>' : '';
+        const safeIgn = ign.replace(/'/g, "\\'");
+
+        document.getElementById('userEditContent').innerHTML =
+            '<div class="flex items-center justify-between" style="padding:14px;border-radius:12px;background:rgba(255,255,255,0.02);border:1px solid var(--border);"><div><p class="fw-800" style="font-size:16px;">' + ign + '</p><p class="text-xs text-muted font-mono">' + uid.substring(0,24) + '...</p></div>' + accessBdg + '</div>' +
+            '<div class="grid-2">' +
+            '<div style="padding:10px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid var(--border);"><p class="text-xs text-muted">FF UID</p><p class="text-sm fw-800">' + ffUid + '</p></div>' +
+            '<div style="padding:10px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid var(--border);"><p class="text-xs text-muted">Coins</p><p class="text-sm fw-800" style="color:var(--yellow)">' + coins + '</p></div>' +
+            '<div style="padding:10px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid var(--border);"><p class="text-xs text-muted">Deposited</p><p class="text-sm fw-800 text-neon">₹' + dep + '</p></div>' +
+            '<div style="padding:10px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid var(--border);"><p class="text-xs text-muted">Winnings</p><p class="text-sm fw-800 text-neon">₹' + win + '</p></div>' +
+            '<div style="padding:10px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid var(--border);"><p class="text-xs text-muted">Matches / Wins</p><p class="text-sm fw-800">' + matches + ' / ' + wins + '</p></div>' +
+            '<div style="padding:10px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid var(--border);"><p class="text-xs text-muted">Kills</p><p class="text-sm fw-800">' + kills + '</p></div>' +
+            '</div>' + blockInfo +
+            '<div class="space-y-2">' +
+            (blocked
+                ? '<button onclick="unblockUser(\'' + uid + '\')" class="btn btn-neon w-full"><i class="fas fa-unlock"></i> Unblock User</button>'
+                : '<button onclick="blockUser(\'' + uid + '\')" class="btn btn-danger w-full"><i class="fas fa-ban"></i> Block User</button>'
+            ) +
+            '<button onclick="deleteUser(\'' + uid + '\',\'' + safeIgn + '\')" class="btn btn-ghost w-full" style="border-color:rgba(255,0,60,0.2);color:var(--danger);"><i class="fas fa-trash"></i> Delete User</button>' +
+            '</div>' +
+            '<p class="text-xs text-muted text-center"><i class="fas fa-shield-alt"></i> Blocked users cannot join, add money, or withdraw</p>';
+
+        document.getElementById('userEditModal').classList.remove('hidden');
+    } catch (e) { showToast('Failed to load user', true); }
+}
+
+function closeUserEditModal() { document.getElementById('userEditModal').classList.add('hidden'); }
+
+async function blockUser(uid) {
+    const reason = prompt('Enter block reason:');
+    if (!reason || !reason.trim()) { showToast('Reason required', true); return; }
+    try {
+        await rtdb.ref('users/' + uid).update({ blocked: true, blockReason: reason.trim(), blockedAt: Date.now(), blockedBy: auth.currentUser.uid });
+        showToast('User blocked'); closeUserEditModal(); loadUsers();
+    } catch (e) { showToast('Failed', true); }
+}
+
+async function unblockUser(uid) {
+    if (!confirm('Unblock this user?')) return;
+    try {
+        await rtdb.ref('users/' + uid).update({ blocked: false, blockReason: null, blockedAt: null, blockedBy: null });
+        showToast('User unblocked'); closeUserEditModal(); loadUsers();
+    } catch (e) { showToast('Failed', true); }
+}
+
+async function deleteUser(uid, ign) {
+    if (!confirm('Permanently delete "' + ign + '"?')) return;
+    try {
+        const uSnap = await rtdb.ref('users/' + uid).once('value');
+        if (uSnap.exists()) { const ff = uSnap.val().ffUid || uSnap.val().ffUID || ''; if (ff) await rtdb.ref('ffUIDIndex/' + ff).remove(); }
+        await rtdb.ref('users/' + uid).remove();
+        await rtdb.ref('userMatches/' + uid).remove();
+        showToast('User deleted'); closeUserEditModal(); loadUsers(); refreshDashboard();
+    } catch (e) { showToast('Failed: ' + e.message, true); }
+}
+
+// ================================================================
+// TOURNAMENTS
+// ================================================================
+function onEntryTypeChange() {
+    const et = document.getElementById('tEntryType').value;
+    const h = document.getElementById('entryTypeHint');
+    if (et === 'coin') {
+        h.innerHTML = '<i class="fas fa-coins" style="color:var(--yellow);margin-right:4px;"></i><span>Coin tournaments appear only in the <strong style="color:var(--yellow)">Coin</strong> section</span>';
+        h.className = 'info-box'; h.style.background = 'rgba(250,204,21,0.03)'; h.style.borderColor = 'rgba(250,204,21,0.1)';
+    } else {
+        h.innerHTML = '<i class="fas fa-info-circle text-neon" style="margin-right:4px;"></i><span>Paid tournaments appear in <strong class="text-neon">Solo/Duo/Squad</strong> sections</span>';
+        h.className = 'info-box info-box-neon'; h.style.background = ''; h.style.borderColor = '';
+    }
+}
+
+function filterTournaments(f) {
+    currentTournamentFilter = f;
+    document.querySelectorAll('#section-tournaments .filter-tab').forEach(b => b.classList.remove('active'));
+    const btn = document.getElementById('filter' + f.charAt(0).toUpperCase() + f.slice(1));
+    if (btn) btn.classList.add('active');
+    loadTournaments();
+}
+
+async function loadTournaments() {
+    try {
+        const tSnap = await rtdb.ref('tournaments').once('value');
+        const jSnap = await rtdb.ref('joinRequests').once('value');
+        const tbody = document.getElementById('tournamentsTable');
+        const rSel = document.getElementById('resultTournamentSelect');
+        const nSel = document.getElementById('notifTournamentSelect');
+        const joinCounts = {};
+        if (jSnap.exists()) jSnap.forEach(c => { const j = c.val(); if (j.status === 'approved') { const mid = j.matchId || j.tournamentId; if (mid) joinCounts[mid] = (joinCounts[mid] || 0) + 1; } });
+
+        if (!tSnap.exists()) {
+            tbody.innerHTML = '<tr><td colspan="11" class="text-center text-muted" style="padding:40px;">No tournaments</td></tr>';
+            rSel.innerHTML = '<option value="">-- No tournaments --</option>';
+            if (nSel) nSel.innerHTML = '<option value="">-- No tournaments --</option>';
+            return;
+        }
+        let html = '', selHtml = '<option value="">-- Select Tournament --</option>', vis = 0;
+        tSnap.forEach(c => {
+            const raw = c.val(), id = c.key, t = T(raw);
+            if (currentTournamentFilter === 'paid' && t.entryType !== 'paid') return;
+            if (currentTournamentFilter === 'coin' && t.entryType !== 'coin') return;
+            if (currentTournamentFilter === 'special' && !t.isSpecial) return;
+            vis++;
+            const filled = Math.max(joinCounts[id] || 0, t.filledSlots);
+            let slotClr = 'color:var(--neon)', slotTxt = filled + '/' + t.maxSlots;
+            if (filled >= t.maxSlots) { slotClr = 'color:var(--danger)'; slotTxt = 'FULL'; }
+            else if (filled / t.maxSlots > 0.8) { slotClr = 'color:var(--yellow)'; }
+            let stBdg = t.status === 'upcoming' ? '<span class="badge badge-blue">Upcoming</span>' : t.status === 'live' ? '<span class="badge badge-red status-live">🔴 Live</span>' : '<span class="badge badge-gray">Completed</span>';
+            let etBdg = t.entryType === 'coin' ? '<span class="badge badge-yellow"><i class="fas fa-coins"></i> Coin</span>' : '<span class="badge badge-neon"><i class="fas fa-money-bill-wave"></i> Paid</span>';
+            let feeD = t.entryType === 'coin' ? '<span style="color:var(--yellow)" class="fw-800">' + t.entryFee + ' <i class="fas fa-coins" style="font-size:10px;"></i></span>' : '<span class="text-neon fw-800">₹' + t.entryFee + '</span>';
+            const mtD = t.matchTime ? new Date(t.matchTime).toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : 'Not Set';
+            const gm = t.gameMode.charAt(0).toUpperCase() + t.gameMode.slice(1);
+            let extra = t.isSpecial ? '<span style="color:var(--yellow)" class="text-xs"> ⭐</span>' : '';
+            extra += t.entryType === 'coin' ? '<span class="text-xs text-muted" style="display:block;">→ Coin Section</span>' : '<span class="text-xs text-muted" style="display:block;">→ ' + gm + ' Section</span>';
+            const roomIco = t.roomLocked ? '<i class="fas fa-lock text-danger"></i>' : '<i class="fas fa-lock-open text-neon"></i>';
+            const roomD = t.roomId ? '<span class="text-xs text-dim">' + roomIco + ' Set</span>' : '<span class="text-xs text-muted">' + roomIco + ' Empty</span>';
+            const safeName = t.name.replace(/'/g, "\\'");
+            html += '<tr><td><span class="fw-800">' + t.name + '</span>' + extra + '</td><td class="text-dim text-xs fw-800" style="text-transform:uppercase;">' + gm + '</td><td class="text-dim text-sm">' + t.map + '</td><td>' + etBdg + '</td><td>' + feeD + '</td><td class="text-neon fw-800">₹' + t.prizePool + '</td><td class="fw-800" style="' + slotClr + '">' + slotTxt + '</td><td class="text-xs text-dim">' + mtD + '</td><td>' + stBdg + '</td><td>' + roomD + '</td><td><button onclick="editTournament(\'' + id + '\')" class="btn btn-xs btn-xs-blue" style="margin-right:3px;"><i class="fas fa-pen"></i></button><button onclick="deleteTournament(\'' + id + '\',\'' + safeName + '\')" class="btn btn-xs btn-xs-red"><i class="fas fa-trash"></i></button></td></tr>';
+            selHtml += '<option value="' + id + '">' + t.name + ' (' + gm + ' / ' + t.entryType + (t.isSpecial ? ' / ⭐' : '') + ')</option>';
+        });
+        tbody.innerHTML = vis > 0 ? html : '<tr><td colspan="11" class="text-center text-muted" style="padding:40px;">No ' + (currentTournamentFilter === 'all' ? '' : currentTournamentFilter + ' ') + 'tournaments</td></tr>';
+        rSel.innerHTML = selHtml;
+        if (nSel) nSel.innerHTML = selHtml;
+    } catch (e) { showToast('Failed to load tournaments', true); }
+}
+
+function openTournamentModal() {
+    document.getElementById('modalTitle').textContent = 'Create Tournament';
+    document.getElementById('tournamentForm').reset();
+    document.getElementById('tournamentId').value = '';
+    document.getElementById('tEntryType').value = 'paid';
+    document.getElementById('tEntryFee').value = 10;
+    document.getElementById('tMap').value = 'Bermuda';
+    document.getElementById('tIsSpecial').checked = false;
+    document.getElementById('tRoomLocked').checked = true;
+    onEntryTypeChange();
+    document.getElementById('tournamentModal').classList.remove('hidden');
+}
+function closeTournamentModal() { document.getElementById('tournamentModal').classList.add('hidden'); }
+
+async function editTournament(id) {
+    try {
+        const snap = await rtdb.ref('tournaments/' + id).once('value');
+        if (!snap.exists()) { showToast('Not found', true); return; }
+        const t = T(snap.val());
+        document.getElementById('modalTitle').textContent = 'Edit Tournament';
+        document.getElementById('tournamentId').value = id;
+        document.getElementById('tName').value = t.name;
+        document.getElementById('tGameMode').value = t.gameMode;
+        document.getElementById('tMap').value = t.map;
+        document.getElementById('tEntryType').value = t.entryType;
+        document.getElementById('tEntryFee').value = t.entryFee;
+        document.getElementById('tPrizePool').value = t.prizePool;
+        document.getElementById('tMaxSlots').value = t.maxSlots;
+        document.getElementById('tRoomId').value = t.roomId;
+        document.getElementById('tRoomPass').value = t.roomPassword;
+        document.getElementById('tIsSpecial').checked = t.isSpecial;
+        document.getElementById('tRoomLocked').checked = t.roomLocked;
+        if (t.matchTime) { const dt = new Date(t.matchTime); document.getElementById('tMatchTime').value = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().slice(0, 16); }
+        onEntryTypeChange();
+        document.getElementById('tournamentModal').classList.remove('hidden');
+    } catch (e) { showToast('Failed', true); }
+}
+
+document.getElementById('tournamentForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('tournamentId').value;
+    const entryType = document.getElementById('tEntryType').value;
+    const entryFee = parseInt(document.getElementById('tEntryFee').value) || 0;
+    const matchTimeStr = document.getElementById('tMatchTime').value;
+    if (!matchTimeStr) { showToast('Match time required', true); return; }
+    if (entryType !== 'paid' && entryType !== 'coin') { showToast('Invalid entry type', true); return; }
+    if (entryFee <= 0) { showToast('Entry fee must be > 0', true); return; }
+    const matchTimeMs = new Date(matchTimeStr).getTime();
+    const data = {
+        name: document.getElementById('tName').value.trim(),
+        gameMode: document.getElementById('tGameMode').value,
+        entryType: entryType, entryFee: entryFee,
+        prizePool: parseInt(document.getElementById('tPrizePool').value) || 0,
+        map: formatMapName(document.getElementById('tMap').value),
+        maxSlots: parseInt(document.getElementById('tMaxSlots').value) || 12,
+        matchTime: matchTimeMs, status: computeStatus(matchTimeMs),
+        roomId: document.getElementById('tRoomId').value.trim(),
+        roomPassword: document.getElementById('tRoomPass').value.trim(),
+        roomLocked: document.getElementById('tRoomLocked').checked,
+        isSpecial: document.getElementById('tIsSpecial').checked,
+        updatedAt: Date.now()
+    };
+    try {
+        if (id) { await rtdb.ref('tournaments/' + id).update(data); showToast('Tournament updated!'); }
+        else { data.filledSlots = 0; data.createdAt = Date.now(); await rtdb.ref('tournaments').push(data); showToast('Tournament created!'); }
+        closeTournamentModal(); loadTournaments(); refreshDashboard();
+    } catch (e) { showToast('Failed: ' + e.message, true); }
+});
+
+async function deleteTournament(id, name) {
+    if (!confirm('Delete "' + name + '"?')) return;
+    try { await rtdb.ref('tournaments/' + id).remove(); showToast('Deleted'); loadTournaments(); refreshDashboard(); }
+    catch (e) { showToast('Failed', true); }
+}
+
+// ================================================================
+// JOIN REQUESTS
+// ================================================================
+async function loadJoinRequests() {
+    try {
+        const snap = await rtdb.ref('joinRequests').once('value');
+        const tbody = document.getElementById('joinRequestsTable');
+        if (!snap.exists()) { tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted" style="padding:40px;">No join requests</td></tr>'; return; }
+        let html = ''; const arr = [];
+        snap.forEach(c => arr.push({ key: c.key, ...c.val() }));
+        arr.reverse().forEach(req => {
+            const id = req.key, status = req.status || 'pending';
+            let stBdg = status === 'pending' ? '<span class="badge badge-yellow">Pending</span>' : status === 'approved' ? '<span class="badge badge-neon">Approved</span>' : '<span class="badge badge-red">Rejected</span>';
+            let actions = status === 'pending' ? '<button onclick="approveJoin(\'' + id + '\')" class="btn btn-xs btn-xs-neon" style="margin-right:3px;"><i class="fas fa-check"></i></button><button onclick="rejectJoin(\'' + id + '\')" class="btn btn-xs btn-xs-red"><i class="fas fa-times"></i></button>' : '';
+            const time = req.createdAt ? new Date(req.createdAt).toLocaleString() : 'N/A';
+            const et = req.entryType || 'paid';
+            let etBdg = et === 'coin' ? '<span class="badge badge-yellow"><i class="fas fa-coins"></i> Coin</span>' : '<span class="badge badge-neon"><i class="fas fa-money-bill-wave"></i> Paid</span>';
+            const fee = req.entryFee || 0;
+            let feeD = et === 'coin' ? '<span style="color:var(--yellow)" class="fw-800">' + fee + '</span>' : '<span class="text-neon fw-800">₹' + fee + '</span>';
+            html += '<tr><td><span class="fw-800">' + (req.odeName || req.userName || 'Unknown') + '</span><br><span class="text-xs text-muted">' + (req.odeFfUid || req.ffUid || '') + '</span></td><td class="text-dim text-sm">' + (req.tournamentName || req.matchId || 'N/A') + '</td><td>' + etBdg + '</td><td>' + feeD + '</td><td>' + stBdg + '</td><td class="text-xs text-muted">' + time + '</td><td>' + actions + '</td></tr>';
+        });
+        tbody.innerHTML = html;
+    } catch (e) { showToast('Failed', true); }
+}
+
+async function approveJoin(requestId) {
+    if (!confirm('Approve this join request?')) return;
+    try {
+        const reqSnap = await rtdb.ref('joinRequests/' + requestId).once('value');
+        if (!reqSnap.exists()) { showToast('Not found', true); return; }
+        const req = reqSnap.val();
+        if (req.status && req.status !== 'pending') { showToast('Already processed', true); return; }
+        const uid = req.oderId || req.uid || req.userId;
+        if (!uid) { showToast('UID missing', true); return; }
+        const matchId = req.matchId || req.tournamentId;
+        if (!matchId) { showToast('Tournament ID missing', true); return; }
+        const tSnap = await rtdb.ref('tournaments/' + matchId).once('value');
+        if (!tSnap.exists()) { showToast('Tournament not found', true); return; }
+        const tournament = T(tSnap.val());
+        if (tournament.filledSlots >= tournament.maxSlots) { showToast('Tournament FULL', true); return; }
+        const userSnap = await rtdb.ref('users/' + uid).once('value');
+        if (!userSnap.exists()) { showToast('User not found', true); return; }
+        const user = userSnap.val();
+        if (user.blocked === true) { showToast('User is blocked', true); return; }
+        const entryType = req.entryType || tournament.entryType || 'paid';
+        const entryFee = parseInt(req.entryFee || tournament.entryFee || 0);
+        if (entryType === 'paid' && entryFee > 0) {
+            const dep = (user.realMoney && user.realMoney.deposited) || 0;
+            if (dep < entryFee) { showToast('Insufficient balance', true); return; }
+            await rtdb.ref('users/' + uid + '/realMoney/deposited').set(dep - entryFee);
+        } else if (entryType === 'coin' && entryFee > 0) {
+            const coins = user.coins || 0;
+            if (coins < entryFee) { showToast('Insufficient coins', true); return; }
+            await rtdb.ref('users/' + uid + '/coins').set(coins - entryFee);
+        }
+        const now = Date.now();
+        await rtdb.ref('joinRequests/' + requestId).update({ status: 'approved', processed: true, processedAt: now, processedBy: auth.currentUser.uid, roomId: tournament.roomId, roomPassword: tournament.roomPassword });
+        await rtdb.ref('tournaments/' + matchId + '/filledSlots').set(tournament.filledSlots + 1);
+        await rtdb.ref('userMatches/' + uid + '/matches/' + matchId).set({ oderId: uid, matchId, tournamentId: matchId, tournamentName: tournament.name, entryType, entryFee, status: 'joined', joinedAt: now });
+        await rtdb.ref('users/' + uid + '/notifications').push({ title: 'Join Approved', message: 'You\'ve been approved for ' + tournament.name, type: 'success', read: false, timestamp: now });
+        showToast('Join approved!'); loadJoinRequests(); loadTournaments();
+    } catch (e) { showToast('Failed: ' + e.message, true); }
+}
+
+async function rejectJoin(requestId) {
+    const reason = prompt('Rejection reason:');
+    if (!reason) return;
+    try {
+        await rtdb.ref('joinRequests/' + requestId).update({ status: 'rejected', processed: true, processedAt: Date.now(), processedBy: auth.currentUser.uid, rejectionReason: reason.trim() });
+        showToast('Rejected'); loadJoinRequests();
+    } catch (e) { showToast('Failed', true); }
+}
+
+// ================================================================
+// WALLET REQUESTS
+// ================================================================
+async function loadWalletRequests() {
+    try {
+        const filter = document.getElementById('walletTypeFilter').value;
+        const tbody = document.getElementById('walletRequestsTable');
+        let html = '', hasData = false;
+        if (filter === 'all' || filter === 'add') {
+            const snap = await rtdb.ref('addMoneyRequests').once('value');
+            if (snap.exists()) snap.forEach(c => { hasData = true; html += walletRow(c.key, c.val(), 'add'); });
+        }
+        if (filter === 'all' || filter === 'withdraw') {
+            const snap = await rtdb.ref('withdrawRequests').once('value');
+            if (snap.exists()) snap.forEach(c => { hasData = true; html += walletRow(c.key, c.val(), 'withdraw'); });
+        }
+        tbody.innerHTML = hasData ? html : '<tr><td colspan="6" class="text-center text-muted" style="padding:40px;">No wallet requests</td></tr>';
+    } catch (e) { showToast('Failed', true); }
+}
+
+function walletRow(id, req, type) {
+    const uid = req.oderId || req.uid || req.userId || 'N/A';
+    const amount = req.amount || 0, status = req.status || 'pending';
+    const col = type === 'add' ? 'addMoneyRequests' : 'withdrawRequests';
+    let tBdg = type === 'add' ? '<span class="badge badge-neon">Add</span>' : '<span class="badge badge-blue">Withdraw</span>';
+    let sBdg = status === 'pending' ? '<span class="badge badge-yellow">Pending</span>' : status === 'approved' ? '<span class="badge badge-neon">Approved</span>' : '<span class="badge badge-red">Rejected</span>';
+    const ss = req.screenshotBase64 || req.screenshotUrl || req.screenshot || '';
+    let ssH = ss ? '<img src="' + ss + '" style="width:48px;height:48px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer;" onclick="viewScreenshot(\'' + id + '\',\'' + col + '\')" onerror="this.outerHTML=\'<span class=text-muted>Broken</span>\'">' : '<span class="text-muted text-xs">None</span>';
+    let acts = status === 'pending' ? '<button onclick="approveWallet(\'' + id + '\',\'' + col + '\',\'' + type + '\')" class="btn btn-xs btn-xs-neon" style="margin-right:3px;"><i class="fas fa-check"></i></button><button onclick="rejectWallet(\'' + id + '\',\'' + col + '\')" class="btn btn-xs btn-xs-red"><i class="fas fa-times"></i></button>' : '';
+    return '<tr><td class="text-xs text-dim font-mono">' + uid.substring(0,16) + '...</td><td>' + tBdg + '</td><td class="text-neon fw-800">₹' + amount + '</td><td>' + ssH + '</td><td>' + sBdg + '</td><td>' + acts + '</td></tr>';
+}
+
+function viewScreenshot(id, col) {
+    rtdb.ref(col + '/' + id).once('value').then(s => {
+        if (!s.exists()) return;
+        const r = s.val(), src = r.screenshotBase64 || r.screenshotUrl || r.screenshot || '';
+        if (!src) return;
+        document.getElementById('screenshotInfo').innerHTML = '<p style="font-size:18px;font-weight:800;">Amount: ₹' + (r.amount || 0) + '</p>';
+        document.getElementById('screenshotImg').src = src;
+        document.getElementById('screenshotModal').classList.remove('hidden');
+    });
+}
+
+async function approveWallet(id, col, type) {
+    if (!confirm('Approve this ' + type + ' request?')) return;
+    try {
+        const snap = await rtdb.ref(col + '/' + id).once('value');
+        if (!snap.exists()) { showToast('Not found', true); return; }
+        const req = snap.val();
+        if (req.status !== 'pending') { showToast('Already processed', true); return; }
+        const uid = req.oderId || req.uid || req.userId;
+        if (!uid) { showToast('UID missing', true); return; }
+        const amount = parseFloat(req.amount) || 0;
+        const uSnap = await rtdb.ref('users/' + uid).once('value');
+        if (!uSnap.exists()) { showToast('User not found', true); return; }
+        const user = uSnap.val();
+        if (type === 'add') {
+            const cur = (user.realMoney && user.realMoney.deposited) || 0;
+            await rtdb.ref('users/' + uid + '/realMoney/deposited').set(cur + amount);
+        } else {
+            const curW = (user.realMoney && user.realMoney.winnings) || 0;
+            if (curW < amount) { showToast('Insufficient winnings', true); return; }
+            await rtdb.ref('users/' + uid + '/realMoney/winnings').set(curW - amount);
+        }
+        await rtdb.ref(col + '/' + id).update({ status: 'approved', processedAt: Date.now(), processedBy: auth.currentUser.uid });
+        showToast('Approved!'); loadWalletRequests();
+    } catch (e) { showToast('Failed: ' + e.message, true); }
+}
+
+async function rejectWallet(id, col) {
+    const reason = prompt('Rejection reason:');
+    if (!reason) return;
+    try {
+        await rtdb.ref(col + '/' + id).update({ status: 'rejected', processedAt: Date.now(), processedBy: auth.currentUser.uid, rejectionReason: reason });
+        showToast('Rejected'); loadWalletRequests();
+    } catch (e) { showToast('Failed', true); }
+}
+
+// ================================================================
+// TEAM REQUESTS
+// ================================================================
+async function loadTeamRequests() {
+    try {
+        const snap = await rtdb.ref('teamRequests').once('value');
+        const tbody = document.getElementById('teamRequestsTable');
+        if (!snap.exists()) { tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted" style="padding:40px;">No team requests</td></tr>'; return; }
+        let html = '';
+        snap.forEach(c => {
+            const req = c.val(), id = c.key, status = req.status || 'pending';
+            let sBdg = status === 'pending' ? '<span class="badge badge-yellow">Pending</span>' : status === 'approved' ? '<span class="badge badge-neon">Approved</span>' : '<span class="badge badge-red">Rejected</span>';
+            let acts = status === 'pending' ? '<button onclick="approveTeam(\'' + id + '\')" class="btn btn-xs btn-xs-neon" style="margin-right:3px;"><i class="fas fa-check"></i></button><button onclick="rejectTeam(\'' + id + '\')" class="btn btn-xs btn-xs-red"><i class="fas fa-times"></i></button>' : '';
+            html += '<tr><td class="fw-800">' + (req.ownerName || 'Unknown') + '</td><td class="text-dim text-xs fw-800" style="text-transform:uppercase;">' + (req.teamType || 'duo') + '</td><td>' + (req.memberName || 'Unknown') + '</td><td>' + sBdg + '</td><td>' + acts + '</td></tr>';
+        });
+        tbody.innerHTML = html;
+    } catch (e) { showToast('Failed', true); }
+}
+
+async function approveTeam(id) {
+    if (!confirm('Approve?')) return;
+    try { await rtdb.ref('teamRequests/' + id).update({ status: 'approved', processedAt: Date.now() }); showToast('Approved'); loadTeamRequests(); }
+    catch (e) { showToast('Failed', true); }
+}
+
+async function rejectTeam(id) {
+    const reason = prompt('Rejection reason:');
+    if (!reason) return;
+    try { await rtdb.ref('teamRequests/' + id).update({ status: 'rejected', processedAt: Date.now(), rejectionReason: reason }); showToast('Rejected'); loadTeamRequests(); }
+    catch (e) { showToast('Failed', true); }
+}
+
+// ================================================================
+// SUPPORT REQUESTS
+// ================================================================
+function filterSupport(f) {
+    currentSupportFilter = f;
+    document.querySelectorAll('#section-support .filter-tab').forEach(b => b.classList.remove('active'));
+    document.getElementById('supportFilter' + f.charAt(0).toUpperCase() + f.slice(1)).classList.add('active');
+    loadSupportRequests();
+}
+
+async function loadSupportRequests() {
+    try {
+        const snap = await rtdb.ref('supportRequests').once('value');
+        const tbody = document.getElementById('supportTable');
+        if (!snap.exists()) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted" style="padding:40px;">No support requests</td></tr>'; return; }
+        let html = '';
+        snap.forEach(c => {
+            const req = c.val(), id = c.key, status = req.status || 'pending';
+            if (currentSupportFilter !== 'all' && status !== currentSupportFilter) return;
+            let sBdg = status === 'pending' ? '<span class="badge badge-yellow">Pending</span>' : '<span class="badge badge-neon">Resolved</span>';
+            let acts = status === 'pending' ? '<button onclick="resolveSupport(\'' + id + '\')" class="btn btn-xs btn-xs-neon"><i class="fas fa-check"></i> Resolve</button>' : '';
+            const msg = (req.message || '').substring(0, 50) + '...';
+            html += '<tr><td class="fw-800">' + (req.username || 'Unknown') + '</td><td class="text-xs text-dim">' + (req.userId || '').substring(0,14) + '...</td><td class="text-dim text-sm">' + msg + '</td><td class="text-xs text-muted">' + (req.createdAt ? new Date(req.createdAt).toLocaleString() : 'N/A') + '</td><td>' + sBdg + '</td><td>' + acts + '</td></tr>';
+        });
+        tbody.innerHTML = html || '<tr><td colspan="6" class="text-center text-muted" style="padding:40px;">No requests</td></tr>';
+    } catch (e) { showToast('Failed', true); }
+}
+
+async function resolveSupport(id) {
+    if (!confirm('Mark as resolved?')) return;
+    try { await rtdb.ref('supportRequests/' + id).update({ status: 'resolved', resolvedAt: Date.now() }); showToast('Resolved'); loadSupportRequests(); }
+    catch (e) { showToast('Failed', true); }
+}
+
+// ================================================================
+// NOTIFICATIONS
+// ================================================================
+async function sendGlobalNotification() {
+    const title = document.getElementById('globalNotifTitle').value.trim();
+    const message = document.getElementById('globalNotifMessage').value.trim();
+    if (!title || !message) { showToast('Title and message required', true); return; }
+    if (!confirm('Send to ALL users?')) return;
+    try {
+        const uSnap = await rtdb.ref('users').once('value');
+        const updates = {};
+        uSnap.forEach(c => { const k = rtdb.ref('users/' + c.key + '/notifications').push().key; updates['users/' + c.key + '/notifications/' + k] = { title, message, type: 'info', read: false, timestamp: Date.now() }; });
+        await rtdb.ref().update(updates);
+        document.getElementById('globalNotifTitle').value = '';
+        document.getElementById('globalNotifMessage').value = '';
+        showToast('Sent to ' + uSnap.numChildren() + ' users!');
+        loadNotificationHistory();
+    } catch (e) { showToast('Failed: ' + e.message, true); }
+}
+
+async function sendMatchNotification() {
+    const matchId = document.getElementById('notifTournamentSelect').value;
+    const title = document.getElementById('matchNotifTitle').value.trim();
+    const message = document.getElementById('matchNotifMessage').value.trim();
+    if (!matchId || !title || !message) { showToast('All fields required', true); return; }
+    if (!confirm('Send to match participants?')) return;
+    try {
+        const jSnap = await rtdb.ref('joinRequests').orderByChild('matchId').equalTo(matchId).once('value');
+        const updates = {}; let count = 0;
+        jSnap.forEach(c => {
+            const j = c.val(); if (j.status !== 'approved') return;
+            const uid = j.oderId || j.uid || j.userId; if (!uid) return;
+            count++;
+            const k = rtdb.ref('users/' + uid + '/notifications').push().key;
+            updates['users/' + uid + '/notifications/' + k] = { title, message, type: 'info', read: false, timestamp: Date.now() };
+        });
+        if (!count) { showToast('No participants', true); return; }
+        await rtdb.ref().update(updates);
+        document.getElementById('matchNotifTitle').value = '';
+        document.getElementById('matchNotifMessage').value = '';
+        showToast('Sent to ' + count + ' participants!');
+    } catch (e) { showToast('Failed: ' + e.message, true); }
+}
+
+async function loadNotificationHistory() {
+    try {
+        const snap = await rtdb.ref('adminNotifications').limitToLast(20).once('value');
+        const div = document.getElementById('notifHistory');
+        if (!snap.exists()) { div.innerHTML = '<p class="text-muted text-sm">No notifications sent</p>'; return; }
+        let html = ''; const arr = [];
+        snap.forEach(c => arr.push(c.val()));
+        arr.reverse().forEach(n => {
+            html += '<div class="feed-item" style="flex-direction:column;align-items:flex-start;gap:4px;"><p class="text-sm fw-800">' + n.title + '</p><p class="text-xs text-dim">' + n.message + '</p><p class="text-xs text-muted">' + new Date(n.sentAt).toLocaleString() + '</p></div>';
+        });
+        div.innerHTML = html || '<p class="text-muted text-sm">No notifications</p>';
+    } catch (e) { console.error(e); }
+}
+
+// ================================================================
+// MATCH RESULTS
+// ================================================================
+async function loadTournamentParticipants() {
+    const matchId = document.getElementById('resultTournamentSelect').value;
+    const container = document.getElementById('resultsContainer');
+    const list = document.getElementById('participantsList');
+    if (!matchId) { container.classList.add('hidden'); return; }
+    try {
+        const snap = await rtdb.ref('joinRequests').orderByChild('matchId').equalTo(matchId).once('value');
+        if (!snap.exists()) { list.innerHTML = '<p class="text-muted text-sm">No participants</p>'; container.classList.remove('hidden'); return; }
+        let html = '';
+        snap.forEach(c => {
+            const p = c.val(); if (p.status !== 'approved') return;
+            const uid = p.oderId || p.uid || p.userId || '';
+            const name = p.odeName || p.userName || 'Unknown';
+            html += '<div class="flex items-center gap-4" style="padding:14px;border-radius:12px;background:rgba(255,255,255,0.02);border:1px solid var(--border);" data-request-id="' + c.key + '" data-uid="' + uid + '"><div class="flex-1"><p class="fw-800">' + name + '</p></div><div class="flex gap-3"><div><label class="text-xs text-muted">Kills</label><input type="number" class="neon-input participant-kills" style="width:70px;text-align:center;" value="0" min="0"></div><div><label class="text-xs text-muted">Reward ₹</label><input type="number" class="neon-input participant-reward" style="width:90px;text-align:center;" value="0" min="0"></div></div></div>';
+        });
+        list.innerHTML = html || '<p class="text-muted text-sm">No approved participants</p>';
+        container.classList.remove('hidden');
+    } catch (e) { showToast('Failed', true); }
+}
+
+async function saveResults() {
+    const parts = document.querySelectorAll('#participantsList > div[data-request-id]');
+    if (!parts.length) { showToast('No participants', true); return; }
+    if (!confirm('Save and distribute results?')) return;
+    const matchId = document.getElementById('resultTournamentSelect').value;
+    try {
+        for (const el of parts) {
+            const rid = el.dataset.requestId, uid = el.dataset.uid;
+            const kills = parseInt(el.querySelector('.participant-kills').value) || 0;
+            const reward = parseInt(el.querySelector('.participant-reward').value) || 0;
+            await rtdb.ref('joinRequests/' + rid).update({ kills, reward, resultStatus: 'completed' });
+            if (uid && reward > 0) {
+                const uSnap = await rtdb.ref('users/' + uid + '/realMoney/winnings').once('value');
+                await rtdb.ref('users/' + uid + '/realMoney/winnings').set((uSnap.exists() ? uSnap.val() : 0) + reward);
+            }
+        }
+        await rtdb.ref('tournaments/' + matchId).update({ status: 'completed', updatedAt: Date.now() });
+        showToast('Results saved!'); loadTournaments();
+    } catch (e) { showToast('Failed: ' + e.message, true); }
+}
+
+// ================================================================
+// SETTINGS
+// ================================================================
+function previewQrCode(event) {
+    const file = event.target.files[0]; if (!file) return;
+    if (file.size > 3 * 1024 * 1024) { showToast('Max 3MB', true); return; }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        pendingQrBase64 = e.target.result;
+        document.getElementById('qrPreview').src = pendingQrBase64;
+        document.getElementById('qrPreviewContainer').classList.remove('hidden');
+        document.getElementById('qrFileName').textContent = file.name;
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeQrPreview() {
+    pendingQrBase64 = null;
+    document.getElementById('qrPreviewContainer').classList.add('hidden');
+    document.getElementById('qrFileName').textContent = '';
+    document.getElementById('settingUpiQr').value = '';
+}
+
+async function loadSettings() {
+    try {
+        const pSnap = await rtdb.ref('appSettings/payment').once('value');
+        if (pSnap.exists()) {
+            const p = pSnap.val();
+            document.getElementById('settingUpiId').value = p.upiId || '';
+            document.getElementById('settingMinWithdraw').value = p.minWithdraw || 50;
+            if (p.upiQrBase64) { document.getElementById('existingQr').src = p.upiQrBase64; document.getElementById('existingQrContainer').classList.remove('hidden'); }
+        }
+        const cSnap = await rtdb.ref('appConfig').once('value');
+        if (cSnap.exists()) {
+            const c = cSnap.val();
+            document.getElementById('settingKillReward').value = c.killReward || 5;
+            document.getElementById('settingCoinsPerAd').value = c.coinsPerAd || 10;
+        }
+    } catch (e) { console.error(e); }
+}
+
+async function saveSettings() {
+    const upiId = document.getElementById('settingUpiId').value.trim();
+    if (!upiId) { showToast('UPI ID required', true); return; }
+    try {
+        const payData = { upiId, minWithdraw: parseInt(document.getElementById('settingMinWithdraw').value) || 50, updatedAt: Date.now() };
+        if (pendingQrBase64) payData.upiQrBase64 = pendingQrBase64;
+        await rtdb.ref('appSettings/payment').update(payData);
+        await rtdb.ref('appConfig').update({ killReward: parseInt(document.getElementById('settingKillReward').value) || 5, coinsPerAd: parseInt(document.getElementById('settingCoinsPerAd').value) || 10, updatedAt: Date.now() });
+        pendingQrBase64 = null; removeQrPreview(); loadSettings();
+        showToast('Settings saved!');
+    } catch (e) { showToast('Failed: ' + e.message, true); }
+}
+
+// ================================================================
+// UTILITIES
+// ================================================================
+function toggleSidebar() {
+    const sb = document.getElementById('sidebar');
+    const ov = document.getElementById('sidebarOverlay');
+    sb.classList.toggle('open');
+    ov.classList.toggle('show');
+}
+
+function showSection(section, el) {
+    document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById('section-' + section);
+    if (target) target.classList.add('active');
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+    if (el) el.classList.add('active');
+    if (window.innerWidth < 1024) {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('sidebarOverlay').classList.remove('show');
+    }
+}
+
+function showToast(message, isError) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.className = 'toast ' + (isError ? 'toast-error' : 'toast-success') + ' show';
+    setTimeout(() => { toast.classList.remove('show'); }, 3500);
+}
+</script>
+</body>
+</html>

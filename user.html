@@ -1,0 +1,1490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Mini eSports</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+--bg:#050507;--bg2:#0c0b10;--card:#111118;--card2:#16161f;
+--green:#00ff6a;--yellow:#ffd700;--red:#ff2e2e;--blue:#00d4ff;--purple:#b964ff;--orange:#ff8c00;
+--txt:#fff;--txt2:#7a7a8e;--border:rgba(255,255,255,.06);
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,sans-serif;background:var(--bg);color:var(--txt);overflow-x:hidden;min-height:100vh;-webkit-tap-highlight-color:transparent;user-select:none;}
+::-webkit-scrollbar{display:none;}
+a{color:inherit;text-decoration:none;}
+
+/* ── LOADING ── */
+.splash{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .4s;}
+.splash.hide{opacity:0;pointer-events:none;}
+.splash-logo{font-size:32px;font-weight:900;letter-spacing:2px;background:linear-gradient(135deg,var(--green),var(--yellow));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.splash-spin{width:32px;height:32px;border:3px solid rgba(0,255,106,.15);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── LOGIN SCREEN ── */
+.login-screen{position:fixed;inset:0;z-index:9000;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;}
+.login-screen.hide{display:none;}
+.login-logo{font-size:42px;margin-bottom:12px;}
+.login-title{font-size:28px;font-weight:900;background:linear-gradient(135deg,var(--green),var(--yellow));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;}
+.login-sub{font-size:14px;color:var(--txt2);margin-bottom:32px;max-width:280px;line-height:1.6;}
+.login-btn{display:flex;align-items:center;justify-content:center;gap:12px;padding:14px 32px;background:#fff;color:#333;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(255,255,255,.15);transition:.15s;}
+.login-btn:active{transform:scale(.96);}
+.login-btn img{width:22px;height:22px;}
+.login-btn i{font-size:20px;color:#4285f4;}
+
+/* ── TOAST ── */
+.toast-wrap{position:fixed;top:94px;left:50%;transform:translateX(-50%);z-index:8000;width:90%;max-width:400px;pointer-events:none;}
+.toast{padding:12px 18px;border-radius:12px;font-size:13px;font-weight:600;text-align:center;opacity:0;transform:translateY(-12px);transition:.3s;margin-bottom:6px;pointer-events:auto;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.ok{background:rgba(0,255,106,.12);border:1px solid rgba(0,255,106,.25);color:var(--green);}
+.toast.err{background:rgba(255,46,46,.12);border:1px solid rgba(255,46,46,.25);color:var(--red);}
+.toast.inf{background:rgba(0,212,255,.12);border:1px solid rgba(0,212,255,.25);color:var(--blue);}
+
+/* ── HEADER ── */
+.hdr{position:fixed;top:0;left:0;right:0;z-index:500;background:linear-gradient(180deg,#09090f 0%,rgba(9,9,15,.97) 100%);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}
+.hdr-row{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;}
+.hdr-logo{display:flex;align-items:center;gap:7px;}
+.hdr-logo i{font-size:20px;color:var(--red);filter:drop-shadow(0 0 6px var(--red));}
+.hdr-logo span{font-size:17px;font-weight:900;background:linear-gradient(135deg,var(--green),var(--yellow));-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:1px;}
+.hdr-right{display:flex;align-items:center;gap:5px;}
+.hdr-bell{position:relative;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.04);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--txt2);font-size:14px;}
+.hdr-bell:active{transform:scale(.9);}
+.bell-dot{position:absolute;top:5px;right:5px;width:7px;height:7px;background:var(--red);border-radius:50%;border:2px solid #09090f;display:none;}
+.bell-dot.on{display:block;animation:pulse 1.4s infinite;}
+.hdr-chip{display:flex;align-items:center;gap:4px;border-radius:18px;padding:5px 10px;font-size:11px;font-weight:700;}
+.chip-coin{background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.22);color:var(--yellow);}
+.chip-money{background:rgba(0,255,106,.08);border:1px solid rgba(0,255,106,.22);color:var(--green);}
+.ticker{background:rgba(0,255,106,.03);padding:5px 0;overflow:hidden;}
+.ticker span{display:inline-block;white-space:nowrap;animation:scroll 22s linear infinite;font-size:11px;color:var(--green);padding-left:100%;}
+@keyframes scroll{to{transform:translateX(-100%)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* ── VIEW-ONLY BANNER ── */
+.vo-banner{margin:0 16px 12px;padding:12px 14px;border-radius:11px;font-size:12px;line-height:1.5;display:none;align-items:flex-start;gap:9px;background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.2);color:var(--yellow);}
+.vo-banner.on{display:flex;}
+.vo-banner i{font-size:15px;flex-shrink:0;margin-top:1px;}
+.vo-banner a{color:var(--green);text-decoration:underline;font-weight:700;}
+
+/* ── NAV ── */
+.nav{position:fixed;bottom:0;left:0;right:0;z-index:500;background:linear-gradient(0deg,#09090f,rgba(9,9,15,.98));border-top:1px solid var(--border);display:flex;padding:5px 0 env(safe-area-inset-bottom,6px);backdrop-filter:blur(16px);}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;cursor:pointer;}
+.nav-btn i{font-size:17px;color:var(--txt2);transition:.15s;}
+.nav-btn span{font-size:9px;color:var(--txt2);transition:.15s;}
+.nav-btn.on i{color:var(--green);filter:drop-shadow(0 0 8px var(--green));}
+.nav-btn.on span{color:var(--green);}
+
+/* ── APP ── */
+.app{padding:88px 0 72px;min-height:100vh;}
+.scr{display:none;padding:0 16px 20px;}
+.scr.on{display:block;animation:fadeUp .2s ease;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ── TABS & PILLS ── */
+.tabs{display:flex;gap:6px;padding:6px 0 10px;overflow-x:auto;}
+.tab{flex-shrink:0;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--txt2);transition:.15s;}
+.tab.on{background:linear-gradient(135deg,rgba(0,255,106,.12),rgba(0,255,106,.04));border-color:rgba(0,255,106,.3);color:var(--green);box-shadow:0 0 12px rgba(0,255,106,.08);}
+.tab .ld{display:inline-block;width:6px;height:6px;background:var(--red);border-radius:50%;margin-right:4px;animation:pulse 1.4s infinite;}
+.pills{display:flex;gap:6px;padding-bottom:10px;overflow-x:auto;}
+.pill{flex-shrink:0;padding:6px 14px;border-radius:14px;font-size:12px;font-weight:600;cursor:pointer;background:var(--bg2);color:var(--txt2);border:1px solid transparent;transition:.15s;}
+.pill.on{background:rgba(0,212,255,.08);border-color:rgba(0,212,255,.3);color:var(--blue);}
+
+/* ── MATCH CARD ── */
+.mlist{display:flex;flex-direction:column;gap:10px;}
+.mcard{background:var(--card);border-radius:14px;border:1px solid var(--border);overflow:hidden;transition:.15s;}
+.mcard:active{transform:scale(.985);}
+.mc-top{display:flex;justify-content:space-between;align-items:center;padding:12px 14px 4px;}
+.mc-name{font-size:14px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-right:8px;}
+.mc-tags{display:flex;gap:4px;flex-shrink:0;}
+.tag{padding:3px 7px;border-radius:6px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+.tag-solo{background:rgba(0,255,106,.12);color:var(--green);}
+.tag-duo{background:rgba(255,215,0,.12);color:var(--yellow);}
+.tag-squad{background:rgba(255,46,46,.12);color:var(--red);}
+.tag-coin{background:rgba(255,215,0,.15);color:var(--yellow);}
+.tag-live{background:rgba(255,46,46,.15);color:var(--red);animation:pulse 1.4s infinite;}
+.mc-sub{display:flex;gap:10px;padding:2px 14px 8px;font-size:11px;color:var(--txt2);flex-wrap:wrap;}
+.mc-sub span{display:flex;align-items:center;gap:3px;}
+.mc-sub i{font-size:10px;}
+.mc-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:rgba(255,255,255,.025);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.mc-cell{padding:10px 6px;text-align:center;background:var(--card);}
+.mc-cell label{display:block;font-size:9px;color:var(--txt2);text-transform:uppercase;margin-bottom:3px;letter-spacing:.4px;}
+.mc-cell .v{font-size:14px;font-weight:700;}
+.v-prize{color:var(--green);}
+.v-fee{color:var(--yellow);}
+.v-time{color:var(--blue);font-size:11px!important;}
+.mc-bot{display:flex;align-items:center;padding:10px 14px;gap:8px;}
+.mc-slots{flex:1;}
+.mc-slots-t{font-size:10px;color:var(--txt2);margin-bottom:3px;}
+.mc-bar{height:4px;background:rgba(255,255,255,.06);border-radius:4px;overflow:hidden;}
+.mc-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--blue));border-radius:4px;transition:.3s;}
+.mc-info{width:34px;height:34px;border-radius:10px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.15);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--blue);font-size:13px;flex-shrink:0;}
+.mc-join{padding:8px 18px;border-radius:10px;font-size:12px;font-weight:700;border:none;cursor:pointer;min-height:34px;transition:.15s;flex-shrink:0;}
+.j-go{background:linear-gradient(135deg,var(--green),#00cc55);color:#000;box-shadow:0 0 12px rgba(0,255,106,.15);}
+.j-go:active{transform:scale(.94);}
+.j-in{background:transparent;border:1.5px solid var(--green);color:var(--green);cursor:default;}
+.j-full{background:rgba(255,46,46,.1);color:var(--red);cursor:default;}
+.j-off{background:rgba(255,255,255,.04);color:var(--txt2);cursor:default;}
+.j-vo{background:rgba(255,215,0,.08);color:var(--yellow);cursor:not-allowed;border:1px solid rgba(255,215,0,.15);}
+.mc-live-bar{display:flex;align-items:center;gap:5px;padding:4px 14px 6px;font-size:11px;font-weight:700;color:var(--red);}
+.mc-live-dot{width:7px;height:7px;background:var(--red);border-radius:50%;animation:pulse 1.4s infinite;box-shadow:0 0 6px var(--red);}
+
+/* ── MODAL ── */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:700;align-items:flex-end;justify-content:center;}
+.ov.open{display:flex;animation:oFade .15s;}
+@keyframes oFade{from{opacity:0}to{opacity:1}}
+.modal{background:var(--bg2);border-radius:20px 20px 0 0;width:100%;max-width:460px;max-height:85vh;overflow-y:auto;animation:mUp .25s ease;padding-bottom:env(safe-area-inset-bottom,16px);}
+.ov.center{align-items:center;}
+.ov.center .modal{border-radius:16px;margin:0 16px;max-height:80vh;}
+@keyframes mUp{from{transform:translateY(100%)}to{transform:none}}
+.m-bar{width:36px;height:4px;background:rgba(255,255,255,.12);border-radius:4px;margin:12px auto 6px;}
+.m-title{font-size:17px;font-weight:800;padding:6px 20px 14px;text-align:center;}
+.m-body{padding:0 20px 20px;}
+
+/* ── FORM ── */
+.fg{margin-bottom:14px;}
+.fg label{display:block;font-size:12px;color:var(--txt2);margin-bottom:5px;font-weight:600;}
+.fi{width:100%;padding:11px 13px;background:var(--card);border:1px solid var(--border);border-radius:11px;color:var(--txt);font-size:14px;outline:none;transition:.15s;}
+.fi:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(0,255,106,.08);}
+.fi::placeholder{color:var(--txt2);}
+select.fi{appearance:none;cursor:pointer;}
+textarea.fi{resize:none;min-height:76px;}
+.fi.bad{border-color:var(--red);box-shadow:0 0 0 3px rgba(255,46,46,.08);}
+.ferr{font-size:11px;color:var(--red);margin-top:4px;display:none;align-items:center;gap:4px;}
+.ferr.on{display:flex;}
+.ferr i{font-size:10px;}
+.fhint{font-size:11px;color:var(--txt2);margin-top:4px;display:flex;align-items:center;gap:4px;}
+.fhint i{font-size:10px;color:var(--blue);}
+
+/* ── BUTTONS ── */
+.btn{width:100%;padding:13px;border-radius:12px;font-size:14px;font-weight:700;border:none;cursor:pointer;min-height:46px;transition:.15s;}
+.btn:active{transform:scale(.97);}
+.btn:disabled{opacity:.45;cursor:default;transform:none!important;}
+.btn-g{background:linear-gradient(135deg,var(--green),#00cc55);color:#000;box-shadow:0 3px 16px rgba(0,255,106,.2);}
+.btn-s{background:var(--card);color:var(--txt);border:1px solid var(--border);}
+.btn-r{background:linear-gradient(135deg,var(--red),#cc0000);color:#fff;box-shadow:0 3px 16px rgba(255,46,46,.15);}
+.btn-o{background:linear-gradient(135deg,var(--orange),#e67300);color:#fff;box-shadow:0 3px 16px rgba(255,140,0,.15);}
+
+/* ── WARN BOX ── */
+.wbox{padding:11px 13px;border-radius:11px;font-size:12px;line-height:1.6;display:flex;align-items:flex-start;gap:9px;margin-bottom:14px;}
+.wbox i{font-size:15px;flex-shrink:0;margin-top:2px;}
+.wbox.wy{background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.15);color:var(--yellow);}
+.wbox.wr{background:rgba(255,46,46,.06);border:1px solid rgba(255,46,46,.15);color:var(--red);}
+.wbox.wb{background:rgba(0,212,255,.06);border:1px solid rgba(0,212,255,.15);color:var(--blue);}
+.wbox.wg{background:rgba(0,255,106,.06);border:1px solid rgba(0,255,106,.15);color:var(--green);}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:48px 20px;color:var(--txt2);}
+.empty i{font-size:44px;margin-bottom:14px;opacity:.25;}
+.empty p{font-size:14px;}
+
+/* ── WALLET ── */
+.wcard{background:var(--card);border-radius:14px;padding:18px;margin-bottom:12px;border:1px solid var(--border);}
+.wcard.wm{border-color:rgba(0,255,106,.12);background:linear-gradient(135deg,rgba(0,255,106,.02),var(--card));}
+.wcard.wc{border-color:rgba(255,215,0,.12);background:linear-gradient(135deg,rgba(255,215,0,.02),var(--card));}
+.wlabel{font-size:11px;color:var(--txt2);text-transform:uppercase;letter-spacing:.8px;}
+.wamt{font-size:30px;font-weight:900;margin:5px 0 10px;}
+.wbreak{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.wbreak div{font-size:11px;color:var(--txt2);}
+.wbreak span{color:var(--txt);font-weight:600;}
+.wbtns{display:flex;gap:8px;}
+.wbtns button{flex:1;padding:11px;border-radius:11px;font-size:13px;font-weight:700;border:none;cursor:pointer;min-height:42px;}
+.wb-add{background:linear-gradient(135deg,var(--green),#00cc55);color:#000;}
+.wb-out{background:var(--bg2);color:var(--txt);border:1px solid var(--border);}
+
+/* ── RANK ── */
+.r-top3{display:flex;justify-content:center;align-items:flex-end;gap:10px;padding:16px 0 20px;}
+.r-card{text-align:center;width:100px;position:relative;}
+.r-card.r1{margin-bottom:10px;}
+.r-medal{font-size:26px;margin-bottom:5px;filter:drop-shadow(0 2px 6px rgba(255,215,0,.35));}
+.r-av{width:58px;height:58px;border-radius:50%;margin:0 auto 6px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;overflow:hidden;position:relative;}
+.r-av img{width:100%;height:100%;object-fit:cover;}
+.r-card.r1 .r-av{width:70px;height:70px;border:3px solid var(--yellow);box-shadow:0 0 18px rgba(255,215,0,.25);font-size:24px;}
+.r-card.r2 .r-av{border:3px solid #c0c0c0;box-shadow:0 0 12px rgba(192,192,192,.15);}
+.r-card.r3 .r-av{border:3px solid #cd7f32;box-shadow:0 0 12px rgba(205,127,50,.15);}
+.r-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;}
+.r-stat{font-size:10px;color:var(--txt2);}
+.r-earn{font-size:14px;font-weight:800;color:var(--green);margin:2px 0 4px;}
+.r-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card);border-radius:11px;margin-bottom:5px;border:1px solid rgba(255,255,255,.02);}
+.r-num{width:26px;font-size:14px;font-weight:700;color:var(--txt2);text-align:center;}
+.r-rav{width:34px;height:34px;border-radius:50%;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;overflow:hidden;}
+.r-rav img{width:100%;height:100%;object-fit:cover;}
+.r-info{flex:1;min-width:0;}
+.r-rname{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.r-rstats{font-size:10px;color:var(--txt2);}
+.r-rearn{font-size:14px;font-weight:700;color:var(--green);text-align:right;}
+.rbadge{font-size:9px;padding:2px 7px;border-radius:7px;font-weight:700;}
+.rb-bronze{background:rgba(205,127,50,.12);color:#cd7f32;}
+.rb-silver{background:rgba(192,192,192,.12);color:#c0c0c0;}
+.rb-gold{background:rgba(255,215,0,.12);color:#ffd700;}
+.rb-plat{background:rgba(0,212,255,.12);color:#00d4ff;}
+.rb-dia{background:rgba(185,100,255,.12);color:#b964ff;}
+
+/* ── NOTIFICATIONS ── */
+.nitem{background:var(--card);border-radius:13px;padding:13px 15px;margin-bottom:7px;border:1px solid var(--border);cursor:pointer;transition:.15s;display:flex;align-items:flex-start;gap:11px;position:relative;}
+.nitem:active{transform:scale(.985);}
+.nitem.unread{border-color:rgba(0,255,106,.12);background:linear-gradient(135deg,rgba(0,255,106,.02),var(--card));}
+.nitem.unread::before{content:'';position:absolute;left:0;top:11px;bottom:11px;width:3px;border-radius:0 3px 3px 0;background:var(--green);}
+.n-icon{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.n-icon.ng{background:rgba(0,255,106,.08);color:var(--green);}
+.n-icon.nr{background:rgba(255,46,46,.08);color:var(--red);}
+.n-icon.nb{background:rgba(0,212,255,.08);color:var(--blue);}
+.n-icon.ny{background:rgba(255,215,0,.08);color:var(--yellow);}
+.n-icon.np{background:rgba(185,100,255,.08);color:var(--purple);}
+.n-body{flex:1;min-width:0;}
+.n-title{font-size:13px;font-weight:700;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.n-msg{font-size:12px;color:var(--txt2);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.n-meta{display:flex;align-items:center;gap:6px;margin-top:4px;}
+.n-time{font-size:10px;color:var(--txt2);}
+.n-tag{font-size:9px;padding:2px 7px;border-radius:6px;background:rgba(0,212,255,.08);color:var(--blue);font-weight:600;}
+
+/* ── PROFILE ── */
+.p-head{text-align:center;padding:18px 0;}
+.p-av-wrap{position:relative;width:78px;height:78px;margin:0 auto 10px;}
+.p-av{width:78px;height:78px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--blue));display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;overflow:hidden;border:3px solid rgba(0,255,106,.25);}
+.p-av img{width:100%;height:100%;object-fit:cover;}
+.p-av-edit{position:absolute;bottom:0;right:0;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--green),#00cc55);display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid var(--bg);}
+.p-av-edit i{font-size:10px;color:#000;}
+.p-av-edit input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.p-name{font-size:19px;font-weight:800;}
+.p-email{font-size:11px;color:var(--txt2);margin-top:3px;}
+.p-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin:14px 0;}
+.p-st{background:var(--card);border-radius:11px;padding:13px 6px;text-align:center;border:1px solid var(--border);}
+.p-st .v{font-size:19px;font-weight:800;margin-bottom:2px;}
+.p-st .l{font-size:10px;color:var(--txt2);text-transform:uppercase;letter-spacing:.4px;}
+.p-sec{background:var(--card);border-radius:13px;padding:15px;margin-bottom:10px;border:1px solid var(--border);}
+.p-sec-t{font-size:12px;font-weight:700;color:var(--txt2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;}
+.p-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.03);}
+.p-row:last-child{border:none;}
+.p-row-l{font-size:13px;color:var(--txt2);}
+.p-row-v{font-size:13px;font-weight:600;}
+.p-link{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.03);cursor:pointer;}
+.p-link:last-child{border:none;}
+.p-link span{font-size:14px;}
+.p-link i.fa-chevron-right{color:var(--txt2);font-size:12px;}
+.p-pending{padding:9px 13px;border-radius:9px;background:rgba(255,215,0,.06);border:1px solid rgba(255,215,0,.15);font-size:12px;color:var(--yellow);display:flex;align-items:center;gap:7px;margin-bottom:10px;}
+
+/* ── TEAM ── */
+.tm-card{background:var(--bg2);border-radius:11px;padding:13px;margin-bottom:8px;}
+.tm-title{font-size:13px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:5px;}
+.tm-mem{display:flex;align-items:center;gap:9px;padding:5px 0;font-size:13px;}
+.tm-av{width:28px;height:28px;border-radius:50%;background:rgba(0,255,106,.08);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--green);}
+.btn-tm{width:100%;padding:9px;border-radius:9px;font-size:12px;font-weight:600;border:1px dashed rgba(255,255,255,.12);background:transparent;color:var(--txt2);cursor:pointer;margin-top:6px;min-height:40px;}
+
+/* ── MY MATCHES ── */
+.mm-card{background:var(--card);border-radius:13px;padding:13px;margin-bottom:8px;border:1px solid var(--border);}
+.mm-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;}
+.mm-name{font-size:14px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-right:8px;}
+.mm-st{padding:3px 9px;border-radius:7px;font-size:10px;font-weight:700;text-transform:uppercase;flex-shrink:0;}
+.st-pend{background:rgba(255,215,0,.12);color:var(--yellow);}
+.st-ok{background:rgba(0,255,106,.12);color:var(--green);}
+.st-rej{background:rgba(255,46,46,.12);color:var(--red);}
+.mm-info{display:flex;gap:14px;font-size:12px;color:var(--txt2);flex-wrap:wrap;}
+.mm-room{margin-top:9px;padding:9px;background:rgba(0,255,106,.03);border-radius:9px;border:1px solid rgba(0,255,106,.08);}
+.mm-room p{font-size:12px;margin-bottom:3px;}
+.mm-room .rv{font-weight:700;color:var(--green);font-size:14px;}
+.mm-lock{margin-top:7px;padding:7px 11px;background:rgba(0,212,255,.04);border-radius:7px;border:1px solid rgba(0,212,255,.08);font-size:11px;color:var(--blue);display:flex;align-items:center;gap:5px;}
+
+/* ── SPECIAL ── */
+.sp-tog{display:flex;background:var(--card);border-radius:11px;padding:3px;margin-bottom:14px;border:1px solid var(--border);}
+.sp-btn{flex:1;padding:9px;border-radius:9px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;color:var(--txt2);transition:.15s;}
+.sp-btn.on{background:linear-gradient(135deg,rgba(255,215,0,.12),rgba(255,215,0,.04));color:var(--yellow);box-shadow:0 0 8px rgba(255,215,0,.08);}
+.cd{display:flex;justify-content:center;gap:8px;margin-bottom:18px;}
+.cd-item{text-align:center;background:var(--card);border-radius:11px;padding:11px 14px;border:1px solid rgba(255,215,0,.08);min-width:56px;}
+.cd-item .n{font-size:22px;font-weight:900;color:var(--yellow);}
+.cd-item .l{font-size:9px;color:var(--txt2);text-transform:uppercase;letter-spacing:.8px;margin-top:2px;}
+
+/* ── DETAIL ROWS ── */
+.drow{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:13px;}
+.drow:last-child{border:none;}
+.drow-l{color:var(--txt2);}
+.drow-v{font-weight:600;text-align:right;max-width:60%;word-break:break-all;}
+.sec-t{font-size:15px;font-weight:800;margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+
+/* ── STEPS ── */
+.steps{display:flex;gap:6px;margin-bottom:18px;}
+.step{flex:1;height:3px;border-radius:3px;background:rgba(255,255,255,.06);}
+.step.on{background:var(--green);}
+
+@media(min-width:480px){
+.app,.nav,.hdr{max-width:480px;margin-left:auto;margin-right:auto;}
+.modal{max-width:480px;}
+}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div class="splash" id="splash"><div class="splash-logo">Mini eSports</div><div class="splash-spin"></div></div>
+
+<!-- LOGIN SCREEN -->
+<div class="login-screen hide" id="loginScreen">
+<div class="login-logo">🎮</div>
+<div class="login-title">Mini eSports</div>
+<div class="login-sub">Join Free Fire tournaments, compete with players, and win real cash prizes!</div>
+<button class="login-btn" id="googleLoginBtn"><i class="fab fa-google"></i> Continue with Google</button>
+</div>
+
+<!-- TOAST -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- HEADER -->
+<div class="hdr" id="hdr">
+<div class="hdr-row">
+  <div class="hdr-logo"><i class="fas fa-fire"></i><span>Mini eSports</span></div>
+  <div class="hdr-right">
+    <div class="hdr-bell" onclick="go('notif')"><i class="fas fa-bell"></i><div class="bell-dot" id="bellDot"></div></div>
+    <div class="hdr-chip chip-coin"><i class="fas fa-coins"></i> <span id="hCoins">0</span></div>
+    <div class="hdr-chip chip-money">₹<span id="hMoney">0</span></div>
+  </div>
+</div>
+<div class="ticker"><span id="tickerTxt">🔥 Welcome to Mini eSports! Join tournaments and win real cash prizes! 🏆</span></div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+
+<!-- VIEW-ONLY BANNER -->
+<div class="vo-banner" id="voBanner"><i class="fas fa-lock"></i><div id="voBannerText">Complete your profile to participate in tournaments. <a href="#" onclick="go('profile');return false;">Go to Profile →</a></div></div>
+
+<!-- HOME -->
+<div class="scr on" id="s-home">
+<div class="tabs" id="homeTabs">
+  <div class="tab on" data-v="upcoming">Upcoming</div>
+  <div class="tab" data-v="live"><span class="ld"></span>Live</div>
+  <div class="tab" data-v="completed">Completed</div>
+</div>
+<div class="pills" id="homePills">
+  <div class="pill on" data-v="solo">Solo</div>
+  <div class="pill" data-v="duo">Duo</div>
+  <div class="pill" data-v="squad">Squad</div>
+  <div class="pill" data-v="coin">🪙 Coin</div>
+</div>
+<div class="mlist" id="homeList"></div>
+</div>
+
+<!-- NOTIFICATIONS -->
+<div class="scr" id="s-notif">
+<div class="sec-t"><i class="fas fa-bell" style="color:var(--blue)"></i> Notifications</div>
+<div id="notifList"></div>
+</div>
+
+<!-- SPECIAL -->
+<div class="scr" id="s-special">
+<div class="sec-t"><i class="fas fa-crown" style="color:var(--yellow)"></i> Special Tournaments</div>
+<div class="sp-tog" id="spTog">
+  <div class="sp-btn on" data-v="weekly">Weekly</div>
+  <div class="sp-btn" data-v="monthly">Monthly</div>
+</div>
+<div class="cd" id="spCD"></div>
+<div class="mlist" id="spList"></div>
+</div>
+
+<!-- MY MATCHES -->
+<div class="scr" id="s-mymatches">
+<div class="sec-t"><i class="fas fa-gamepad" style="color:var(--blue)"></i> My Matches</div>
+<div class="tabs" id="mmTabs">
+  <div class="tab on" data-v="upcoming">Upcoming</div>
+  <div class="tab" data-v="live"><span class="ld"></span>Live</div>
+  <div class="tab" data-v="completed">Completed</div>
+</div>
+<div id="mmList"></div>
+</div>
+
+<!-- WALLET -->
+<div class="scr" id="s-wallet">
+<div class="sec-t"><i class="fas fa-wallet" style="color:var(--green)"></i> Wallet</div>
+<div class="wcard wm">
+  <div class="wlabel">Real Money Balance</div>
+  <div class="wamt" style="color:var(--green)">₹<span id="wTotal">0</span></div>
+  <div class="wbreak"><div>Deposited: <span id="wDep">₹0</span></div><div>Winnings: <span id="wWin">₹0</span></div><div>Bonus: <span id="wBon">₹0</span></div></div>
+  <div class="wbtns"><button class="wb-add" id="btnAddMoney" onclick="openAddMoney()">+ Add Money</button><button class="wb-out" id="btnWithdraw" onclick="openWithdraw()">Withdraw</button></div>
+</div>
+<div class="wcard wc">
+  <div class="wlabel">Coins</div>
+  <div class="wamt" style="color:var(--yellow)">🪙 <span id="wCoins">0</span></div>
+  <button class="btn btn-s" onclick="watchAd()" style="margin-top:6px"><i class="fas fa-play-circle"></i> Watch Ad (+5 Coins)</button>
+</div>
+</div>
+
+<!-- RANK -->
+<div class="scr" id="s-rank">
+<div class="sec-t"><i class="fas fa-trophy" style="color:var(--yellow)"></i> Global Leaderboard</div>
+<div id="rankTop"></div>
+<div id="rankRest"></div>
+</div>
+
+<!-- PROFILE -->
+<div class="scr" id="s-profile">
+<div class="p-head">
+  <div class="p-av-wrap">
+    <div class="p-av" id="pAvatar">?</div>
+    <label class="p-av-edit"><i class="fas fa-pencil-alt"></i><input type="file" accept="image/*" onchange="uploadAvatar(this)"></label>
+  </div>
+  <div class="p-name" id="pName">-</div>
+  <div class="p-email" id="pEmail">-</div>
+</div>
+<div id="pPendingBanner"></div>
+<div class="p-stats">
+  <div class="p-st"><div class="v" style="color:var(--blue)" id="psMatches">0</div><div class="l">Matches</div></div>
+  <div class="p-st"><div class="v" style="color:var(--yellow)" id="psEarned">₹0</div><div class="l">Earned</div></div>
+  <div class="p-st"><div class="v" id="psRank">-</div><div class="l">Rank</div></div>
+</div>
+<div class="p-sec">
+  <div class="p-sec-t">Game Info</div>
+  <div class="p-row"><span class="p-row-l">IGN</span><span class="p-row-v" id="piIGN">-</span></div>
+  <div class="p-row"><span class="p-row-l">FF UID</span><span class="p-row-v" id="piFFUID">-</span></div>
+</div>
+<div id="pUpdateWrap"><button class="btn btn-o" onclick="openProfileUpdate()" id="pUpdateBtn"><i class="fas fa-paper-plane"></i> Request Profile Update</button></div>
+<div class="p-sec" style="margin-top:10px">
+  <div class="p-sec-t">My Teams</div>
+  <div class="tm-card"><div class="tm-title"><i class="fas fa-user-friends" style="color:var(--yellow)"></i> Duo Team</div><div id="duoList"></div><button class="btn-tm" id="btnDuo" onclick="openTeam('duo')"><i class="fas fa-plus"></i> Add Teammate</button></div>
+  <div class="tm-card"><div class="tm-title"><i class="fas fa-users" style="color:var(--red)"></i> Squad Team</div><div id="squadList"></div><button class="btn-tm" id="btnSquad" onclick="openTeam('squad')"><i class="fas fa-plus"></i> Add Teammate</button></div>
+</div>
+<div class="p-sec">
+  <div class="p-sec-t">Support & Help</div>
+  <div class="p-link" onclick="openSupport()"><span><i class="fas fa-headset" style="margin-right:7px;color:var(--blue)"></i> Contact Support</span><i class="fas fa-chevron-right"></i></div>
+  <div class="p-link" onclick="openRules()"><span><i class="fas fa-book" style="margin-right:7px;color:var(--yellow)"></i> Rules & Fair Play</span><i class="fas fa-chevron-right"></i></div>
+  <div class="p-link" onclick="doLogout()"><span><i class="fas fa-sign-out-alt" style="margin-right:7px;color:var(--red)"></i> Logout</span><i class="fas fa-chevron-right"></i></div>
+</div>
+</div>
+
+</div><!-- /app -->
+
+<!-- NAV -->
+<div class="nav" id="nav">
+<div class="nav-btn on" data-s="home" onclick="go('home')"><i class="fas fa-home"></i><span>Home</span></div>
+<div class="nav-btn" data-s="special" onclick="go('special')"><i class="fas fa-crown"></i><span>Special</span></div>
+<div class="nav-btn" data-s="mymatches" onclick="go('mymatches')"><i class="fas fa-gamepad"></i><span>Matches</span></div>
+<div class="nav-btn" data-s="wallet" onclick="go('wallet')"><i class="fas fa-wallet"></i><span>Wallet</span></div>
+<div class="nav-btn" data-s="rank" onclick="go('rank')"><i class="fas fa-trophy"></i><span>Rank</span></div>
+<div class="nav-btn" data-s="profile" onclick="go('profile')"><i class="fas fa-user"></i><span>Profile</span></div>
+</div>
+
+<!-- ══════════ MODALS ══════════ -->
+
+<!-- PROFILE UPDATE -->
+<div class="ov" id="ovProfileUpdate">
+<div class="modal"><div class="m-bar"></div><div class="m-title">Request Profile Update</div>
+<div class="m-body">
+  <div class="wbox wy"><i class="fas fa-exclamation-triangle"></i><div><strong>Important:</strong> Only real Free Fire IGN and UID allowed. Fake details = disqualified from matches.</div></div>
+  <div class="fg"><label>IN-GAME NAME (IGN) *</label><input type="text" class="fi" id="puIGN" placeholder="Your exact Free Fire IGN" maxlength="30"><div class="ferr" id="puIGNE"><i class="fas fa-exclamation-circle"></i><span></span></div></div>
+  <div class="fg"><label>FREE FIRE UID *</label><input type="text" class="fi" id="puUID" placeholder="Your numeric Free Fire UID" maxlength="15" inputmode="numeric"><div class="ferr" id="puUIDE"><i class="fas fa-exclamation-circle"></i><span></span></div><div class="fhint"><i class="fas fa-info-circle"></i> Find UID in Free Fire profile screen</div></div>
+  <button class="btn btn-o" id="puBtn" onclick="doProfileUpdate()"><i class="fas fa-paper-plane"></i> Submit for Verification</button>
+</div>
+</div>
+</div>
+
+<!-- JOIN -->
+<div class="ov" id="ovJoin">
+<div class="modal"><div class="m-bar"></div><div class="m-title">Confirm Join</div>
+<div class="m-body">
+  <div id="joinBody"></div>
+  <div class="wbox wb" style="margin-top:10px"><i class="fas fa-shield-alt"></i><div>You must play using your registered IGN & UID only. Mismatch = disqualification.</div></div>
+  <button class="btn btn-g" id="joinBtn" onclick="doJoin()" style="margin-top:10px">Confirm & Join</button>
+</div>
+</div>
+</div>
+
+<!-- MATCH DETAILS -->
+<div class="ov" id="ovDetails">
+<div class="modal"><div class="m-bar"></div><div class="m-title">Match Details</div><div class="m-body" id="detBody"></div></div>
+</div>
+
+<!-- ADD MONEY -->
+<div class="ov" id="ovAddMoney">
+<div class="modal"><div class="m-bar"></div><div class="m-title">Add Money</div>
+<div class="m-body"><div class="steps" id="amSteps"><div class="step on"></div><div class="step"></div><div class="step"></div></div><div id="amBody"></div></div>
+</div>
+</div>
+
+<!-- WITHDRAW -->
+<div class="ov" id="ovWithdraw">
+<div class="modal"><div class="m-bar"></div><div class="m-title">Withdraw</div><div class="m-body" id="wdBody"></div></div>
+</div>
+
+<!-- TEAMMATE -->
+<div class="ov" id="ovTeam">
+<div class="modal"><div class="m-bar"></div><div class="m-title" id="tmTitle">Add Teammate</div>
+<div class="m-body">
+  <div class="fg"><label>TEAMMATE'S FF UID</label><input type="text" class="fi" id="tmUID" placeholder="Enter Free Fire UID" inputmode="numeric"></div>
+  <button class="btn btn-g" onclick="doTeam()">Send Request</button>
+</div>
+</div>
+</div>
+
+<!-- SUPPORT -->
+<div class="ov" id="ovSupport">
+<div class="modal"><div class="m-bar"></div><div class="m-title">Contact Support</div>
+<div class="m-body">
+  <div class="fg"><label>ISSUE TYPE</label><select class="fi" id="supType"><option value="Wallet">Wallet Issue</option><option value="Match">Match Issue</option><option value="Account">Account Issue</option><option value="Other">Other</option></select></div>
+  <div class="fg"><label>MESSAGE</label><textarea class="fi" id="supMsg" placeholder="Describe your issue..." rows="4"></textarea></div>
+  <button class="btn btn-g" onclick="doSupport()">Submit</button>
+</div>
+</div>
+</div>
+
+<!-- RULES -->
+<div class="ov" id="ovRules">
+<div class="modal"><div class="m-bar"></div><div class="m-title">Rules & Fair Play</div>
+<div class="m-body" style="font-size:13px;color:var(--txt2);line-height:1.8;">
+  <p><strong style="color:var(--txt)">1. Real Identity:</strong> Use your real Free Fire IGN and UID. Fake details = disqualification.</p>
+  <p><strong style="color:var(--txt)">2. Fair Play:</strong> No hacking or cheating. Violators permanently banned.</p>
+  <p><strong style="color:var(--txt)">3. Match Rules:</strong> Join room on time with your registered IGN/UID only.</p>
+  <p><strong style="color:var(--txt)">4. Teams:</strong> In duo/squad, play with registered teammates only.</p>
+  <p><strong style="color:var(--txt)">5. Wallet:</strong> Min deposit ₹10, min withdrawal ₹100 (winnings only).</p>
+  <p><strong style="color:var(--txt)">6. Results:</strong> Based on screenshots & game data. Admin's decision is final.</p>
+  <p><strong style="color:var(--txt)">7. Refunds:</strong> Cancelled matches get full refund.</p>
+  <button class="btn btn-s" onclick="closeOv('ovRules')" style="margin-top:14px">Got it!</button>
+</div>
+</div>
+</div>
+
+<!-- NOTIF DETAIL -->
+<div class="ov" id="ovNotifDet">
+<div class="modal"><div class="m-bar"></div><div class="m-title">Notification</div><div class="m-body" id="ndBody"></div></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// FIREBASE CONFIG
+// ═══════════════════════════════════════════════════════
+firebase.initializeApp({
+  apiKey:"AIzaSyCc0VeTIfwYqOTfKEt3IfiKHvxNkgZnkPQ",
+  authDomain:"ff-tournament-app-93105.firebaseapp.com",
+  databaseURL:"https://ff-tournament-app-93105-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"ff-tournament-app-93105",
+  storageBucket:"ff-tournament-app-93105.firebasestorage.app",
+  messagingSenderId:"486362918198",
+  appId:"1:486362918198:web:ce5bd047fb584636bd5797",
+  measurementId:"G-5TNKW1TVB1"
+});
+var auth=firebase.auth(),db=firebase.database();
+var googleProvider=new firebase.auth.GoogleAuthProvider();
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+var U=null,UD=null,TOURS={},JREQS={},NOTIFS={},PAY={upiId:'example@upi',payeeName:'Mini Esport'};
+var hStat='upcoming',hCat='solo',spType='weekly',mmStat='upcoming';
+var amStep=1,amAmt=0,joinMatch=null,teamMode='duo',ssB64='',cdInt=null;
+var LIVE_MS=20*60*1000,prevTours={};
+
+// ═══════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════
+function toast(msg,type){var w=document.getElementById('toastWrap');var d=document.createElement('div');d.className='toast '+(type||'inf');d.textContent=msg;w.appendChild(d);requestAnimationFrame(function(){d.classList.add('show');});setTimeout(function(){d.classList.remove('show');setTimeout(function(){d.remove();},300);},3000);}
+function openOv(id){document.getElementById(id).classList.add('open');}
+function closeOv(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.ov').forEach(function(o){o.addEventListener('click',function(e){if(e.target===o)o.classList.remove('open');});});
+function gid(){return db.ref().push().key;}
+function tc(s){if(!s)return'';return s.replace(/\w\S*/g,function(t){return t.charAt(0).toUpperCase()+t.substr(1).toLowerCase();});}
+function showErr(id,msg){var el=document.getElementById(id);el.querySelector('span').textContent=msg;el.classList.add('on');var inp=el.previousElementSibling;if(inp&&inp.tagName!=='DIV')inp.classList.add('bad');}
+function clearErr(id){var el=document.getElementById(id);if(!el)return;el.classList.remove('on');el.querySelector('span').textContent='';var inp=el.previousElementSibling;if(inp&&inp.tagName!=='DIV')inp.classList.remove('bad');}
+function ago(ts){if(!ts)return'';var d=Date.now()-ts;if(d<60000)return'Just now';if(d<3600000)return Math.floor(d/60000)+'m ago';if(d<86400000)return Math.floor(d/3600000)+'h ago';if(d<604800000)return Math.floor(d/86400000)+'d ago';var x=new Date(ts);return x.getDate()+'/'+(x.getMonth()+1)+'/'+x.getFullYear();}
+
+// ═══════════════════════════════════════════════════════
+// STATUS FROM matchTime
+// ═══════════════════════════════════════════════════════
+function effStatus(t){
+  if(!t)return'upcoming';
+  var mt=t.matchTime?Number(t.matchTime):0;
+  if(!mt||mt<=0)return'upcoming';
+  var now=Date.now();
+  if(now<mt)return'upcoming';
+  if(now<mt+LIVE_MS)return'live';
+  return'completed';
+}
+
+function fmtTime(mt){
+  if(!mt)return'';
+  var ts=Number(mt);if(isNaN(ts))return'';
+  var now=Date.now(),diff=ts-now;
+  if(diff<=0)return'Live Now';
+  if(diff<86400000){var h=Math.floor(diff/3600000),m=Math.floor((diff%3600000)/60000);return'Starts in: '+h+'h '+m+'m';}
+  var d=new Date(ts),mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var hr=d.getHours(),ap=hr>=12?'PM':'AM';hr=hr%12||12;
+  return String(d.getDate()).padStart(2,'0')+' '+mo[d.getMonth()]+' '+d.getFullYear()+', '+String(hr).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+' '+ap;
+}
+
+function rankInfo(u){
+  var s=u.stats||{},sc=((s.wins||0)*100)+((s.kills||0)*10)+((s.earnings||0));
+  if(sc>=10000)return{n:'Diamond',c:'rb-dia',i:'💎',sc:sc};
+  if(sc>=5000)return{n:'Platinum',c:'rb-plat',i:'🔷',sc:sc};
+  if(sc>=2000)return{n:'Gold',c:'rb-gold',i:'🥇',sc:sc};
+  if(sc>=500)return{n:'Silver',c:'rb-silver',i:'🥈',sc:sc};
+  return{n:'Bronze',c:'rb-bronze',i:'🥉',sc:sc};
+}
+
+// ═══════════════════════════════════════════════════════
+// ACCESS CONTROL — SINGLE SOURCE: users/{uid}
+// ═══════════════════════════════════════════════════════
+function isApproved(){return UD&&UD.approved===true;}
+function isViewOnly(){
+  // VIEW ONLY if: not approved OR has pending profile update
+  if(!UD)return true;
+  if(UD.approved!==true)return true;
+  if(UD.profileUpdatePending===true)return true;
+  return false;
+}
+function hasPendingRequest(){
+  return UD&&(UD.profileUpdatePending===true||(UD.pendingRequest&&UD.pendingRequest.status==='pending'));
+}
+function canAct(){return isApproved()&&!hasPendingRequest();}
+
+// ═══════════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════════
+auth.onAuthStateChanged(function(u){
+  document.getElementById('splash').classList.add('hide');
+  if(u){
+    U=u;
+    document.getElementById('loginScreen').classList.add('hide');
+    boot();
+  }else{
+    U=null;UD=null;
+    document.getElementById('loginScreen').classList.remove('hide');
+  }
+});
+
+document.getElementById('googleLoginBtn').addEventListener('click',function(){
+  auth.signInWithPopup(googleProvider).catch(function(e){
+    console.error('Login error:',e);
+    toast('Login failed: '+e.message,'err');
+  });
+});
+
+function doLogout(){
+  auth.signOut().then(function(){
+    toast('Logged out','ok');
+  }).catch(function(e){
+    toast(e.message,'err');
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// BOOT — Auto-create user if not exists
+// ═══════════════════════════════════════════════════════
+function boot(){
+  // Real-time listener on users/{uid} — SINGLE SOURCE OF TRUTH
+  db.ref('users/'+U.uid).on('value',function(s){
+    if(!s.exists()){
+      // Auto-create user with approved=false, accessMode=VIEW_ONLY
+      console.log('[boot] User does not exist, creating...');
+      db.ref('users/'+U.uid).set({
+        uid:U.uid,
+        email:U.email||'',
+        displayName:U.displayName||'',
+        photoURL:U.photoURL||'',
+        approved:false,
+        accessMode:'VIEW_ONLY',
+        coins:0,
+        realMoney:{deposited:0,winnings:0,bonus:0},
+        stats:{matches:0,wins:0,kills:0,earnings:0},
+        createdAt:firebase.database.ServerValue.TIMESTAMP
+      }).then(function(){
+        console.log('[boot] User created');
+      }).catch(function(e){
+        console.error('[boot] Failed to create user:',e);
+        toast('Error creating account','err');
+      });
+      return;
+    }
+    
+    UD=s.val();
+    console.log('[boot] User data loaded:',{approved:UD.approved,ign:UD.ign,ffUid:UD.ffUid});
+    applyState();
+    updateHdr();
+    renderHome();
+    renderProfile();
+    renderWallet();
+  });
+
+  // Tournaments
+  db.ref('tournaments').on('value',function(s){
+    var n=s.val()||{};
+    detectChanges(prevTours,n);
+    prevTours=JSON.parse(JSON.stringify(n));
+    TOURS=n;
+    renderHome();renderSpecial();renderMM();
+  });
+
+  // Join requests
+  db.ref('joinRequests').orderByChild('userId').equalTo(U.uid).on('value',function(s){
+    JREQS=s.val()||{};
+    renderHome();renderMM();
+  });
+
+  // Notifications
+  db.ref('notifications').orderByChild('createdAt').limitToLast(50).on('value',function(s){
+    NOTIFS=s.val()||{};
+    renderNotifs();updateBell();
+  });
+
+  // Payment settings
+  db.ref('appSettings/payment').on('value',function(s){if(s.exists())PAY=s.val();});
+  
+  // Ticker
+  db.ref('appSettings/ticker').on('value',function(s){if(s.exists())document.getElementById('tickerTxt').textContent=s.val();});
+
+  // Profile request approval listener — reads from profileRequests, syncs to users/{uid}
+  db.ref('profileRequests').orderByChild('uid').equalTo(U.uid).on('value',function(s){
+    if(!s.exists())return;
+    if(!UD)return;
+    if(!UD.pendingRequest&&!UD.profileUpdatePending)return;
+    
+    s.forEach(function(child){
+      var req=child.val();
+      var reqId=child.key;
+      
+      // Check if this is the pending request we're waiting for
+      var isPending=UD.pendingRequest&&UD.pendingRequest.requestId===reqId;
+      if(!isPending&&UD.profileUpdatePending){
+        // Also match by status if requestId doesn't match
+        isPending=req.status==='pending'||req.status==='approved'||req.status==='rejected';
+      }
+      
+      if(req.status==='approved'&&(isPending||UD.profileUpdatePending)){
+        // Admin approved — sync IGN + ffUid to users/{uid}, clear pending flags
+        console.log('[ProfileReq] Approved! Syncing to users/'+U.uid);
+        db.ref('users/'+U.uid).update({
+          ign:req.ign,
+          ffUid:req.ffUid,
+          approved:true,
+          accessMode:'FULL',
+          profileUpdatePending:null,
+          pendingRequest:null
+        }).then(function(){
+          console.log('[ProfileReq] User data synced successfully');
+          toast('🎉 Profile approved! Full access unlocked!','ok');
+        }).catch(function(e){
+          console.error('[ProfileReq] Sync error:',e);
+        });
+      }
+      
+      if(req.status==='rejected'&&(isPending||UD.profileUpdatePending)){
+        console.log('[ProfileReq] Rejected');
+        db.ref('users/'+U.uid).update({
+          profileUpdatePending:null,
+          pendingRequest:null
+        }).then(function(){
+          toast('Profile request rejected. Please try again.','err');
+        });
+      }
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// STATE MANAGEMENT
+// ═══════════════════════════════════════════════════════
+function applyState(){
+  var banner=document.getElementById('voBanner');
+  var bannerText=document.getElementById('voBannerText');
+  
+  if(!UD){
+    banner.classList.remove('on');
+    return;
+  }
+  
+  console.log('[applyState] approved='+UD.approved+', profileUpdatePending='+UD.profileUpdatePending);
+  
+  if(UD.approved===true){
+    if(UD.profileUpdatePending===true||hasPendingRequest()){
+      // Approved but has pending update request — show pending banner, VIEW ONLY
+      banner.classList.add('on');
+      bannerText.innerHTML='Profile verification pending. App is in view-only mode until admin approval.';
+    }else{
+      // Fully approved, no pending — full access, hide banner
+      banner.classList.remove('on');
+    }
+  }else{
+    // Not approved — VIEW ONLY mode
+    banner.classList.add('on');
+    bannerText.innerHTML='Complete your profile to participate in tournaments. <a href="#" onclick="go(\'profile\');return false;">Go to Profile →</a>';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// HEADER
+// ═══════════════════════════════════════════════════════
+function updateHdr(){
+  if(!UD)return;
+  document.getElementById('hCoins').textContent=UD.coins||0;
+  var rm=UD.realMoney||{};
+  document.getElementById('hMoney').textContent=(rm.deposited||0)+(rm.winnings||0)+(rm.bonus||0);
+}
+
+// ═══════════════════════════════════════════════════════
+// NOTIFICATIONS
+// ═══════════════════════════════════════════════════════
+function updateBell(){
+  var dot=document.getElementById('bellDot');
+  var rd=UD&&UD.readNotifications||{};
+  var has=false;
+  for(var k in NOTIFS){
+    var n=NOTIFS[k];
+    if(n.targetUserId&&n.targetUserId!=='all'&&n.targetUserId!==U.uid)continue;
+    if(!rd[k]){has=true;break;}
+  }
+  dot.classList.toggle('on',has);
+}
+
+function renderNotifs(){
+  var c=document.getElementById('notifList');
+  if(!U){c.innerHTML='';return;}
+  var rd=UD&&UD.readNotifications||{};
+  var arr=Object.entries(NOTIFS).map(function(e){return Object.assign({},e[1],{key:e[0]});})
+    .filter(function(n){return!n.targetUserId||n.targetUserId==='all'||n.targetUserId===U.uid;})
+    .sort(function(a,b){return(b.createdAt||0)-(a.createdAt||0);});
+  if(!arr.length){c.innerHTML='<div class="empty"><i class="fas fa-bell-slash"></i><p>No notifications yet</p></div>';return;}
+  c.innerHTML=arr.map(function(n){
+    var ur=!rd[n.key];
+    var mt=n.matchName?'<span class="n-tag">'+n.matchName+'</span>':'';
+    return'<div class="nitem'+(ur?' unread':'')+'" onclick="openND(\''+n.key+'\')"><div class="n-icon '+(n.icon||'nb')+'"><i class="fas '+(n.faIcon||'fa-bell')+'"></i></div><div class="n-body"><div class="n-title">'+n.title+'</div><div class="n-msg">'+n.message+'</div><div class="n-meta"><span class="n-time">'+ago(n.createdAt)+'</span>'+mt+'</div></div></div>';
+  }).join('');
+}
+
+function openND(key){
+  var n=NOTIFS[key];if(!n)return;
+  if(U&&UD)db.ref('users/'+U.uid+'/readNotifications/'+key).set(true);
+  var h='<div style="text-align:center;margin-bottom:14px"><div class="n-icon '+(n.icon||'nb')+'" style="width:52px;height:52px;border-radius:14px;margin:0 auto 10px;font-size:22px"><i class="fas '+(n.faIcon||'fa-bell')+'"></i></div></div>';
+  h+='<div style="font-size:15px;font-weight:700;text-align:center;margin-bottom:6px">'+n.title+'</div>';
+  h+='<div style="font-size:13px;color:var(--txt2);text-align:center;line-height:1.6;margin-bottom:14px">'+n.message+'</div>';
+  if(n.matchName)h+='<div class="drow"><span class="drow-l">Match</span><span class="drow-v">'+n.matchName+'</span></div>';
+  h+='<div class="drow"><span class="drow-l">Time</span><span class="drow-v">'+ago(n.createdAt)+'</span></div>';
+  if(n.type==='room_released'&&n.matchId){
+    var t=TOURS[n.matchId];
+    if(t&&t.roomStatus==='released'&&getJR(n.matchId)){
+      h+='<div style="margin-top:10px;padding:12px;background:rgba(0,255,106,.04);border-radius:10px;border:1px solid rgba(0,255,106,.1)"><div style="font-size:11px;color:var(--txt2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Room Details</div><div class="drow"><span class="drow-l">Room ID</span><span class="drow-v" style="color:var(--green);font-size:15px">'+(t.roomId||'-')+'</span></div><div class="drow"><span class="drow-l">Password</span><span class="drow-v" style="color:var(--green);font-size:15px">'+(t.roomPassword||'-')+'</span></div></div>';
+    }
+  }
+  h+='<button class="btn btn-s" onclick="closeOv(\'ovNotifDet\')" style="margin-top:14px">Close</button>';
+  document.getElementById('ndBody').innerHTML=h;
+  openOv('ovNotifDet');
+}
+
+// ═══════════════════════════════════════════════════════
+// TOURNAMENT CHANGE DETECTION
+// ═══════════════════════════════════════════════════════
+function detectChanges(old,nw){
+  if(!U||!UD)return;
+  for(var id in nw){
+    var n=nw[id],o=old[id];
+    if(!o){
+      pushNotif({type:'new_match',title:'New Tournament!',message:(n.name||'A match')+' is now available. Entry: '+(n.entryType==='coin'?'🪙 '+(n.entryFee||0):'₹'+(n.entryFee||0)),matchName:n.name||'',matchId:id,icon:'ng',fa:'fa-plus-circle',target:'all'});
+      continue;
+    }
+    if(n.roomStatus==='released'&&o.roomStatus!=='released'&&getJR(id)){
+      pushNotif({type:'room_released',title:'Room Details Released!',message:'Room ID & Password for "'+(n.name||'Match')+'" are now available.',matchName:n.name||'',matchId:id,icon:'ng',fa:'fa-key',target:U.uid});
+    }
+  }
+}
+
+function pushNotif(d){
+  var nid=gid();
+  db.ref('notifications/'+nid).set({id:nid,targetUserId:d.target||'all',type:d.type,title:d.title,message:d.message,matchName:d.matchName||'',matchId:d.matchId||'',icon:d.icon||'nb',faIcon:d.fa||'fa-bell',createdAt:firebase.database.ServerValue.TIMESTAMP});
+}
+
+// ═══════════════════════════════════════════════════════
+// USERNAME UNIQUENESS
+// ═══════════════════════════════════════════════════════
+function checkUnique(name,cb){
+  db.ref('users').orderByChild('ign').equalTo(name).once('value',function(s){
+    if(!s.exists()){cb(true);return;}
+    var f=false;
+    s.forEach(function(c){if(c.key!==U.uid)f=true;});
+    cb(!f);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// PROFILE UPDATE REQUEST — push() to profileRequests
+// ═══════════════════════════════════════════════════════
+function openProfileUpdate(){
+  if(hasPendingRequest()){
+    toast('You already have a pending request','inf');
+    return;
+  }
+  clearErr('puIGNE');clearErr('puUIDE');
+  document.getElementById('puIGN').value=UD.ign||'';
+  document.getElementById('puUID').value=UD.ffUid||'';
+  openOv('ovProfileUpdate');
+}
+
+function doProfileUpdate(){
+  clearErr('puIGNE');clearErr('puUIDE');
+  var ign=document.getElementById('puIGN').value.trim();
+  var ffUid=document.getElementById('puUID').value.trim();
+  var bad=false;
+  
+  if(ign.length<3){showErr('puIGNE','IGN must be at least 3 characters');bad=true;}
+  if(!ffUid||!/^\d{5,15}$/.test(ffUid)){showErr('puUIDE','Enter a valid numeric FF UID (5-15 digits)');bad=true;}
+  if(bad)return;
+  
+  var btn=document.getElementById('puBtn');
+  btn.disabled=true;btn.textContent='Checking...';
+  
+  checkUnique(ign,function(ok){
+    if(!ok&&ign!==(UD.ign||'')){
+      showErr('puIGNE','IGN already taken. Choose another.');
+      btn.disabled=false;btn.innerHTML='<i class="fas fa-paper-plane"></i> Submit for Verification';
+      return;
+    }
+    
+    btn.textContent='Submitting...';
+    
+    // STEP 1: Create profileRequests/{autoId} using push()
+    var newRef=db.ref('profileRequests').push();
+    console.log('[ProfileUpdate] Creating request at profileRequests/'+newRef.key);
+    
+    newRef.set({
+      uid:U.uid,
+      ign:ign,
+      ffUid:ffUid,
+      status:'pending',
+      createdAt:firebase.database.ServerValue.TIMESTAMP
+    }).then(function(){
+      console.log('[ProfileUpdate] Request saved to profileRequests/'+newRef.key);
+      
+      // STEP 2: Update users/{uid} with pendingRequest + profileUpdatePending flag
+      return db.ref('users/'+U.uid).update({
+        profileUpdatePending:true,
+        pendingRequest:{
+          requestId:newRef.key,
+          ign:ign,
+          ffUid:ffUid,
+          status:'pending',
+          createdAt:firebase.database.ServerValue.TIMESTAMP
+        }
+      });
+    }).then(function(){
+      console.log('[ProfileUpdate] User record updated with pendingRequest');
+      closeOv('ovProfileUpdate');
+      toast('Profile sent for admin verification!','ok');
+      btn.disabled=false;btn.innerHTML='<i class="fas fa-paper-plane"></i> Submit for Verification';
+    }).catch(function(e){
+      console.error('[ProfileUpdate] Error:',e);
+      toast('Error: '+e.message,'err');
+      btn.disabled=false;btn.innerHTML='<i class="fas fa-paper-plane"></i> Submit for Verification';
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// PROFILE IMAGE
+// ═══════════════════════════════════════════════════════
+function uploadAvatar(inp){
+  var f=inp.files[0];if(!f)return;
+  if(!f.type.startsWith('image/')){toast('Select an image file','err');inp.value='';return;}
+  toast('Processing...','inf');
+  var rd=new FileReader();
+  rd.onload=function(e){
+    var img=new Image();
+    img.onload=function(){
+      var cv=document.createElement('canvas'),mx=400,w=img.width,h=img.height;
+      if(w>h){if(w>mx){h=Math.round(h*mx/w);w=mx;}}
+      else{if(h>mx){w=Math.round(w*mx/h);h=mx;}}
+      cv.width=w;cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      var q=0.8,b=cv.toDataURL('image/jpeg',q);
+      while(b.length>200*1024&&q>0.1){q-=0.1;b=cv.toDataURL('image/jpeg',q);}
+      db.ref('users/'+U.uid+'/profileImage').set(b).then(function(){
+        toast('Photo updated!','ok');
+      }).catch(function(e){toast(e.message,'err');});
+    };
+    img.src=e.target.result;
+  };
+  rd.readAsDataURL(f);inp.value='';
+}
+
+// ═══════════════════════════════════════════════════════
+// SCREEN SWITCH
+// ═══════════════════════════════════════════════════════
+function go(name){
+  document.querySelectorAll('.scr').forEach(function(s){s.classList.remove('on');});
+  document.getElementById('s-'+name).classList.add('on');
+  document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('on');});
+  var nb=document.querySelector('.nav-btn[data-s="'+name+'"]');if(nb)nb.classList.add('on');
+  if(name==='rank')renderRank();
+  if(name==='profile')renderProfile();
+  if(name==='wallet')renderWallet();
+  if(name==='mymatches')renderMM();
+  if(name==='special')renderSpecial();
+  if(name==='notif')renderNotifs();
+}
+
+// ═══════════════════════════════════════════════════════
+// HOME TABS/PILLS
+// ═══════════════════════════════════════════════════════
+document.getElementById('homeTabs').addEventListener('click',function(e){
+  var t=e.target.closest('.tab');if(!t)return;
+  hStat=t.dataset.v;
+  document.querySelectorAll('#homeTabs .tab').forEach(function(x){x.classList.remove('on');});
+  t.classList.add('on');renderHome();
+});
+document.getElementById('homePills').addEventListener('click',function(e){
+  var p=e.target.closest('.pill');if(!p)return;
+  hCat=p.dataset.v;
+  document.querySelectorAll('#homePills .pill').forEach(function(x){x.classList.remove('on');});
+  p.classList.add('on');renderHome();
+});
+
+// ═══════════════════════════════════════════════════════
+// STRICT FILTERING
+// ═══════════════════════════════════════════════════════
+function filterHome(all,stat,cat){
+  return Object.entries(all).map(function(e){return Object.assign({},e[1],{id:e[0]});})
+    .filter(function(m){
+      if(m.isSpecial===true)return false;
+      if(effStatus(m)!==stat)return false;
+      if(!m.maxSlots||m.maxSlots===0)return false;
+      if(cat==='coin')return m.entryType==='coin';
+      if(m.entryType==='coin')return false;
+      return m.type===cat;
+    })
+    .sort(function(a,b){return(a.matchTime||0)-(b.matchTime||0);});
+}
+
+// ═══════════════════════════════════════════════════════
+// HOME RENDER
+// ═══════════════════════════════════════════════════════
+function renderHome(){
+  var list=document.getElementById('homeList');
+  var matches=filterHome(TOURS,hStat,hCat);
+  if(!matches.length){
+    list.innerHTML='<div class="empty"><i class="fas fa-trophy"></i><p>No Tournaments</p></div>';
+    return;
+  }
+  list.innerHTML=matches.map(function(m){return mCard(m);}).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// JOIN REQUEST CHECK
+// ═══════════════════════════════════════════════════════
+function getJR(mid){
+  for(var k in JREQS){if(JREQS[k].matchId===mid)return JREQS[k];}
+  return null;
+}
+
+// ═══════════════════════════════════════════════════════
+// MATCH CARD
+// ═══════════════════════════════════════════════════════
+function mCard(m){
+  var jr=getJR(m.id),pct=m.maxSlots?Math.min(((m.joinedSlots||0)/m.maxSlots)*100,100):0;
+  var full=(m.joinedSlots||0)>=(m.maxSlots||0);
+  var eff=effStatus(m),isLive=eff==='live',isDone=eff==='completed';
+  var timeStr=isLive?'Live Now':isDone?'Ended':fmtTime(m.matchTime);
+  var entryDisp=m.entryType==='coin'?'🪙 '+(m.entryFee||0):'₹'+(m.entryFee||0);
+
+  var tBadge='<span class="tag tag-'+(m.type||'solo')+'">'+(m.type||'solo').toUpperCase()+'</span>';
+  var cBadge=m.entryType==='coin'?'<span class="tag tag-coin">COIN</span>':'';
+  var lBadge=isLive?'<span class="tag tag-live">LIVE</span>':'';
+
+  // Join button logic
+  var jBtn='';
+  if(isViewOnly()){
+    jBtn='<button class="mc-join j-vo" disabled>View Only</button>';
+  }else if(jr){
+    jBtn='<button class="mc-join j-in" disabled>Joined</button>';
+  }else if(full){
+    jBtn='<button class="mc-join j-full" disabled>Full</button>';
+  }else if(isDone){
+    jBtn='<button class="mc-join j-off" disabled>Ended</button>';
+  }else if(isLive){
+    jBtn='<button class="mc-join j-off" disabled>Started</button>';
+  }else{
+    jBtn='<button class="mc-join j-go" onclick="openJoin(\''+m.id+'\')">Join</button>';
+  }
+
+  var subs=[];
+  subs.push('<span><i class="fas fa-gamepad"></i> '+(m.matchType||'Battle Royale')+'</span>');
+  if(m.map)subs.push('<span><i class="fas fa-map"></i> '+tc(m.map)+'</span>');
+  if(m.perKill)subs.push('<span><i class="fas fa-skull"></i> ₹'+m.perKill+'/Kill</span>');
+
+  var liveBar=isLive?'<div class="mc-live-bar"><div class="mc-live-dot"></div> Match is Live Now</div>':'';
+  var timeCell=timeStr?'<div class="mc-cell"><label>Start Time</label><div class="v v-time">'+timeStr+'</div></div>':'<div class="mc-cell"><label>Start Time</label><div class="v v-time" style="color:var(--txt2);font-size:10px!important">Time Not Announced</div></div>';
+
+  return'<div class="mcard"><div class="mc-top"><div class="mc-name">'+(m.name||'Unnamed')+'</div><div class="mc-tags">'+tBadge+cBadge+lBadge+'</div></div>'+liveBar+'<div class="mc-sub">'+subs.join('')+'</div><div class="mc-grid"><div class="mc-cell"><label>Prize Pool</label><div class="v v-prize">₹'+(m.prizePool||0)+'</div></div><div class="mc-cell"><label>Entry Fee</label><div class="v v-fee">'+entryDisp+'</div></div>'+timeCell+'</div><div class="mc-bot"><div class="mc-slots"><div class="mc-slots-t">'+(m.joinedSlots||0)+'/'+(m.maxSlots||0)+' Slots</div><div class="mc-bar"><div class="mc-fill" style="width:'+pct+'%"></div></div></div><div class="mc-info" onclick="openDet(\''+m.id+'\')"><i class="fas fa-info-circle"></i></div>'+jBtn+'</div></div>';
+}
+
+// ═══════════════════════════════════════════════════════
+// MATCH DETAILS
+// ═══════════════════════════════════════════════════════
+function openDet(mid){
+  var m=TOURS[mid];if(!m)return;
+  var jr=getJR(mid),eff=effStatus(m),isLive=eff==='live';
+  var timeStr=isLive?'Live Now':fmtTime(m.matchTime);
+  var entryDisp=m.entryType==='coin'?'🪙 '+(m.entryFee||0)+' Coins':'₹'+(m.entryFee||0);
+
+  var roomH='';
+  if(m.roomStatus==='released'){
+    if(jr)roomH='<div class="drow"><span class="drow-l">Room ID</span><span class="drow-v" style="color:var(--green)">'+(m.roomId||'-')+'</span></div><div class="drow"><span class="drow-l">Password</span><span class="drow-v" style="color:var(--green)">'+(m.roomPassword||'-')+'</span></div>';
+    else roomH='<div style="padding:10px;background:rgba(255,215,0,.04);border-radius:9px;border:1px solid rgba(255,215,0,.08);font-size:13px;color:var(--yellow);text-align:center;margin-top:6px">Join the match to see room details</div>';
+  }else{
+    roomH='<div style="padding:10px;background:rgba(0,212,255,.04);border-radius:9px;border:1px solid rgba(0,212,255,.08);font-size:13px;color:var(--blue);text-align:center;margin-top:6px">Room details will be shared before match start</div>';
+  }
+
+  var r='';
+  r+='<div class="drow"><span class="drow-l">Match Name</span><span class="drow-v">'+(m.name||'-')+'</span></div>';
+  r+='<div class="drow"><span class="drow-l">Match Type</span><span class="drow-v">'+(m.matchType||'Battle Royale')+'</span></div>';
+  r+='<div class="drow"><span class="drow-l">Mode</span><span class="drow-v">'+(m.type||'solo').toUpperCase()+'</span></div>';
+  if(m.map)r+='<div class="drow"><span class="drow-l">Map</span><span class="drow-v">'+tc(m.map)+'</span></div>';
+  if(timeStr)r+='<div class="drow"><span class="drow-l">Start Time</span><span class="drow-v" style="color:var(--blue)">'+timeStr+'</span></div>';
+  r+='<div class="drow"><span class="drow-l">Prize Pool</span><span class="drow-v" style="color:var(--green)">₹'+(m.prizePool||0)+'</span></div>';
+  r+='<div class="drow"><span class="drow-l">Entry Fee</span><span class="drow-v" style="color:var(--yellow)">'+entryDisp+'</span></div>';
+  r+='<div class="drow"><span class="drow-l">Slots</span><span class="drow-v">'+(m.joinedSlots||0)+'/'+(m.maxSlots||0)+'</span></div>';
+  if(m.perKill)r+='<div class="drow"><span class="drow-l">Per Kill</span><span class="drow-v">₹'+m.perKill+'</span></div>';
+  var desc=m.description?'<div style="margin-top:10px;padding:10px;background:var(--card);border-radius:9px;font-size:13px;color:var(--txt2);line-height:1.6">'+m.description+'</div>':'';
+  document.getElementById('detBody').innerHTML=r+desc+'<div style="margin-top:10px"><div style="font-size:11px;font-weight:700;color:var(--txt2);margin-bottom:6px">ROOM DETAILS</div>'+roomH+'</div><button class="btn btn-s" onclick="closeOv(\'ovDetails\')" style="margin-top:14px">Close</button>';
+  openOv('ovDetails');
+}
+
+// ═══════════════════════════════════════════════════════
+// JOIN MATCH
+// ═══════════════════════════════════════════════════════
+function openJoin(mid){
+  if(isViewOnly())return toast('Complete your profile first','err');
+  var m=TOURS[mid];if(!m)return;
+  joinMatch=Object.assign({},m,{id:mid});
+  var isCoin=m.entryType==='coin',rm=UD.realMoney||{};
+  var bal=isCoin?(UD.coins||0):((rm.deposited||0)+(rm.winnings||0)+(rm.bonus||0));
+  var eDisp=isCoin?'🪙 '+(m.entryFee||0)+' Coins':'₹'+(m.entryFee||0);
+  var bDisp=isCoin?'🪙 '+bal+' Coins':'₹'+bal;
+  var ok=bal>=(m.entryFee||0);
+  document.getElementById('joinBody').innerHTML=
+    '<div class="drow"><span class="drow-l">Match</span><span class="drow-v">'+m.name+'</span></div>'+
+    '<div class="drow"><span class="drow-l">Mode</span><span class="drow-v">'+(m.type||'solo').toUpperCase()+'</span></div>'+
+    '<div class="drow"><span class="drow-l">Entry Fee</span><span class="drow-v" style="color:var(--yellow)">'+eDisp+'</span></div>'+
+    '<div class="drow"><span class="drow-l">Your Balance</span><span class="drow-v" style="color:'+(ok?'var(--green)':'var(--red)')+'">'+bDisp+'</span></div>'+
+    '<div style="margin-top:8px;padding:9px 11px;background:rgba(0,212,255,.04);border-radius:9px;border:1px solid rgba(0,212,255,.08);font-size:12px"><div style="color:var(--txt2);margin-bottom:3px">Playing as:</div><div style="font-weight:700;color:var(--blue)">IGN: '+(UD.ign||'-')+' | UID: '+(UD.ffUid||'-')+'</div></div>'+
+    (!ok?'<div style="padding:9px;background:rgba(255,46,46,.08);border-radius:9px;text-align:center;font-size:13px;color:var(--red);margin-top:6px">Insufficient balance!</div>':'');
+  var btn=document.getElementById('joinBtn');btn.disabled=!ok;btn.style.opacity=ok?1:0.5;
+  openOv('ovJoin');
+}
+
+function doJoin(){
+  if(!joinMatch||!UD||isViewOnly())return;
+  var m=joinMatch,isCoin=m.entryType==='coin',fee=m.entryFee||0,rm=UD.realMoney||{};
+  var bal=isCoin?(UD.coins||0):((rm.deposited||0)+(rm.winnings||0)+(rm.bonus||0));
+  if(bal<fee)return toast('Insufficient balance','err');
+  if(getJR(m.id))return toast('Already joined','err');
+  var t=TOURS[m.id];if(t&&(t.joinedSlots||0)>=(t.maxSlots||0))return toast('Match full','err');
+  if(effStatus(t)!=='upcoming')return toast('Cannot join - match already started','err');
+
+  var rid=gid(),ups={};
+  ups['joinRequests/'+rid]={requestId:rid,userId:U.uid,userName:UD.ign||'',userFFUID:UD.ffUid||'',matchId:m.id,matchName:m.name,entryFee:fee,mode:m.type||'solo',isFree:false,status:'pending',createdAt:firebase.database.ServerValue.TIMESTAMP};
+  if(isCoin){
+    ups['users/'+U.uid+'/coins']=(UD.coins||0)-fee;
+  }else{
+    var rem=fee,d=rm.deposited||0,w=rm.winnings||0,b=rm.bonus||0;
+    var dd=Math.min(rem,d);rem-=dd;
+    var dw=Math.min(rem,w);rem-=dw;
+    var db2=Math.min(rem,b);
+    ups['users/'+U.uid+'/realMoney/deposited']=d-dd;
+    ups['users/'+U.uid+'/realMoney/winnings']=w-dw;
+    ups['users/'+U.uid+'/realMoney/bonus']=b-db2;
+  }
+  ups['tournaments/'+m.id+'/joinedSlots']=(t&&t.joinedSlots||0)+1;
+  ups['users/'+U.uid+'/stats/matches']=(UD.stats&&UD.stats.matches||0)+1;
+
+  db.ref().update(ups).then(function(){
+    closeOv('ovJoin');
+    toast('Joined! Play with your registered IGN/UID only.','ok');
+    joinMatch=null;
+  }).catch(function(e){toast(e.message,'err');});
+}
+
+// ═══════════════════════════════════════════════════════
+// SPECIAL
+// ═══════════════════════════════════════════════════════
+document.getElementById('spTog').addEventListener('click',function(e){
+  var b=e.target.closest('.sp-btn');if(!b)return;
+  spType=b.dataset.v;
+  document.querySelectorAll('#spTog .sp-btn').forEach(function(x){x.classList.remove('on');});
+  b.classList.add('on');renderSpecial();
+});
+
+function renderSpecial(){
+  var list=document.getElementById('spList'),cd=document.getElementById('spCD');
+  var arr=Object.entries(TOURS).map(function(e){return Object.assign({},e[1],{id:e[0]});})
+    .filter(function(m){return m.isSpecial===true&&m.specialType===spType;})
+    .sort(function(a,b){return(a.matchTime||0)-(b.matchTime||0);});
+  if(cdInt){clearInterval(cdInt);cdInt=null;}
+  var up=arr.filter(function(m){return m.matchTime&&m.matchTime>Date.now();});
+  if(up.length)startCD(up[0].matchTime,cd);
+  else cd.innerHTML='<div class="cd-item"><div class="n">0</div><div class="l">Days</div></div><div class="cd-item"><div class="n">0</div><div class="l">Hours</div></div><div class="cd-item"><div class="n">0</div><div class="l">Mins</div></div><div class="cd-item"><div class="n">0</div><div class="l">Secs</div></div>';
+  if(!arr.length){list.innerHTML='<div class="empty"><i class="fas fa-crown"></i><p>No Tournaments</p></div>';return;}
+  list.innerHTML=arr.map(function(m){return mCard(m);}).join('');
+}
+
+function startCD(target,el){
+  function tick(){
+    var d=Math.max(0,target-Date.now());
+    var dd=Math.floor(d/86400000),hh=Math.floor((d%86400000)/3600000),mm=Math.floor((d%3600000)/60000),ss=Math.floor((d%60000)/1000);
+    el.innerHTML='<div class="cd-item"><div class="n">'+dd+'</div><div class="l">Days</div></div><div class="cd-item"><div class="n">'+hh+'</div><div class="l">Hours</div></div><div class="cd-item"><div class="n">'+mm+'</div><div class="l">Mins</div></div><div class="cd-item"><div class="n">'+ss+'</div><div class="l">Secs</div></div>';
+  }
+  tick();cdInt=setInterval(tick,1000);
+}
+
+// ═══════════════════════════════════════════════════════
+// MY MATCHES
+// ═══════════════════════════════════════════════════════
+document.getElementById('mmTabs').addEventListener('click',function(e){
+  var t=e.target.closest('.tab');if(!t)return;
+  mmStat=t.dataset.v;
+  document.querySelectorAll('#mmTabs .tab').forEach(function(x){x.classList.remove('on');});
+  t.classList.add('on');renderMM();
+});
+
+function renderMM(){
+  var c=document.getElementById('mmList');if(!U){c.innerHTML='';return;}
+  var arr=Object.entries(JREQS).map(function(e){return Object.assign({},e[1],{key:e[0]});})
+    .filter(function(r){
+      var t=TOURS[r.matchId];if(!t)return false;
+      return effStatus(t)===mmStat;
+    })
+    .sort(function(a,b){return(b.createdAt||0)-(a.createdAt||0);});
+  if(!arr.length){c.innerHTML='<div class="empty"><i class="fas fa-gamepad"></i><p>No Tournaments</p></div>';return;}
+  c.innerHTML=arr.map(function(r){
+    var t=TOURS[r.matchId]||{},eff=effStatus(t);
+    var stC=r.status==='approved'?'st-ok':r.status==='rejected'?'st-rej':'st-pend';
+    var eDisp=t.entryType==='coin'?'🪙 '+r.entryFee:'₹'+r.entryFee;
+    var isLive=eff==='live';
+    var timeS=isLive?'<span style="color:var(--red);font-weight:700">Live Now</span>':'';
+    if(!isLive&&t.matchTime)timeS='<span>'+fmtTime(t.matchTime)+'</span>';
+    var roomH='';
+    if(t.roomStatus==='released'&&(r.status==='approved'||r.status==='pending')){
+      roomH='<div class="mm-room"><p>Room ID: <span class="rv">'+(t.roomId||'-')+'</span></p><p>Password: <span class="rv">'+(t.roomPassword||'-')+'</span></p></div>';
+    }
+    var lockH='<div class="mm-lock"><i class="fas fa-lock"></i> Playing as: '+(r.userName||'-')+' | UID: '+(r.userFFUID||'-')+'</div>';
+    var mapS=t.map?'<span><i class="fas fa-map" style="margin-right:2px"></i>'+tc(t.map)+'</span>':'';
+    return'<div class="mm-card"><div class="mm-top"><div class="mm-name">'+r.matchName+'</div><span class="mm-st '+stC+'">'+r.status+'</span></div><div class="mm-info"><span>Entry: '+eDisp+'</span><span>Mode: '+(r.mode||'solo').toUpperCase()+'</span>'+mapS+(timeS||'')+'</div>'+lockH+roomH+'</div>';
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// WALLET
+// ═══════════════════════════════════════════════════════
+function renderWallet(){
+  if(!UD)return;
+  var rm=UD.realMoney||{},tot=(rm.deposited||0)+(rm.winnings||0)+(rm.bonus||0);
+  document.getElementById('wTotal').textContent=tot;
+  document.getElementById('wDep').textContent='₹'+(rm.deposited||0);
+  document.getElementById('wWin').textContent='₹'+(rm.winnings||0);
+  document.getElementById('wBon').textContent='₹'+(rm.bonus||0);
+  document.getElementById('wCoins').textContent=UD.coins||0;
+  
+  // Disable wallet actions if view only
+  var addBtn=document.getElementById('btnAddMoney');
+  var wdBtn=document.getElementById('btnWithdraw');
+  if(isViewOnly()){
+    addBtn.disabled=true;addBtn.style.opacity='.5';
+    wdBtn.disabled=true;wdBtn.style.opacity='.5';
+  }else{
+    addBtn.disabled=false;addBtn.style.opacity='1';
+    wdBtn.disabled=false;wdBtn.style.opacity='1';
+  }
+}
+
+function openAddMoney(){
+  if(isViewOnly())return toast('Complete your profile first','err');
+  amStep=1;amAmt=0;renderAM();openOv('ovAddMoney');
+}
+
+function renderAM(){
+  document.querySelectorAll('#amSteps .step').forEach(function(s,i){s.classList.toggle('on',i<amStep);});
+  var c=document.getElementById('amBody');
+  if(amStep===1)c.innerHTML='<div class="fg"><label>ENTER AMOUNT (Min ₹10)</label><input type="number" class="fi" id="amAmt" placeholder="Enter amount" min="10"></div><div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap"><button class="btn btn-s" style="flex:1;min-width:55px;padding:9px;font-size:13px" onclick="document.getElementById(\'amAmt\').value=50">₹50</button><button class="btn btn-s" style="flex:1;min-width:55px;padding:9px;font-size:13px" onclick="document.getElementById(\'amAmt\').value=100">₹100</button><button class="btn btn-s" style="flex:1;min-width:55px;padding:9px;font-size:13px" onclick="document.getElementById(\'amAmt\').value=200">₹200</button><button class="btn btn-s" style="flex:1;min-width:55px;padding:9px;font-size:13px" onclick="document.getElementById(\'amAmt\').value=500">₹500</button></div><button class="btn btn-g" onclick="amNext()">Pay via UPI</button>';
+  else if(amStep===2){var url='upi://pay?pa='+PAY.upiId+'&pn='+encodeURIComponent(PAY.payeeName)+'&am='+amAmt+'&cu=INR&tn=Mini_Esport_Wallet';c.innerHTML='<div style="text-align:center;padding:14px 0"><div style="font-size:44px;margin-bottom:10px">📱</div><p style="font-size:15px;font-weight:700;margin-bottom:3px">Pay ₹'+amAmt+'</p><p style="font-size:12px;color:var(--txt2);margin-bottom:14px">UPI: '+PAY.upiId+'</p><a href="'+url+'" style="display:inline-block;padding:13px 28px;background:linear-gradient(135deg,#5f259f,#9c27b0);color:#fff;border-radius:12px;text-decoration:none;font-weight:700;font-size:14px;box-shadow:0 3px 16px rgba(95,37,159,.25)">Open UPI App</a></div><button class="btn btn-g" onclick="amStep=3;renderAM()" style="margin-top:14px">I\'ve completed payment</button>';}
+  else c.innerHTML='<div class="fg"><label>TRANSACTION ID (UTR)</label><input type="text" class="fi" id="amTxn" placeholder="Enter UTR / Transaction ID"></div><div class="fg"><label>PAYMENT SCREENSHOT (Max 2MB)</label><input type="file" accept="image/*" class="fi" id="amSS" onchange="handleSS(this)" style="padding:9px"><div id="ssPreview" style="margin-top:6px"></div></div><button class="btn btn-g" onclick="submitAM()">Submit for Verification</button>';
+}
+
+function handleSS(inp){
+  var f=inp.files[0];if(!f)return;
+  if(f.size>2*1024*1024){toast('File must be under 2MB','err');inp.value='';return;}
+  var r=new FileReader();r.onload=function(e){ssB64=e.target.result;document.getElementById('ssPreview').innerHTML='<img src="'+ssB64+'" style="width:100%;max-height:180px;object-fit:contain;border-radius:9px;margin-top:6px">';};r.readAsDataURL(f);
+}
+
+function amNext(){var a=parseInt(document.getElementById('amAmt').value);if(!a||a<10)return toast('Minimum ₹10','err');amAmt=a;amStep=2;renderAM();}
+
+function submitAM(){
+  var txn=document.getElementById('amTxn').value.trim();
+  if(!txn)return toast('Enter transaction ID','err');
+  var rid=gid();
+  db.ref('walletRequests/'+rid).set({
+    requestId:rid,uid:U.uid,userName:UD.ign||'',amount:amAmt,transactionId:txn,
+    screenshotBase64:ssB64||'',status:'pending',type:'deposit',
+    createdAt:firebase.database.ServerValue.TIMESTAMP
+  }).then(function(){closeOv('ovAddMoney');toast('Deposit request submitted!','ok');ssB64='';}).catch(function(e){toast(e.message,'err');});
+}
+
+function openWithdraw(){
+  if(isViewOnly())return toast('Complete your profile first','err');
+  var w=(UD&&UD.realMoney&&UD.realMoney.winnings)||0;
+  document.getElementById('wdBody').innerHTML='<div style="text-align:center;padding:10px 0 14px"><div style="font-size:11px;color:var(--txt2);text-transform:uppercase">Available Winnings</div><div style="font-size:26px;font-weight:900;color:var(--green)">₹'+w+'</div></div><div class="fg"><label>WITHDRAW AMOUNT (Min ₹100)</label><input type="number" class="fi" id="wdAmt" placeholder="Enter amount" min="100" max="'+w+'"></div><div class="fg"><label>YOUR UPI ID</label><input type="text" class="fi" id="wdUPI" placeholder="yourname@upi"></div><button class="btn btn-r" onclick="submitWD()">Withdraw</button>';
+  openOv('ovWithdraw');
+}
+
+function submitWD(){
+  var a=parseInt(document.getElementById('wdAmt').value),upi=document.getElementById('wdUPI').value.trim();
+  var w=(UD&&UD.realMoney&&UD.realMoney.winnings)||0;
+  if(!a||a<100)return toast('Minimum ₹100','err');
+  if(a>w)return toast('Insufficient winnings','err');
+  if(!upi||upi.indexOf('@')===-1)return toast('Enter valid UPI ID','err');
+  var rid=gid(),ups={};
+  ups['walletRequests/'+rid]={requestId:rid,uid:U.uid,userName:UD.ign||'',amount:a,upiId:upi,status:'pending',type:'withdraw',createdAt:firebase.database.ServerValue.TIMESTAMP};
+  ups['users/'+U.uid+'/realMoney/winnings']=w-a;
+  db.ref().update(ups).then(function(){closeOv('ovWithdraw');toast('Withdrawal submitted!','ok');}).catch(function(e){toast(e.message,'err');});
+}
+
+function watchAd(){
+  if(window.Android&&typeof window.Android.showRewardedAd==='function')window.Android.showRewardedAd();
+  else toast('Ads available only in APK','inf');
+}
+window.onAdReward=function(){
+  if(!U||!UD)return;
+  db.ref('users/'+U.uid+'/coins').set((UD.coins||0)+5).then(function(){toast('+5 Coins earned!','ok');});
+};
+
+// ═══════════════════════════════════════════════════════
+// RANK
+// ═══════════════════════════════════════════════════════
+function renderRank(){
+  db.ref('users').orderByChild('stats/earnings').limitToLast(50).once('value',function(s){
+    var users=[];
+    s.forEach(function(c){var u=c.val();if(u.approved===true)users.push(u);});
+    users.sort(function(a,b){return((b.stats&&b.stats.earnings||0)-(a.stats&&a.stats.earnings||0));});
+    var topC=document.getElementById('rankTop'),restC=document.getElementById('rankRest');
+    if(!users.length){topC.innerHTML='';restC.innerHTML='<div class="empty"><i class="fas fa-trophy"></i><p>No players yet</p></div>';return;}
+
+    var medals=['🥇','🥈','🥉'],top3=users.slice(0,3),order=[];
+    if(top3[1])order.push(Object.assign({},top3[1],{rank:2}));
+    if(top3[0])order.push(Object.assign({},top3[0],{rank:1}));
+    if(top3[2])order.push(Object.assign({},top3[2],{rank:3}));
+
+    topC.innerHTML='<div class="r-top3">'+order.map(function(u){
+      var ri=rankInfo(u),pc=u.rank===1?'r1':u.rank===2?'r2':'r3';
+      var bg=u.rank===1?'linear-gradient(135deg,#ffd700,#ff8c00)':u.rank===2?'linear-gradient(135deg,#c0c0c0,#808080)':'linear-gradient(135deg,#cd7f32,#8b4513)';
+      var av=u.profileImage?'<img src="'+u.profileImage+'" alt="">':((u.ign||u.displayName||'?')[0].toUpperCase());
+      return'<div class="r-card '+pc+'"><div class="r-medal">'+medals[u.rank-1]+'</div><div class="r-av" style="background:'+bg+'">'+av+'</div><div class="r-name">'+(u.ign||u.displayName||'-')+'</div><div class="r-stat">W:'+(u.stats&&u.stats.wins||0)+' K:'+(u.stats&&u.stats.kills||0)+'</div><div class="r-earn">₹'+(u.stats&&u.stats.earnings||0)+'</div><span class="rbadge '+ri.c+'">'+ri.i+' '+ri.n+'</span></div>';
+    }).join('')+'</div>';
+
+    restC.innerHTML=users.slice(3).map(function(u,i){
+      var ri=rankInfo(u),av=u.profileImage?'<img src="'+u.profileImage+'" alt="">':((u.ign||u.displayName||'?')[0].toUpperCase());
+      return'<div class="r-row"><div class="r-num">'+(i+4)+'</div><div class="r-rav">'+av+'</div><div class="r-info"><div class="r-rname">'+(u.ign||u.displayName||'-')+'</div><div class="r-rstats">W:'+(u.stats&&u.stats.wins||0)+' K:'+(u.stats&&u.stats.kills||0)+' <span class="rbadge '+ri.c+'" style="margin-left:3px">'+ri.i+' '+ri.n+'</span></div></div><div class="r-rearn">₹'+(u.stats&&u.stats.earnings||0)+'</div></div>';
+    }).join('');
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// PROFILE — SINGLE SOURCE: users/{uid}
+// ═══════════════════════════════════════════════════════
+function renderProfile(){
+  if(!UD)return;
+  
+  // Avatar
+  var av=document.getElementById('pAvatar');
+  if(UD.profileImage){
+    av.innerHTML='<img src="'+UD.profileImage+'" alt="">';
+  }else if(UD.photoURL){
+    av.innerHTML='<img src="'+UD.photoURL+'" alt="">';
+  }else{
+    av.textContent=(UD.ign||UD.displayName||'?')[0].toUpperCase();
+  }
+  
+  // Name & Email
+  document.getElementById('pName').textContent=UD.ign||UD.displayName||'-';
+  document.getElementById('pEmail').textContent=UD.email||'-';
+  
+  // Stats
+  document.getElementById('psMatches').textContent=(UD.stats&&UD.stats.matches)||0;
+  document.getElementById('psEarned').textContent='₹'+((UD.stats&&UD.stats.earnings)||0);
+  var ri=rankInfo(UD);
+  document.getElementById('psRank').innerHTML='<span class="rbadge '+ri.c+'">'+ri.i+' '+ri.n+'</span>';
+  
+  // Game Info — from users/{uid} ONLY
+  document.getElementById('piIGN').textContent=UD.ign||'-';
+  document.getElementById('piFFUID').textContent=UD.ffUid||'-';
+  
+  // Pending request banner
+  var pb=document.getElementById('pPendingBanner');
+  if(hasPendingRequest()){
+    pb.innerHTML='<div class="p-pending"><i class="fas fa-clock"></i> Profile verification pending. IGN: "'+(UD.pendingRequest.ign||'-')+'" / UID: "'+(UD.pendingRequest.ffUid||'-')+'"</div>';
+    document.getElementById('pUpdateBtn').disabled=true;
+    document.getElementById('pUpdateBtn').style.opacity='.5';
+  }else{
+    pb.innerHTML='';
+    document.getElementById('pUpdateBtn').disabled=false;
+    document.getElementById('pUpdateBtn').style.opacity='1';
+  }
+  
+  // Teams
+  var duoT=UD.duoTeam||{},duoA=Object.values(duoT);
+  document.getElementById('duoList').innerHTML=duoA.length?duoA.map(function(m){return'<div class="tm-mem"><div class="tm-av">'+(m.name||m.ffuid||'?')[0].toUpperCase()+'</div><span>'+(m.name||m.ffuid||'-')+'</span></div>';}).join(''):'<div style="font-size:12px;color:var(--txt2);padding:3px 0">No teammates yet</div>';
+  var sqT=UD.squadTeam||{},sqA=Object.values(sqT);
+  document.getElementById('squadList').innerHTML=sqA.length?sqA.map(function(m){return'<div class="tm-mem"><div class="tm-av">'+(m.name||m.ffuid||'?')[0].toUpperCase()+'</div><span>'+(m.name||m.ffuid||'-')+'</span></div>';}).join(''):'<div style="font-size:12px;color:var(--txt2);padding:3px 0">No teammates yet</div>';
+  
+  // Disable team buttons if view only
+  var btnDuo=document.getElementById('btnDuo');
+  var btnSquad=document.getElementById('btnSquad');
+  if(isViewOnly()){
+    btnDuo.disabled=true;btnDuo.style.opacity='.5';
+    btnSquad.disabled=true;btnSquad.style.opacity='.5';
+  }else{
+    btnDuo.disabled=false;btnDuo.style.opacity='1';
+    btnSquad.disabled=false;btnSquad.style.opacity='1';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// TEAM
+// ═══════════════════════════════════════════════════════
+function openTeam(mode){
+  if(isViewOnly())return toast('Complete your profile first','err');
+  teamMode=mode;
+  var max=mode==='duo'?1:3,cur=Object.keys((UD&&UD[mode+'Team'])||{}).length;
+  if(cur>=max)return toast(tc(mode)+' team is full','err');
+  document.getElementById('tmTitle').textContent='Add '+tc(mode)+' Teammate';
+  document.getElementById('tmUID').value='';
+  openOv('ovTeam');
+}
+
+function doTeam(){
+  var uid=document.getElementById('tmUID').value.trim();
+  if(!uid)return toast('Enter FF UID','err');
+  var rid=gid();
+  db.ref('teamRequests/'+rid).set({
+    requestId:rid,ownerId:U.uid,ownerName:UD.ign||'',memberFFUID:uid,
+    mode:teamMode,status:'pending',createdAt:firebase.database.ServerValue.TIMESTAMP
+  }).then(function(){closeOv('ovTeam');toast('Team request sent!','ok');}).catch(function(e){toast(e.message,'err');});
+}
+
+// ═══════════════════════════════════════════════════════
+// SUPPORT
+// ═══════════════════════════════════════════════════════
+function openSupport(){document.getElementById('supMsg').value='';openOv('ovSupport');}
+
+function doSupport(){
+  var type=document.getElementById('supType').value,msg=document.getElementById('supMsg').value.trim();
+  if(!msg)return toast('Describe your issue','err');
+  var rid=gid();
+  db.ref('supportRequests/'+rid).set({
+    requestId:rid,userId:U.uid,userName:(UD&&UD.ign)||'',
+    userEmail:(UD&&UD.email)||'',type:type,message:msg,
+    status:'pending',createdAt:firebase.database.ServerValue.TIMESTAMP
+  }).then(function(){closeOv('ovSupport');toast('Support ticket submitted!','ok');}).catch(function(e){toast(e.message,'err');});
+}
+
+function openRules(){openOv('ovRules');}
+
+// ═══════════════════════════════════════════════════════
+// AUTO-REFRESH (30s)
+// ═══════════════════════════════════════════════════════
+setInterval(function(){renderHome();renderMM();renderSpecial();},30000);
+</script>
+</body>
+</html>
