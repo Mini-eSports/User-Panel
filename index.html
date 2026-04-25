@@ -144,7 +144,8 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 /* LEADERBOARD */
 .podium{display:flex;align-items:flex-end;justify-content:center;gap:10px;margin:16px 0 10px;padding-bottom:8px}
 .podium-item{display:flex;flex-direction:column;align-items:center;text-align:center}
-.podium-item .p-av{width:48px;height:48px;border-radius:50%;border:2px solid var(--dim2);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;background:var(--card)}
+.podium-item .p-av{width:48px;height:48px;border-radius:50%;border:2px solid var(--dim2);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;background:var(--card);position:relative;}
+.podium-item .p-av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;border-radius:50%;}
 .podium-item.first .p-av{width:60px;height:60px;border-color:var(--yellow);box-shadow:var(--glow-y)}
 .podium-item.second .p-av{border-color:#ccc}
 .podium-item.third .p-av{border-color:var(--red);box-shadow:var(--glow-r)}
@@ -156,7 +157,8 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .podium-item.third .podium-bar{height:40px;background:linear-gradient(180deg,var(--red),rgba(255,0,0,0.05))}
 .rank-item{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:12px;padding:10px 12px;margin-bottom:6px}
 .rank-num{width:26px;height:26px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--dim);flex-shrink:0}
-.rank-av{width:32px;height:32px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--card2);font-size:14px;font-weight:700;flex-shrink:0}
+.rank-av{width:36px;height:36px;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--card2);font-size:14px;font-weight:700;flex-shrink:0;position:relative;}
+.rank-av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;border-radius:50%;}
 .rank-info{flex:1;min-width:0}
 .rank-name{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rank-tier{font-size:10px;color:var(--dim)}
@@ -297,7 +299,7 @@ textarea.form-input{resize:none;min-height:80px}
   <div id="header">
     <div class="header-row">
       <div class="header-left">
-        <span class="fire">🔥</span>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--yellow)" style="flex-shrink:0"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
         <span class="brand">Mini eSports</span>
       </div>
       <div class="header-right">
@@ -662,7 +664,13 @@ async function boot(){
     loadPaymentSettings();
     go('home');
     const ud = snap.val()||{};
-    if(!ud.ign||!ud.ffuid) setTimeout(()=>openFirstTimeProfile(),1000);
+    if(!ud.ign||!ud.ffuid){
+      // Sirf ek baar dikhao per session
+      if(!sessionStorage.getItem('profilePopupShown_'+U.uid)){
+        sessionStorage.setItem('profilePopupShown_'+U.uid,'1');
+        setTimeout(()=>openFirstTimeProfile(),1000);
+      }
+    }
   }catch(e){ toast('Error: '+e.message,'error'); }
 }
 
@@ -785,22 +793,52 @@ function tournamentCard(t,special=false){
   const pct=t.maxSlots?Math.min(100,((t.filledSlots||0)/t.maxSlots)*100):0;
   const diff=t.matchTime?t.matchTime-Date.now():0;
   const timeStr=diff>0?formatCountdown(diff):'';
-  const entryLabel=t.entryType==='paid'?'₹'+(t.entryFee||0):(t.entryFee||0)+' ◎';
-  const prizeLabel=t.entryType==='paid'?'₹'+(t.prizePool||0):(t.prizePool||0)+' ◎';
-  const statusBadge=t.status==='live'?'<span class="badge badge-live"><span class="live-dot"></span>LIVE</span>':t.status==='completed'?'<span class="badge badge-completed">DONE</span>':'<span class="badge badge-upcoming">⏰</span>';
+  const isPaid=t.entryType==='paid';
+  const entryLabel=isPaid?'₹'+(t.entryFee||0):(t.entryFee||0)+' ◎';
+  const prizeLabel=isPaid?'₹'+(t.prizePool||0):(t.prizePool||0)+' ◎';
+  const statusBadge=t.status==='live'?'<span class="badge badge-live"><span class="live-dot"></span>LIVE</span>':t.status==='completed'?'<span class="badge badge-completed">✓ DONE</span>':'<span class="badge badge-upcoming">⏰ UPCOMING</span>';
   const canJoin=UD&&UD.approved&&!UD.profileUpdatePending&&t.status==='upcoming'&&!isFull;
-  return `<div class="t-card${special?' t-card-special':''}" data-name="${esc(t.name||'')}">
-    ${statusBadge}
-    <div class="t-name">${esc(t.name||'Tournament')}</div>
-    <div class="t-meta">
-      <span>${esc(t.gameMode||'-')} · ${esc(t.map||'-')}</span>
-      <span>Entry: <strong>${entryLabel}</strong> · Prize: <strong>${prizeLabel}</strong></span>
-      <span>Slots: ${t.filledSlots||0}/${t.maxSlots||0}${timeStr?' · ⏱ '+timeStr:''}</span>
-    </div>
-    <div class="slots-bar"><div class="slots-fill" style="width:${pct}%"></div></div>
-    <div class="t-actions" style="margin-top:8px;">
-      <button class="btn btn-outline" onclick="viewTournament('${t.id}')">Details</button>
-      <button class="btn btn-yellow${canJoin?'':' btn-disabled'}" onclick="joinTournament('${t.id}')">${isFull?'FULL':'JOIN'}</button>
+  const modeIcon=t.gameMode==='duo'?'👥':t.gameMode==='squad'?'⚔️':'🎯';
+  const borderColor=special?'linear-gradient(135deg,var(--yellow),var(--red))':isPaid?'rgba(255,215,0,0.2)':'rgba(100,200,255,0.2)';
+  const accentColor=isPaid?'var(--yellow)':'#64c8ff';
+  return `<div class="t-card" data-name="${esc(t.name||'')}" style="border:1px solid ${isPaid?'rgba(255,215,0,0.18)':'rgba(100,200,255,0.18)'};background:linear-gradient(135deg,#0d0d0d 0%,#111 100%);padding:0;overflow:hidden;margin-bottom:10px;">
+    <!-- Top accent bar -->
+    <div style="height:3px;background:${special?'linear-gradient(90deg,var(--yellow),var(--red))':isPaid?'linear-gradient(90deg,var(--yellow3),var(--yellow))':'linear-gradient(90deg,#3399ff,#64c8ff)'};"></div>
+    <div style="padding:12px;">
+      <!-- Header row -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div style="flex:1;min-width:0;">
+          ${statusBadge}
+          <div class="t-name" style="font-size:14px;margin-top:5px;">${esc(t.name||'Tournament')}</div>
+        </div>
+        <!-- Prize badge -->
+        <div style="text-align:right;flex-shrink:0;margin-left:8px;">
+          <div style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;">Prize Pool</div>
+          <div style="font-size:15px;font-weight:900;color:${accentColor};">${prizeLabel}</div>
+        </div>
+      </div>
+      <!-- Info pills -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+        <span style="background:rgba(255,255,255,0.06);border-radius:20px;padding:4px 10px;font-size:10px;font-weight:600;color:#ccc;">${modeIcon} ${esc(t.gameMode||'Solo')}</span>
+        <span style="background:rgba(255,255,255,0.06);border-radius:20px;padding:4px 10px;font-size:10px;font-weight:600;color:#ccc;">🗺 ${esc(t.map||'-')}</span>
+        <span style="background:${isPaid?'rgba(255,215,0,0.1)':'rgba(100,200,255,0.1)'};border-radius:20px;padding:4px 10px;font-size:10px;font-weight:700;color:${accentColor};">Entry: ${entryLabel}</span>
+        ${timeStr?`<span style="background:rgba(255,0,0,0.1);border-radius:20px;padding:4px 10px;font-size:10px;font-weight:600;color:var(--red);">⏱ ${timeStr}</span>`:''}
+      </div>
+      <!-- Slots bar -->
+      <div style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-bottom:4px;">
+          <span>Slots Filled</span>
+          <span style="color:${isFull?'var(--red)':'#fff'};font-weight:700;">${t.filledSlots||0}/${t.maxSlots||0}</span>
+        </div>
+        <div style="height:5px;background:#222;border-radius:3px;overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:${pct>=90?'var(--red)':isPaid?'linear-gradient(90deg,var(--yellow3),var(--yellow))':'linear-gradient(90deg,#3399ff,#64c8ff)'};border-radius:3px;transition:width .3s;"></div>
+        </div>
+      </div>
+      <!-- Action buttons -->
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline" style="flex:1;padding:10px;" onclick="viewTournament('${t.id}')">📋 Details</button>
+        <button class="btn ${canJoin?'btn-yellow':''}" style="flex:1;padding:10px;${!canJoin?'background:#222;color:#555;border:1px solid #333;cursor:default;':''}" onclick="${canJoin?`joinTournament('${t.id}')`:''}">${isFull?'🔴 FULL':t.status==='completed'?'✓ ENDED':'⚡ JOIN'}</button>
+      </div>
     </div>
   </div>`;
 }
@@ -997,9 +1035,10 @@ function loadTxHistory(){
 }
 
 // ====== ADD MONEY ======
-function openAddMoney(){
+async function openAddMoney(){
   addMoneyStep=1;addMoneyAmount=0;
-  loadPaymentSettings().then(()=>renderAddMoneyModal()).catch(()=>renderAddMoneyModal());
+  try{ await loadPaymentSettings(); }catch(e){}
+  renderAddMoneyModal();
 }
 function amSteps(){
   const s=addMoneyStep;
@@ -1226,11 +1265,12 @@ async function renderLeaderboard(sortBy){
     po.forEach((p,i)=>{
       if(!p)return;
       const initials=p.name.charAt(0).toUpperCase();
+      const avSize=i===1?60:48;
+      const avHtml=p.photo
+        ?`<img src="${esc(p.photo)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;border-radius:50%;" onerror="this.style.display='none'">`
+        :`<span style="color:var(--yellow);font-weight:700;font-size:${i===1?22:18}px;position:relative;z-index:1;">${initials}</span>`;
       podHtml+=`<div class="podium-item ${pc[i]}">${i===1?'<div style="font-size:18px;margin-bottom:3px;">♛</div>':''}
-        <div class="p-av" style="${i===1?'font-size:22px;':''}">
-          ${p.photo?`<img src="${esc(p.photo)}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`:''}
-          <span style="${p.photo?'display:none':''}color:var(--yellow);font-weight:700;">${initials}</span>
-        </div>
+        <div class="p-av" style="width:${avSize}px;height:${avSize}px;position:relative;">${avHtml}</div>
         <div class="p-name">${esc(p.name)}</div>
         <div class="p-score">${currentLbTab==='kills'?p.kills+' kills':currentLbTab==='wins'?p.wins+' wins':p.score+' pts'}</div>
         <div class="podium-bar"></div>
@@ -1242,11 +1282,12 @@ async function renderLeaderboard(sortBy){
     arr.slice(3).forEach((p,i)=>{
       const initials=p.name.charAt(0).toUpperCase();
       const val=currentLbTab==='kills'?p.kills+' kills':currentLbTab==='wins'?p.wins+' wins':p.score+' pts';
+      const rvHtml=p.photo
+        ?`<img src="${esc(p.photo)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;border-radius:50%;" onerror="this.style.display='none'">`
+        :`<span style="color:var(--yellow);font-weight:700;">${initials}</span>`;
       listHtml+=`<div class="rank-item">
         <div class="rank-num">${i+4}</div>
-        <div class="rank-av" style="color:var(--yellow);">
-          ${p.photo?`<img src="${esc(p.photo)}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`:initials}
-        </div>
+        <div class="rank-av">${rvHtml}</div>
         <div class="rank-info"><div class="rank-name">${esc(p.name)}</div><div class="rank-tier">${getTier(p.score)}</div></div>
         <div class="rank-score">${val}</div>
       </div>`;
