@@ -32,8 +32,8 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes pulse-fire{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
 /* LOGIN */
-#loginScreen{position:fixed;inset:0;z-index:9998;background:linear-gradient(135deg,#000 0%,#0a0005 50%,#000 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;overflow:hidden}
-#loginScreen.hide{display:none}
+#loginScreen{position:fixed;inset:0;z-index:9998;background:linear-gradient(135deg,#000 0%,#0a0005 50%,#000 100%);display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;overflow:hidden}
+#loginScreen.show{display:flex}#loginScreen.hide{display:none}
 #loginScreen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,rgba(255,215,0,0.06) 0%,transparent 60%);pointer-events:none}
 .login-card{text-align:center;max-width:340px;width:100%;position:relative;z-index:1}
 .login-card .fire{font-size:72px;animation:pulse-fire 2s infinite;display:block;margin-bottom:8px}
@@ -529,9 +529,14 @@ const firebaseConfig = {
   messagingSenderId:"486362918198",
   appId:"1:486362918198:web:ce5bd047fb584636bd5797"
 };
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-const auth = firebase.auth();
+let db, auth;
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+  auth = firebase.auth();
+} catch(e) {
+  console.error('Firebase init error:', e);
+}
 
 let U=null, UD=null, allTournaments={}, currentSpecialTab='weekly', currentMatchTab='upcoming';
 let countdownInterval=null, dailyInterval=null, listeners=[], paymentSettings={};
@@ -556,9 +561,12 @@ document.addEventListener('touchend',e=>{
 
 // ====== AUTH STATE ======
 window.addEventListener('load',()=>{
-  setTimeout(()=>{
-    document.getElementById('splash').classList.add('hide');
-  },800);
+  // Always hide splash after 1.5s
+  const hideSplash = () => {
+    const s = document.getElementById('splash');
+    if(s) s.classList.add('hide');
+  };
+  setTimeout(hideSplash, 1200);
 
   auth.onAuthStateChanged(async(user)=>{
     // Only allow Google-authenticated users (not anonymous)
@@ -570,6 +578,7 @@ window.addEventListener('load',()=>{
         email: user.email || '',
         photoURL: user.photoURL || ''
       };
+      document.getElementById('loginScreen').classList.remove('show');
       document.getElementById('loginScreen').classList.add('hide');
       document.getElementById('authLoading').classList.remove('show');
 
@@ -581,6 +590,7 @@ window.addEventListener('load',()=>{
       cleanupListeners();
       U = null; UD = null;
       document.getElementById('mainApp').classList.remove('show');
+      document.getElementById('loginScreen').classList.add('show');
       document.getElementById('loginScreen').classList.remove('hide');
       document.getElementById('authLoading').classList.remove('show');
     }
@@ -620,8 +630,9 @@ async function doLogout(){
   
   U=null; UD=null; isGoogleUser=false;
   document.getElementById('mainApp').classList.remove('show');
+  document.getElementById('loginScreen').classList.add('show');
   document.getElementById('loginScreen').classList.remove('hide');
-  document.getElementById('headerAvatar').style.display='none';
+  // avatar removed from header
 }
 
 // ====== BOOT ======
