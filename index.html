@@ -320,18 +320,20 @@ textarea.form-input{resize:none;min-height:80px}
   <div class="content-area" id="contentArea">
     <!-- HOME -->
     <div class="screen active" id="screen-home">
-      <!-- Filter Dropdown -->
-      <div style="position:relative;margin-bottom:12px;" id="homeFilterWrap">
-        <div onclick="toggleHomeDropdown()" style="display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--byellow);border-radius:12px;padding:11px 14px;cursor:pointer;touch-action:manipulation;">
-          <span id="homeFilterLabel" style="font-size:13px;font-weight:700;color:var(--yellow);display:flex;align-items:center;gap:5px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M21 18v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1h-9a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h9zm-9-2h10V8H12v8zm4-2.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg> Paid Matches</span>
-          <span id="homeDropArrow" style="color:var(--yellow);font-size:14px;transition:transform .15s;">▼</span>
+      <!-- Match Type Selector -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div id="boxPaid" onclick="selectHomeFilter('paid')" style="background:linear-gradient(135deg,rgba(255,215,0,0.15),rgba(255,180,0,0.05));border:2px solid var(--yellow);border-radius:14px;padding:14px 10px;cursor:pointer;text-align:center;touch-action:manipulation;transition:all .15s ease;">
+          <div style="font-size:24px;margin-bottom:4px;">💰</div>
+          <div style="font-size:13px;font-weight:800;color:var(--yellow);">Paid Matches</div>
+          <div style="font-size:10px;color:var(--dim);margin-top:2px;">Win Real Money</div>
         </div>
-        <div id="homeDropMenu" style="display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;background:#111;border:1px solid var(--byellow);border-radius:12px;z-index:50;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,0.6);">
-          <div onclick="selectHomeFilter('paid')" id="filterOptPaid" style="padding:13px 16px;cursor:pointer;font-size:13px;font-weight:700;color:var(--yellow);background:rgba(255,215,0,0.08);border-bottom:1px solid rgba(255,215,0,0.1);touch-action:manipulation;">₹ Paid Matches</div>
-          <div onclick="selectHomeFilter('coin')" id="filterOptCoin" style="padding:13px 16px;cursor:pointer;font-size:13px;font-weight:700;color:var(--dim);touch-action:manipulation;">◎ Coin Matches</div>
+        <div id="boxFree" onclick="selectHomeFilter('coin')" style="background:linear-gradient(135deg,rgba(100,200,255,0.08),rgba(50,150,255,0.03));border:2px solid #333;border-radius:14px;padding:14px 10px;cursor:pointer;text-align:center;touch-action:manipulation;transition:all .15s ease;">
+          <div style="font-size:24px;margin-bottom:4px;">🎮</div>
+          <div style="font-size:13px;font-weight:800;color:#64c8ff;">Free Matches</div>
+          <div style="font-size:10px;color:var(--dim);margin-top:2px;">Play with Coins</div>
         </div>
       </div>
-      <div id="homeMatchList"><div class="empty-state"><div class="emoji">★</div><div class="msg">Loading matches...</div></div></div>
+            <div id="homeMatchList"><div class="empty-state"><div class="emoji">★</div><div class="msg">Loading matches...</div></div></div>
     </div>
 
     <!-- SPECIAL -->
@@ -392,17 +394,31 @@ textarea.form-input{resize:none;min-height:80px}
 
     <!-- RANK -->
     <div class="screen" id="screen-rank">
-      <div class="lb-tabs" id="lbTabs">
-        <div class="lb-tab active" onclick="switchLbTab('score',this)" style="display:flex;align-items:center;gap:5px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>Overall</div>
-        <div class="lb-tab" onclick="switchLbTab('kills',this)" style="display:flex;align-items:center;gap:5px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M14.5 2.5c0 1.5-1.5 7-1.5 7h-2S9.5 4 9.5 2.5a2.5 2.5 0 0 1 5 0zM12 11a1 1 0 1 0 0 2 1 1 0 0 0 0-2zm-1 4v7h2v-7h-2z"/></svg>Kills</div>
-        <div class="lb-tab" onclick="switchLbTab('wins',this)" style="display:flex;align-items:center;gap:5px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M5 3h14l2 7-9 11L2 10l3-7z"/></svg>Wins</div>
-        <div class="lb-tab" onclick="switchLbTab('referrals',this)" style="display:flex;align-items:center;gap:5px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Referrals</div>
+      <!-- My Rank Banner -->
+      <div style="background:linear-gradient(135deg,#1a1000,#110a00);border:1px solid rgba(255,215,0,0.3);border-radius:14px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:12px;">
+        <div id="myRankAvatar" style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--yellow3),var(--yellow));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#000;flex-shrink:0;overflow:hidden;position:relative;"></div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Your Rank</div>
+          <div style="font-size:20px;font-weight:900;color:var(--yellow);" id="myRankDisplay">#-</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:10px;color:var(--dim);margin-bottom:2px;">Points</div>
+          <div style="font-size:16px;font-weight:800;color:#fff;" id="myScoreDisplay">0 pts</div>
+          <div id="myTierBadge" style="font-size:10px;font-weight:700;color:var(--yellow);margin-top:2px;">◉ Bronze</div>
+        </div>
       </div>
+      <!-- Category Tabs -->
+      <div class="lb-tabs" id="lbTabs" style="margin-bottom:12px;">
+        <div class="lb-tab active" onclick="switchLbTab('score',this)">🏆 Overall</div>
+        <div class="lb-tab" onclick="switchLbTab('kills',this)">⚔ Kills</div>
+        <div class="lb-tab" onclick="switchLbTab('wins',this)">🥇 Wins</div>
+        <div class="lb-tab" onclick="switchLbTab('referrals',this)">👥 Refs</div>
+      </div>
+      <!-- Podium -->
       <div id="podiumArea"></div>
-      <div class="rank-list" id="rankList"><div class="empty-state"><div class="msg">Loading leaderboard...</div></div></div>
+      <!-- Rank List -->
+      <div id="rankList"><div class="empty-state"><div class="msg">Loading leaderboard...</div></div></div>
     </div>
-
-    <!-- PROFILE -->
     <div class="screen" id="screen-profile">
       <div style="text-align:center;padding:18px 0 10px;">
         <div style="position:relative;display:inline-block;margin-bottom:10px;">
@@ -780,34 +796,23 @@ function updateApprovalBanner(){
 }
 
 // ====== HOME ======
-function toggleHomeDropdown(){
-  const menu=document.getElementById('homeDropMenu');
-  const arrow=document.getElementById('homeDropArrow');
-  const isOpen=menu.style.display==='block';
-  menu.style.display=isOpen?'none':'block';
-  arrow.style.transform=isOpen?'':'rotate(180deg)';
-}
+// toggleHomeDropdown removed - using boxes now
 function selectHomeFilter(filter){
   currentHomeTab=filter;
-  document.getElementById('homeDropMenu').style.display='none';
-  document.getElementById('homeDropArrow').style.transform='';
-  document.getElementById('homeFilterLabel').textContent=filter==='paid'?'₹ Paid Matches':'◎ Coin Matches';
-  document.getElementById('filterOptPaid').style.background=filter==='paid'?'rgba(255,215,0,0.08)':'';
-  document.getElementById('filterOptPaid').style.color=filter==='paid'?'var(--yellow)':'var(--dim)';
-  document.getElementById('filterOptCoin').style.background=filter==='coin'?'rgba(255,215,0,0.08)':'';
-  document.getElementById('filterOptCoin').style.color=filter==='coin'?'var(--yellow)':'var(--dim)';
+  // Update box styles
+  const bPaid=document.getElementById('boxPaid');
+  const bFree=document.getElementById('boxFree');
+  if(bPaid){
+    bPaid.style.border=filter==='paid'?'2px solid var(--yellow)':'2px solid #333';
+    bPaid.style.background=filter==='paid'?'linear-gradient(135deg,rgba(255,215,0,0.18),rgba(255,180,0,0.08))':'linear-gradient(135deg,rgba(255,215,0,0.04),rgba(0,0,0,0))';
+  }
+  if(bFree){
+    bFree.style.border=filter==='coin'?'2px solid #64c8ff':'2px solid #333';
+    bFree.style.background=filter==='coin'?'linear-gradient(135deg,rgba(100,200,255,0.15),rgba(50,150,255,0.08))':'linear-gradient(135deg,rgba(100,200,255,0.04),rgba(0,0,0,0))';
+  }
   renderHome();
 }
-// Close dropdown on outside click
-document.addEventListener('click',e=>{
-  const wrap=document.getElementById('homeFilterWrap');
-  if(wrap&&!wrap.contains(e.target)){
-    const menu=document.getElementById('homeDropMenu');
-    if(menu)menu.style.display='none';
-    const arrow=document.getElementById('homeDropArrow');
-    if(arrow)arrow.style.transform='';
-  }
-});
+// dropdown listener removed
 function switchHomeTab(tab){ selectHomeFilter(tab); }
 function renderHome(){
   const all=[];
@@ -1077,10 +1082,11 @@ function loadTxHistory(){
 }
 
 // ====== ADD MONEY ======
-async function openAddMoney(){
+function openAddMoney(){
   addMoneyStep=1;addMoneyAmount=0;
-  try{ await loadPaymentSettings(); }catch(e){}
   renderAddMoneyModal();
+  // Load payment settings in background (non-blocking)
+  loadPaymentSettings().catch(()=>{});
 }
 function amSteps(){
   const s=addMoneyStep;
@@ -1296,7 +1302,26 @@ async function renderLeaderboard(sortBy){
       if(score>=5000)return'◆ Diamond';if(score>=3000)return'◇ Platinum';
       if(score>=1500)return'★ Gold';if(score>=500)return'◈ Silver';return'◉ Bronze';
     };
-    if(U){const idx=arr.findIndex(a=>a.uid===U.uid);if(idx>=0)document.getElementById('pRankNum').textContent='#'+(idx+1);}
+    if(U){
+      const myIdx=arr.findIndex(a=>a.uid===U.uid);
+      if(myIdx>=0){
+        document.getElementById('pRankNum').textContent='#'+(myIdx+1);
+        const rd=document.getElementById('myRankDisplay');
+        if(rd)rd.textContent='#'+(myIdx+1);
+        const myEntry=arr[myIdx];
+        const sd=document.getElementById('myScoreDisplay');
+        if(sd)sd.textContent=(currentLbTab==='kills'?myEntry.kills+' kills':currentLbTab==='wins'?myEntry.wins+' wins':myEntry.score+' pts');
+        // My avatar
+        const av=document.getElementById('myRankAvatar');
+        if(av){
+          if(UD&&UD.photoURL) av.innerHTML='<img src="'+UD.photoURL+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+          else av.textContent=(UD&&UD.displayName?UD.displayName:'?').charAt(0).toUpperCase();
+        }
+        // My tier
+        const tierEl=document.getElementById('myTierBadge');
+        if(tierEl)tierEl.textContent=getTier(myEntry.score);
+      }
+    }
     const top3=arr.slice(0,3);
     const po=[top3[1],top3[0],top3[2]];
     const pc=['second','first','third'];
