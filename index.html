@@ -6,9 +6,7 @@
 <title>Mini eSports</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
 <!-- Firebase 9 compat -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -553,25 +551,242 @@ textarea.form-input{resize:none;min-height:80px}
 </div>
 <div class="toast-container" id="toastContainer"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ====== FIREBASE ======
-const firebaseConfig = {
-  apiKey:"AIzaSyCc0VeTIfwYqOTfKEt3IfiKHvxNkgZnkPQ",
-  authDomain:"ff-tournament-app-93105.firebaseapp.com",
-  databaseURL:"https://ff-tournament-app-93105-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId:"ff-tournament-app-93105",
-  storageBucket:"ff-tournament-app-93105.firebasestorage.app",
-  messagingSenderId:"486362918198",
-  appId:"1:486362918198:web:ce5bd047fb584636bd5797"
-};
-let db, auth;
-try {
-  firebase.initializeApp(firebaseConfig);
-  db = firebase.database();
-  auth = firebase.auth();
-} catch(e) {
-  console.error('Firebase init error:', e);
+// ====== SUPABASE ======
+const SUPABASE_URL = 'https://qgmgaouvjavpzbbjuqye.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_hhFcscXkGSX_keKTauxSdA_eagVd_Dv';
+const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ====== FIELD MAPPERS ======
+function toSnake(obj) {
+  const map = {
+    displayName:'display_name', tournamentId:'tournament_id', tournamentName:'tournament_name',
+    entryType:'entry_type', entryFee:'entry_fee', prizePool:'prize_pool', maxSlots:'max_slots',
+    filledSlots:'filled_slots', matchTime:'match_time', roomId:'room_id', roomPassword:'room_password',
+    roomLocked:'room_locked', isSpecial:'is_special', gameMode:'game_mode', createdAt:'created_at',
+    photoURL:'photo_url', profileUpdatePending:'profile_update_pending', lastDailyClaim:'last_daily_claim',
+    realMoney:'real_money', duoTeam:'duo_team', squadTeam:'squad_team',
+    isGoogleUser:'is_google_user', lastSeen:'last_seen',
+    teammateFFUID:'teammate_ffuid', userUpiId:'user_upi_id', screenshotBase64:'screenshot_base64',
+  };
+  const result = {};
+  for(const k in obj) result[map[k]||k] = obj[k];
+  return result;
 }
+function toCamel(obj) {
+  if(!obj) return obj;
+  const map = {
+    display_name:'displayName', tournament_id:'tournamentId', tournament_name:'tournamentName',
+    entry_type:'entryType', entry_fee:'entryFee', prize_pool:'prizePool', max_slots:'maxSlots',
+    filled_slots:'filledSlots', match_time:'matchTime', room_id:'roomId', room_password:'roomPassword',
+    room_locked:'roomLocked', is_special:'isSpecial', game_mode:'gameMode', created_at:'createdAt',
+    photo_url:'photoURL', profile_update_pending:'profileUpdatePending', last_daily_claim:'lastDailyClaim',
+    real_money:'realMoney', duo_team:'duoTeam', squad_team:'squadTeam',
+    is_google_user:'isGoogleUser', last_seen:'lastSeen',
+    teammate_ffuid:'teammateFFUID', user_upi_id:'userUpiId', screenshot_base64:'screenshotBase64',
+  };
+  const result = {};
+  for(const k in obj) result[map[k]||k] = obj[k];
+  return result;
+}
+
+function makeSnap(rows) {
+  return {
+    exists:()=>rows.length>0,
+    val:()=>{ if(!rows.length)return null; const o={}; rows.forEach(r=>{o[r.id]=toCamel(r);}); return o; },
+    forEach:(cb)=>rows.forEach(r=>cb({key:r.id, val:()=>toCamel(r), exists:()=>true}))
+  };
+}
+
+// ====== DB HELPER ======
+let db = { ref:(path)=>new DbRef(path) };
+
+class DbRef {
+  constructor(path){this.path=path;this._oc=null;this._eq=null;this._lim=null;this._ivals=[];}
+  orderByChild(f){this._oc=f;return this;}
+  equalTo(v){this._eq=v;return this;}
+  limitToLast(n){this._lim=n;return this;}
+
+  _info(){
+    const p=this.path;
+    if(p==='appSettings/payment')return{table:'app_settings',key:'payment',isSettings:true};
+    if(p==='appSettings/ticker')return{table:'app_settings',key:'ticker',isSettings:true};
+    if(p.startsWith('appConfig'))return{table:'app_config',isConfig:true};
+    if(p.startsWith('notifications/users/')){const pts=p.split('/');return{table:'notifications',uid:pts[2],notifId:pts[3]||null};}
+    const TBL={users:'users',tournaments:'tournaments',joinRequests:'join_requests',
+      addMoneyRequests:'add_money_requests',withdrawRequests:'withdraw_requests',
+      profileRequests:'profile_requests',profileUpdateRequests:'profile_update_requests',
+      teamRequests:'team_requests',supportRequests:'support_requests',
+      vouchers:'vouchers',referrals:'referrals',coinHistory:'coin_history'};
+    const pts=p.split('/');
+    return{table:TBL[pts[0]]||pts[0], id:pts[1]||null, subPath:pts.slice(2).join('/')||null, rootKey:pts[0]};
+  }
+
+  async once(t){
+    const i=this._info();
+    try{
+      if(i.isSettings){
+        const{data}=await _sb.from('app_settings').select('value').eq('key',i.key).single();
+        return{exists:()=>!!data,val:()=>data?data.value:null};
+      }
+      if(i.isConfig){
+        const{data}=await _sb.from('app_config').select('*');
+        const o={}; (data||[]).forEach(r=>{o[r.key]=r.value;});
+        return{exists:()=>Object.keys(o).length>0, val:()=>o, forEach:(cb)=>(data||[]).forEach(r=>cb({key:r.key,val:()=>r.value}))};
+      }
+      if(!i.id){
+        let q=_sb.from(i.table).select('*');
+        if(this._oc && this._eq!==null){
+          const snakeField=toSnake({[this._oc]:''});
+          const sf=Object.keys(snakeField)[0];
+          q=q.eq(sf, this._eq);
+        }
+        q=q.order('created_at',{ascending:false});
+        if(this._lim) q=q.limit(this._lim);
+        const{data}=await q;
+        return makeSnap(data||[]);
+      }
+      if(i.subPath){
+        const{data}=await _sb.from(i.table).select('*').eq('id',i.id).single();
+        if(!data)return{exists:()=>false,val:()=>null};
+        const camel=toCamel(data);
+        const pts=i.subPath.split('/');
+        let val=camel;
+        for(const p of pts) val=val?.[p];
+        return{exists:()=>val!=null,val:()=>val};
+      }
+      const{data}=await _sb.from(i.table).select('*').eq('id',i.id).single();
+      if(!data)return{exists:()=>false,val:()=>null};
+      return{exists:()=>true,val:()=>toCamel(data),key:i.id};
+    }catch(e){console.error('db.once err',e,this.path);return{exists:()=>false,val:()=>null,forEach:()=>{}};}
+  }
+
+  on(type,cb){
+    this.once(type).then(s=>cb(s));
+    const iv=setInterval(()=>this.once(type).then(s=>cb(s)),8000);
+    this._ivals.push(iv);
+    return cb;
+  }
+  off(t,cb){this._ivals.forEach(i=>clearInterval(i));}
+
+  async set(val){
+    const i=this._info();
+    if(i.isSettings){await _sb.from('app_settings').upsert({key:i.key,value:val});return;}
+    if(i.id && !i.subPath){
+      if(typeof val==='object'&&val!==null){
+        const snake=toSnake(val);
+        if(!snake.id)snake.id=i.id;
+        await _sb.from(i.table).upsert(snake);
+      } else {
+        // scalar field update - get record and update
+        const{data}=await _sb.from(i.table).select('*').eq('id',i.id).single();
+        if(data){await _sb.from(i.table).update({[i.subPath||'value']:val}).eq('id',i.id);}
+      }
+      return;
+    }
+    if(i.id && i.subPath){
+      const{data}=await _sb.from(i.table).select('*').eq('id',i.id).single();
+      if(data){
+        const camel=toCamel(data);
+        const pts=i.subPath.split('/');
+        let obj=camel;
+        for(let j=0;j<pts.length-1;j++){if(!obj[pts[j]])obj[pts[j]]={};obj=obj[pts[j]];}
+        obj[pts[pts.length-1]]=val;
+        await _sb.from(i.table).update(toSnake(camel)).eq('id',i.id);
+      }
+    }
+  }
+
+  async update(data){
+    const i=this._info();
+    if(i.isSettings){
+      const{data:ex}=await _sb.from('app_settings').select('value').eq('key',i.key).single();
+      await _sb.from('app_settings').upsert({key:i.key,value:{...(ex?.value||{}),...data}});
+      return;
+    }
+    if(!i.id)return;
+    const hasPaths=Object.keys(data).some(k=>k.includes('/'));
+    if(hasPaths){
+      const{data:ex}=await _sb.from(i.table).select('*').eq('id',i.id).single();
+      const camel=toCamel(ex||{});
+      for(const k in data){
+        const pts=k.split('/');let obj=camel;
+        for(let j=0;j<pts.length-1;j++){if(!obj[pts[j]])obj[pts[j]]={};obj=obj[pts[j]];}
+        obj[pts[pts.length-1]]=data[k];
+      }
+      await _sb.from(i.table).update(toSnake(camel)).eq('id',i.id);
+      return;
+    }
+    await _sb.from(i.table).update(toSnake(data)).eq('id',i.id);
+  }
+
+  async remove(){
+    const i=this._info();
+    if(!i.id)return;
+    if(i.subPath){
+      const{data}=await _sb.from(i.table).select('*').eq('id',i.id).single();
+      if(data){
+        const camel=toCamel(data);
+        const pts=i.subPath.split('/');
+        let obj=camel;
+        for(let j=0;j<pts.length-1;j++)obj=obj?.[pts[j]];
+        if(obj)delete obj[pts[pts.length-1]];
+        await _sb.from(i.table).update(toSnake(camel)).eq('id',i.id);
+      }
+      return;
+    }
+    await _sb.from(i.table).delete().eq('id',i.id);
+  }
+
+  async push(data){
+    const i=this._info();
+    const id=crypto.randomUUID();
+    if(i.uid){
+      await _sb.from('notifications').insert({id,uid:i.uid,is_global:false,...toSnake(data||{})});
+      return{key:id};
+    }
+    if(i.table==='coin_history'||(i.subPath==='coinHistory')){
+      await _sb.from('coin_history').insert({id,uid:i.id,...toSnake(data||{})});
+      return{key:id};
+    }
+    if(i.id && i.subPath && i.subPath.includes('Team')){
+      const{data:ex}=await _sb.from('users').select('*').eq('id',i.id).single();
+      const camel=toCamel(ex||{});
+      const tk=i.subPath.split('/')[0];
+      if(!camel[tk])camel[tk]={};
+      camel[tk][id]=data;
+      await _sb.from('users').update(toSnake(camel)).eq('id',i.id);
+      return{key:id};
+    }
+    const snake=toSnake(data||{});
+    snake.id=id;
+    await _sb.from(i.table).insert(snake);
+    return{key:id};
+  }
+}
+
+// ====== AUTH ======
+let auth={
+  currentUser:null,
+  onAuthStateChanged(cb){
+    _sb.auth.onAuthStateChange((_,session)=>{
+      const u=session?.user||null;
+      if(u) u.uid=u.id;
+      auth.currentUser=u;
+      cb(u);
+    });
+    _sb.auth.getSession().then(({data:{session}})=>{
+      const u=session?.user||null;
+      if(u) u.uid=u.id;
+      auth.currentUser=u;
+      cb(u);
+    });
+  },
+  async signOut(){await _sb.auth.signOut();}
+};
+
+let db_orig=db;
 
 let U=null, UD=null, allTournaments={}, currentSpecialTab='weekly', currentMatchTab='upcoming';
 let countdownInterval=null, dailyInterval=null, listeners=[], paymentSettings={};
@@ -638,17 +853,15 @@ async function googleSignIn(){
   if(btn){ btn.disabled=true; btn.style.opacity='0.7'; }
   document.getElementById('authLoading').classList.add('show');
   try{
-    const provider = new firebase.auth.GoogleAuthProvider();
-    provider.addScope('profile');
-    provider.addScope('email');
-    await auth.signInWithPopup(provider);
-    // auth.onAuthStateChanged will handle the rest
+    const {error} = await _sb.auth.signInWithOAuth({
+      provider:'google',
+      options:{redirectTo: window.location.href}
+    });
+    if(error) throw error;
   }catch(e){
     document.getElementById('authLoading').classList.remove('show');
     if(btn){ btn.disabled=false; btn.style.opacity='1'; }
-    if(e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request'){
-      toast('Sign in failed: '+e.message,'error');
-    }
+    toast('Sign in failed: '+e.message,'error');
   }
 }
 
