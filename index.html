@@ -819,14 +819,15 @@ window.addEventListener('load',()=>{
   setTimeout(hideSplash, 1200);
 
   auth.onAuthStateChanged(async(user)=>{
-    // Only allow Google-authenticated users (not anonymous)
-    if(user && !user.isAnonymous && user.providerData && user.providerData.length > 0){
-      isGoogleUser = user.providerData[0].providerId === 'google.com';
+    // Only allow Google-authenticated users
+    if(user && user.app_metadata && user.app_metadata.provider){
+      isGoogleUser = user.app_metadata.provider === 'google';
+      const meta = user.user_metadata || {};
       U = {
         uid: user.uid,
-        displayName: user.displayName || 'Player_'+user.uid.slice(0,6),
+        displayName: meta.full_name || meta.name || user.email || ('Player_'+user.uid.slice(0,6)),
         email: user.email || '',
-        photoURL: user.photoURL || ''
+        photoURL: meta.avatar_url || meta.picture || ''
       };
       document.getElementById('loginScreen').classList.remove('show');
       document.getElementById('loginScreen').classList.add('hide');
