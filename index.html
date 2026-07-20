@@ -636,6 +636,16 @@ class DbRef {
   }
 
   async once(t){
+    try { return await this._onceInner(t); }
+    catch(e){
+      if(/schema cache|PGRST/i.test(e.message||'')){
+        await new Promise(r=>setTimeout(r,900));
+        try { return await this._onceInner(t); } catch(e2){ throw e2; }
+      }
+      throw e;
+    }
+  }
+  async _onceInner(t){
     const i=this._info();
     try{
       if(i.isSettings){
