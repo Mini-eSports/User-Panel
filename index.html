@@ -28,6 +28,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 #splash .logo-text{font-size:28px;font-weight:900;color:var(--yellow);margin-top:12px;text-shadow:0 0 20px rgba(255,215,0,0.5)}
 #splash .loader{width:40px;height:40px;border:3px solid #333;border-top-color:var(--yellow);border-radius:50%;animation:spin 1s linear infinite;margin-top:24px}
 @keyframes spin{to{transform:rotate(360deg)}}
+.btn-spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(0,0,0,0.25);border-top-color:currentColor;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:4px;}
 @keyframes pulse-fire{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
 /* LOGIN */
 #loginScreen{position:fixed;inset:0;z-index:9998;background:linear-gradient(135deg,#000 0%,#0a0005 50%,#000 100%);display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;overflow:hidden}
@@ -88,12 +89,20 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .nav-item svg{width:22px;height:22px;fill:currentColor}
 /* APPROVAL BANNER */
 .approval-banner{background:rgba(255,215,0,0.08);border:1px solid var(--byellow);border-radius:10px;padding:10px 12px;margin:10px 14px 0;text-align:center;font-size:12px;color:var(--yellow)}
-/* CARDS */
-.t-card{background:var(--card);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:10px;margin-bottom:8px;position:relative;transition:all .1s ease;touch-action:manipulation}
+/* CARDS — Premium Esports Style */
+.t-card{background:var(--card);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:10px;margin-bottom:12px;position:relative;transition:transform .15s ease, box-shadow .15s ease;touch-action:manipulation;box-shadow:0 4px 18px rgba(0,0,0,0.35);}
 .t-card:active{transform:scale(0.98)}
-.t-card-special{border:1px solid;border-image:linear-gradient(135deg,var(--yellow),var(--red)) 1}
+.t-card-special{border:1px solid;border-image:linear-gradient(135deg,var(--yellow),var(--red)) 1;box-shadow:0 0 22px rgba(255,215,0,0.15), 0 4px 18px rgba(0,0,0,0.4);animation:specialGlow 3s ease-in-out infinite;}
+@keyframes specialGlow{0%,100%{box-shadow:0 0 18px rgba(255,215,0,0.12), 0 4px 18px rgba(0,0,0,0.4);}50%{box-shadow:0 0 30px rgba(255,215,0,0.26), 0 4px 18px rgba(0,0,0,0.4);}}
+.t-card-topbar{position:relative;overflow:hidden;}
+.t-card-topbar::after{content:'';position:absolute;top:0;left:-40%;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.55),transparent);animation:topbarShine 3.2s ease-in-out infinite;}
+@keyframes topbarShine{0%{left:-40%;}55%{left:110%;}100%{left:110%;}}
+.t-prize-glow{text-shadow:0 0 12px currentColor;}
+.t-slotbar-fill{position:relative;overflow:hidden;}
+.t-slotbar-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,255,255,0) 0%,rgba(255,255,255,0.35) 50%,rgba(255,255,255,0) 100%);animation:slotShine 2.4s linear infinite;}
+@keyframes slotShine{0%{transform:translateX(-100%);}100%{transform:translateX(100%);}}
 .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:6px;font-size:9px;font-weight:700;text-transform:uppercase}
-.badge-live{background:rgba(255,0,0,0.15);color:var(--red);border:1px solid var(--bred)}
+.badge-live{background:rgba(255,0,0,0.15);color:var(--red);border:1px solid var(--bred);box-shadow:0 0 8px rgba(255,0,0,0.25);}
 .badge-upcoming{background:rgba(255,215,0,0.1);color:var(--yellow);border:1px solid var(--byellow)}
 .badge-completed{background:rgba(255,255,255,0.06);color:var(--dim)}
 .live-dot{width:5px;height:5px;background:var(--red);border-radius:50%;animation:live-pulse 1.5s infinite;display:inline-block}
@@ -672,16 +681,17 @@ class DbRef {
 
   async set(val){
     const i=this._info();
-    if(i.isSettings){await _sb.from('app_settings').upsert({key:i.key,value:val});return;}
+    if(i.isSettings){const{error}=await _sb.from('app_settings').upsert({key:i.key,value:val});if(error)throw error;return;}
     if(i.id && !i.subPath){
       if(typeof val==='object'&&val!==null){
         const snake=toSnake(val);
         if(!snake.id)snake.id=i.id;
-        await _sb.from(i.table).upsert(snake);
+        const{error}=await _sb.from(i.table).upsert(snake);
+        if(error)throw error;
       } else {
         // scalar field update - get record and update
         const{data}=await _sb.from(i.table).select('*').eq('id',i.id).single();
-        if(data){await _sb.from(i.table).update({[i.subPath||'value']:val}).eq('id',i.id);}
+        if(data){const{error}=await _sb.from(i.table).update({[i.subPath||'value']:val}).eq('id',i.id);if(error)throw error;}
       }
       return;
     }
@@ -693,7 +703,8 @@ class DbRef {
         let obj=camel;
         for(let j=0;j<pts.length-1;j++){if(!obj[pts[j]])obj[pts[j]]={};obj=obj[pts[j]];}
         obj[pts[pts.length-1]]=val;
-        await _sb.from(i.table).update(toSnake(camel)).eq('id',i.id);
+        const{error}=await _sb.from(i.table).update(toSnake(camel)).eq('id',i.id);
+        if(error)throw error;
       }
     }
   }
@@ -702,7 +713,8 @@ class DbRef {
     const i=this._info();
     if(i.isSettings){
       const{data:ex}=await _sb.from('app_settings').select('value').eq('key',i.key).single();
-      await _sb.from('app_settings').upsert({key:i.key,value:{...(ex?.value||{}),...data}});
+      const{error}=await _sb.from('app_settings').upsert({key:i.key,value:{...(ex?.value||{}),...data}});
+      if(error)throw error;
       return;
     }
     if(!i.id)return;
@@ -715,10 +727,12 @@ class DbRef {
         for(let j=0;j<pts.length-1;j++){if(!obj[pts[j]])obj[pts[j]]={};obj=obj[pts[j]];}
         obj[pts[pts.length-1]]=data[k];
       }
-      await _sb.from(i.table).update(toSnake(camel)).eq('id',i.id);
+      const{error}=await _sb.from(i.table).update(toSnake(camel)).eq('id',i.id);
+      if(error)throw error;
       return;
     }
-    await _sb.from(i.table).update(toSnake(data)).eq('id',i.id);
+    const{error}=await _sb.from(i.table).update(toSnake(data)).eq('id',i.id);
+    if(error)throw error;
   }
 
   async remove(){
@@ -732,22 +746,26 @@ class DbRef {
         let obj=camel;
         for(let j=0;j<pts.length-1;j++)obj=obj?.[pts[j]];
         if(obj)delete obj[pts[pts.length-1]];
-        await _sb.from(i.table).update(toSnake(camel)).eq('id',i.id);
+        const{error}=await _sb.from(i.table).update(toSnake(camel)).eq('id',i.id);
+        if(error)throw error;
       }
       return;
     }
-    await _sb.from(i.table).delete().eq('id',i.id);
+    const{error}=await _sb.from(i.table).delete().eq('id',i.id);
+    if(error)throw error;
   }
 
   async push(data){
     const i=this._info();
     const id=crypto.randomUUID();
     if(i.uid){
-      await _sb.from('notifications').insert({id,uid:i.uid,is_global:false,...toSnake(data||{})});
+      const{error}=await _sb.from('notifications').insert({id,uid:i.uid,is_global:false,...toSnake(data||{})});
+      if(error)throw error;
       return{key:id};
     }
     if(i.table==='coin_history'||(i.subPath==='coinHistory')){
-      await _sb.from('coin_history').insert({id,uid:i.id,...toSnake(data||{})});
+      const{error}=await _sb.from('coin_history').insert({id,uid:i.id,...toSnake(data||{})});
+      if(error)throw error;
       return{key:id};
     }
     if(i.id && i.subPath && i.subPath.includes('Team')){
@@ -756,12 +774,14 @@ class DbRef {
       const tk=i.subPath.split('/')[0];
       if(!camel[tk])camel[tk]={};
       camel[tk][id]=data;
-      await _sb.from('users').update(toSnake(camel)).eq('id',i.id);
+      const{error}=await _sb.from('users').update(toSnake(camel)).eq('id',i.id);
+      if(error)throw error;
       return{key:id};
     }
     const snake=toSnake(data||{});
     snake.id=id;
-    await _sb.from(i.table).insert(snake);
+    const{error}=await _sb.from(i.table).insert(snake);
+    if(error)throw error;
     return{key:id};
   }
 }
@@ -1099,37 +1119,37 @@ function tournamentCard(t,special=false){
   const slotBarBg = pct>=90 ? 'var(--red)' : (isPaid ? 'linear-gradient(90deg,var(--yellow3),var(--yellow))' : 'linear-gradient(90deg,#3399ff,#64c8ff)');
   const pillBg = isPaid ? 'rgba(255,215,0,0.1)' : 'rgba(100,200,255,0.1)';
 
-  return '<div class="t-card" data-name="'+esc(t.name||'')+'" style="border:1px solid '+cardBorder+';background:linear-gradient(135deg,#0d0d0d 0%,#111 100%);padding:0;overflow:hidden;margin-bottom:10px;">'+
-    '<div style="height:3px;background:'+topBar+';"></div>'+
-    '<div style="padding:12px;">'+
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">'+
+  return '<div class="t-card'+(special?' t-card-special':'')+'" data-name="'+esc(t.name||'')+'" style="border:1px solid '+cardBorder+';background:linear-gradient(135deg,#0d0d0d 0%,#111 100%);padding:0;overflow:hidden;margin-bottom:12px;">'+
+    '<div class="t-card-topbar" style="height:3px;background:'+topBar+';"></div>'+
+    '<div style="padding:14px;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">'+
         '<div style="flex:1;min-width:0;">'+
           statusBadge+
-          '<div class="t-name" style="font-size:14px;margin-top:5px;">'+esc(t.name||'Tournament')+'</div>'+
+          '<div class="t-name" style="font-size:15px;letter-spacing:0.2px;margin-top:6px;">'+esc(t.name||'Tournament')+'</div>'+
         '</div>'+
         '<div style="text-align:right;flex-shrink:0;margin-left:8px;">'+
-          '<div style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;">Prize Pool</div>'+
-          '<div style="font-size:15px;font-weight:900;color:'+accentColor+';">'+prizeLabel+'</div>'+
+          '<div style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px;">Prize Pool</div>'+
+          '<div class="t-prize-glow" style="font-size:17px;font-weight:900;color:'+accentColor+';">'+prizeLabel+'</div>'+
         '</div>'+
       '</div>'+
-      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">'+
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">'+
         '<span style="background:rgba(255,255,255,0.06);border-radius:20px;padding:4px 10px;font-size:10px;font-weight:600;color:#ccc;">'+modeIcon+' '+esc(t.gameMode||'Solo')+'</span>'+
         '<span style="background:rgba(255,255,255,0.06);border-radius:20px;padding:4px 10px;font-size:10px;font-weight:600;color:#ccc;">🗺 '+esc(t.map||'-')+'</span>'+
         '<span style="background:'+pillBg+';border-radius:20px;padding:4px 10px;font-size:10px;font-weight:700;color:'+accentColor+';">Entry: '+entryLabel+'</span>'+
         timeHtml+cdHtml+
       '</div>'+
-      '<div style="margin-bottom:10px;">'+
-        '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-bottom:4px;">'+
-          '<span>Slots Filled</span>'+
-          '<span style="color:'+(isFull?'var(--red)':'#fff')+';font-weight:700;">'+(t.filledSlots||0)+'/'+(t.maxSlots||0)+'</span>'+
+      '<div style="margin-bottom:12px;">'+
+        '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-bottom:5px;">'+
+          '<span style="text-transform:uppercase;letter-spacing:0.5px;">Slots Filled</span>'+
+          '<span style="color:'+(isFull?'var(--red)':'#fff')+';font-weight:800;">'+(t.filledSlots||0)+'/'+(t.maxSlots||0)+'</span>'+
         '</div>'+
-        '<div style="height:5px;background:#222;border-radius:3px;overflow:hidden;">'+
-          '<div style="height:100%;width:'+pct+'%;background:'+slotBarBg+';border-radius:3px;"></div>'+
+        '<div style="height:6px;background:#1a1a1a;border-radius:4px;overflow:hidden;">'+
+          '<div class="t-slotbar-fill" style="height:100%;width:'+pct+'%;background:'+slotBarBg+';border-radius:4px;transition:width .4s ease;"></div>'+
         '</div>'+
       '</div>'+
       '<div style="display:flex;gap:8px;">'+
-        '<button class="btn btn-outline" style="flex:1;padding:10px;" onclick="viewTournament(\''+t.id+'\')">📋 Details</button>'+
-        '<button class="'+joinClass+'" style="flex:1;padding:10px;'+joinStyle+'" onclick="'+joinOnclick+'">'+joinLabel+'</button>'+
+        '<button class="btn btn-outline" style="flex:1;padding:11px;border-radius:10px;" onclick="viewTournament(\''+t.id+'\')">📋 Details</button>'+
+        '<button class="'+joinClass+'" style="flex:1;padding:11px;border-radius:10px;'+joinStyle+'" onclick="'+joinOnclick+'">'+joinLabel+'</button>'+
       '</div>'+
     '</div>'+
   '</div>';
@@ -1398,8 +1418,8 @@ function renderAddMoneyModal(){
         </div>
         <input type="file" accept="image/*" id="ssInput" style="display:none;" onchange="previewSS(event)">
       </div>
-      <button class="btn btn-yellow btn-full" style="padding:13px;" onclick="submitAddMoney()">Submit for Verification</button>
-      <button class="btn btn-outline btn-full" style="margin-top:8px;" onclick="closeModal()">Cancel</button>`;
+      <button class="btn btn-yellow btn-full" style="padding:13px;" id="submitAddMoneyBtn" onclick="submitAddMoney()">Submit for Verification</button>
+      <button class="btn btn-outline btn-full" style="margin-top:8px;" id="cancelAddMoneyBtn" onclick="closeModal()">Cancel</button>`;
   }
   openModal(`<div class="modal-bar"></div>${amSteps()}${body}`);
 }
@@ -1423,7 +1443,11 @@ function addMoneyNext(){
   if(amt>maxAmt){toast('Maximum amount is ₹'+maxAmt,'error');return;}
   addMoneyAmount=amt;addMoneyStep=2;renderAddMoneyModal();
 }
+let _submittingDeposit=false;
 async function submitAddMoney(){
+  if(_submittingDeposit)return; // ignore duplicate clicks
+  const btn=document.getElementById('submitAddMoneyBtn');
+  const cancelBtn=document.getElementById('cancelAddMoneyBtn');
   const utr=document.getElementById('utrInput')?.value.trim();
   if(!utr){toast('UTR number is required','error');return;}
   if(!/^\d{12}$/.test(utr)){toast('UTR must be exactly 12 digits','error');return;}
@@ -1431,11 +1455,33 @@ async function submitAddMoney(){
   if(!fi||!fi.files.length){toast('Please upload payment screenshot','error');return;}
   const file=fi.files[0];
   if(file.size>5000000){toast('File too large (max 5MB)','error');return;}
-  try{
-    const base64=await fileToBase64(file);
-    await db.ref('addMoneyRequests').push({uid:U.uid,amount:addMoneyAmount,utr,screenshotBase64:base64,status:'pending',createdAt:Date.now()});
-    closeModal();toast('Payment submitted! Awaiting verification.','success');
-  }catch(e){toast('Error: '+e.message,'error');}
+
+  // Instant response: lock the button immediately, no waiting for network
+  _submittingDeposit=true;
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="btn-spinner"></span> Processing...';}
+  if(cancelBtn)cancelBtn.disabled=true;
+
+  const doSubmit=async(retryCount)=>{
+    try{
+      if(btn)btn.innerHTML='<span class="btn-spinner"></span> Uploading screenshot...';
+      const base64=await fileToBase64(file);
+      if(btn)btn.innerHTML='<span class="btn-spinner"></span> Submitting...';
+      await db.ref('addMoneyRequests').push({uid:U.uid,amount:addMoneyAmount,utr,screenshotBase64:base64,status:'pending',createdAt:Date.now()});
+      closeModal();toast('Payment submitted! Awaiting verification.','success');
+      _submittingDeposit=false;
+    }catch(e){
+      if(retryCount<2 && (!navigator.onLine || /network|fetch/i.test(e.message||''))){
+        if(btn)btn.innerHTML='<span class="btn-spinner"></span> Retrying...';
+        setTimeout(()=>doSubmit(retryCount+1), 1500);
+        return;
+      }
+      _submittingDeposit=false;
+      if(btn){btn.disabled=false;btn.innerHTML='Submit for Verification';}
+      if(cancelBtn)cancelBtn.disabled=false;
+      toast(!navigator.onLine?'No internet connection. Please try again.':'Error: '+(e.message||'Submission failed'),'error');
+    }
+  };
+  doSubmit(0);
 }
 
 // ====== WITHDRAW ======
@@ -1698,46 +1744,89 @@ function openFirstTimeProfile(){
     <p style="color:var(--dim);font-size:13px;margin-bottom:16px;">Enter your Free Fire details to join tournaments.</p>
     <div class="form-group"><label>In-Game Name (IGN) *</label><input class="form-input" type="text" id="ftIGN" placeholder="Your exact Free Fire IGN" maxlength="30" value="${esc(UD.displayName&&UD.displayName.length<=20?UD.displayName:'')}" style="margin-top:5px;"></div>
     <div class="form-group"><label>FF UID (8-12 digits) *</label><input class="form-input" type="text" id="ftFFUID" placeholder="Your Free Fire UID" inputmode="numeric" maxlength="12" style="margin-top:5px;"></div>
-    <button class="btn btn-yellow btn-full" style="padding:13px;" onclick="submitFirstTimeProfile()">Send for Verification</button>
+    <button class="btn btn-yellow btn-full" style="padding:13px;" id="ftSubmitBtn" onclick="confirmFirstTimeProfile()">Send for Verification</button>
     <p style="color:var(--dim);font-size:11px;text-align:center;margin-top:10px;">You can browse while pending approval</p>
   `);
 }
-async function submitFirstTimeProfile(){
+function confirmFirstTimeProfile(){
   const ign=(document.getElementById('ftIGN')?.value||'').trim();
   const ffuid=(document.getElementById('ftFFUID')?.value||'').trim();
   if(!ign){toast('Enter your IGN','error');return;}
   if(!ffuid||!/^\d{8,12}$/.test(ffuid)){toast('FF UID must be 8-12 digits','error');return;}
+  openModal(`<div class="modal-bar"></div>
+    <h3>⚠ One-Time Setup</h3>
+    <p style="color:var(--dim);font-size:13px;line-height:1.6;margin-bottom:18px;">FF UID can only be set once. After submitting you will only be able to change your IGN. UID cannot be changed later.</p>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-outline" style="flex:1;padding:12px;" onclick="openFirstTimeProfileRestore('${esc(ign)}','${esc(ffuid)}')">Cancel</button>
+      <button class="btn btn-yellow" style="flex:1;padding:12px;" id="ftConfirmBtn" onclick="submitFirstTimeProfile('${esc(ign)}','${esc(ffuid)}')">Continue</button>
+    </div>
+  `);
+}
+function openFirstTimeProfileRestore(ign,ffuid){
+  openFirstTimeProfile();
+  setTimeout(()=>{ const i=document.getElementById('ftIGN'), f=document.getElementById('ftFFUID'); if(i)i.value=ign; if(f)f.value=ffuid; },0);
+}
+let _submittingFirstProfile=false;
+async function submitFirstTimeProfile(ign,ffuid){
+  if(_submittingFirstProfile)return;
+  if(!ign){toast('Enter your IGN','error');return;}
+  if(!ffuid||!/^\d{8,12}$/.test(ffuid)){toast('FF UID must be 8-12 digits','error');return;}
+  _submittingFirstProfile=true;
+  const btn=document.getElementById('ftConfirmBtn');
+  const origHTML=btn?btn.innerHTML:'';
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="btn-spinner"></span> Submitting...';}
   try{
+    // Prevent duplicate pending requests
+    const snap = await db.ref('profileRequests').orderByChild('uid').equalTo(U.uid).once('value');
+    const existing = snap.exists()?Object.values(snap.val()||{}):[];
+    if(existing.some(r=>r.status==='pending')){
+      toast('Your profile update request is already pending.','error');
+      _submittingFirstProfile=false;
+      if(btn){btn.disabled=false;btn.innerHTML=origHTML;}
+      return;
+    }
     await db.ref('users/'+U.uid).update({ign,ffuid,profileUpdatePending:true});
     await db.ref('profileRequests').push({uid:U.uid,displayName:UD?.displayName||'Player_'+U.uid.slice(0,6),email:UD?.email||'',ign,ffuid,status:'pending',createdAt:Date.now()});
     closeModal();toast('Profile submitted! Waiting for admin approval.','success');
   }catch(e){toast('Error: '+e.message,'error');}
+  finally{ _submittingFirstProfile=false; if(btn){btn.disabled=false;btn.innerHTML=origHTML;} }
 }
+
+// ====== PROFILE UPDATE (IGN only — UID is permanent after first setup) ======
 function openProfileUpdate(){
   if(!UD)return;
   openModal(`<div class="modal-bar"></div>
     <h3>✎ Request Profile Update</h3>
     <div class="form-group"><label>In-Game Name (IGN)</label><input class="form-input" type="text" id="puIGN" placeholder="Your IGN" value="${esc(UD?.ign||'')}" style="margin-top:5px;"></div>
-    <div class="form-group"><label>FF UID (8-12 digits)</label><input class="form-input" type="text" id="puFFUID" placeholder="Your FF UID" value="${esc(UD?.ffuid||'')}" style="margin-top:5px;"></div>
-    <button class="btn btn-yellow btn-full" style="padding:13px;" onclick="submitProfileUpdate()">Submit Request</button>
+    <div class="form-group"><label>FF UID</label><input class="form-input" type="text" value="${esc(UD?.ffuid||'')}" style="margin-top:5px;opacity:0.6;" disabled></div>
+    <p style="color:var(--dim);font-size:11px;margin-top:-8px;margin-bottom:14px;">🔒 FF UID cannot be changed once set.</p>
+    <button class="btn btn-yellow btn-full" style="padding:13px;" id="puSubmitBtn" onclick="submitProfileUpdate()">Submit Request</button>
     <button class="btn btn-outline btn-full" style="margin-top:8px;" onclick="closeModal()">Cancel</button>
   `);
 }
+let _submittingProfileUpdate=false;
 async function submitProfileUpdate(){
+  if(_submittingProfileUpdate)return;
   const ign=(document.getElementById('puIGN')?.value||'').trim();
-  const ffuid=(document.getElementById('puFFUID')?.value||'').trim();
   if(!ign){toast('Enter your IGN','error');return;}
-  if(!ffuid||!/^\d{8,12}$/.test(ffuid)){toast('FF UID must be 8-12 digits','error');return;}
+  if(ign===(UD?.ign||'')){toast('No changes to submit','error');return;}
+  _submittingProfileUpdate=true;
+  const btn=document.getElementById('puSubmitBtn');
+  const origHTML=btn?btn.innerHTML:'';
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="btn-spinner"></span> Submitting...';}
   try{
-    if(!UD?.ign&&!UD?.ffuid){
-      await db.ref('users/'+U.uid).update({ign,ffuid,profileUpdatePending:true});
-      await db.ref('profileRequests').push({uid:U.uid,displayName:UD?.displayName||'',email:UD?.email||'',ign,ffuid,status:'pending',createdAt:Date.now()});
-    }else{
-      await db.ref('profileUpdateRequests').push({uid:U.uid,displayName:UD?.displayName||'',currentIGN:UD?.ign||'',newIGN:ign,newFFUID:ffuid,status:'pending',createdAt:Date.now()});
-      await db.ref('users/'+U.uid).update({profileUpdatePending:true});
+    // Prevent duplicate pending requests
+    const snap = await db.ref('profileUpdateRequests').orderByChild('uid').equalTo(U.uid).once('value');
+    const existing = snap.exists()?Object.values(snap.val()||{}):[];
+    if(existing.some(r=>r.status==='pending')){
+      toast('Your profile update request is already pending.','error');
+      return;
     }
+    await db.ref('profileUpdateRequests').push({uid:U.uid,displayName:UD?.displayName||'',currentIGN:UD?.ign||'',newIGN:ign,newFFUID:UD?.ffuid||'',status:'pending',createdAt:Date.now()});
+    await db.ref('users/'+U.uid).update({profileUpdatePending:true});
     closeModal();toast('Profile update request submitted!','success');
   }catch(e){toast('Error: '+e.message,'error');}
+  finally{ _submittingProfileUpdate=false; if(btn){btn.disabled=false;btn.innerHTML=origHTML;} }
 }
 
 // ====== TEAMS ======
@@ -1863,8 +1952,22 @@ async function submitVoucher(){
   }catch(e){toast('Error: '+e.message,'error');}
 }
 
-// ====== SUPPORT ======
-function openSupport(){
+// ====== SUPPORT (WhatsApp-style chat) ======
+let _myOpenTicketId = null;
+let _userChatPollInterval = null;
+let _lastUserChatMsgCount = 0;
+
+async function openSupport(){
+  try{
+    const snap = await db.ref('supportRequests').orderByChild('uid').equalTo(U.uid).once('value');
+    const tickets = snap.exists()?Object.entries(snap.val()||{}).map(([id,v])=>({id,...v})):[];
+    const openTicket = tickets.filter(t=>t.status!=='resolved').sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))[0];
+    if(openTicket){ openSupportChat(openTicket.id, openTicket.type); return; }
+  }catch(e){}
+  openNewSupportForm();
+}
+
+function openNewSupportForm(){
   openModal(`<div class="modal-bar"></div>
     <h3 style="display:flex;align-items:center;gap:8px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>Contact Support</h3>
     <div class="form-group">
@@ -1879,19 +1982,99 @@ function openSupport(){
       </select>
     </div>
     <div class="form-group"><label>Message</label><textarea class="form-input" id="supMsg" placeholder="Describe your issue..." style="margin-top:5px;"></textarea></div>
-    <button class="btn btn-yellow btn-full" style="padding:13px;" onclick="submitSupport()">Send</button>
+    <button class="btn btn-yellow btn-full" style="padding:13px;" id="supSendBtn" onclick="submitSupport()">Send</button>
     <button class="btn btn-outline btn-full" style="margin-top:8px;" onclick="closeModal()">Cancel</button>
   `);
 }
+let _submittingSupport=false;
 async function submitSupport(){
+  if(_submittingSupport)return;
   const type=(document.getElementById('supType')?.value||'');
   const msg=(document.getElementById('supMsg')?.value||'').trim();
   if(!type){toast('Select issue type','error');return;}
   if(!msg){toast('Enter your message','error');return;}
+  _submittingSupport=true;
+  const btn=document.getElementById('supSendBtn');
+  const origHTML=btn?btn.innerHTML:'';
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="btn-spinner"></span> Sending...';}
   try{
-    await db.ref('supportRequests').push({uid:U.uid,ign:UD?.ign||'',type,message:msg,status:'pending',createdAt:Date.now()});
-    closeModal();toast('Support request sent!','success');
-  }catch(e){toast('Error: '+e.message,'error');}
+    const res = await db.ref('supportRequests').push({uid:U.uid,ign:UD?.ign||'',playerName:UD?.displayName||'',type,message:msg,status:'pending',unreadByAdmin:true,lastMessageAt:Date.now(),createdAt:Date.now()});
+    const ticketId = res.key;
+    await _sb.from('support_messages').insert({id:crypto.randomUUID(), ticket_id:ticketId, sender:'user', message:msg, created_at:Date.now()});
+    toast('Support request sent!','success');
+    openSupportChat(ticketId, type);
+  }catch(e){
+    toast('Error: '+e.message,'error');
+    _submittingSupport=false;
+    if(btn){btn.disabled=false;btn.innerHTML=origHTML;}
+  }
+}
+
+function openSupportChat(ticketId, issueType){
+  _myOpenTicketId = ticketId;
+  _submittingSupport=false;
+  openModal(`<div class="modal-bar"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <h3 style="margin:0;">🎧 Admin</h3>
+      <span style="font-size:11px;color:var(--dim);">${esc(issueType||'Support')}</span>
+    </div>
+    <div id="userChatMessages" style="height:46vh;overflow-y:auto;background:#0a0a0a;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;margin-bottom:10px;"></div>
+    <div style="display:flex;gap:8px;">
+      <input type="text" class="form-input" id="userChatInput" placeholder="Type a message..." style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();sendUserChatMessage();}">
+      <button class="btn btn-yellow" style="flex-shrink:0;padding:0 16px;" id="userChatSendBtn" onclick="sendUserChatMessage()">➤</button>
+    </div>
+    <button class="btn btn-outline btn-full" style="margin-top:10px;" onclick="closeUserChat()">Close</button>
+  `);
+  loadUserChatMessages(ticketId, true);
+  if(_userChatPollInterval) clearInterval(_userChatPollInterval);
+  _userChatPollInterval = setInterval(()=>loadUserChatMessages(ticketId,false), 3000);
+  db.ref('supportRequests/'+ticketId).update({unreadByUser:false}).catch(()=>{});
+}
+function closeUserChat(){
+  if(_userChatPollInterval){clearInterval(_userChatPollInterval);_userChatPollInterval=null;}
+  _myOpenTicketId = null;
+  closeModal();
+}
+async function loadUserChatMessages(ticketId, forceScroll){
+  try{
+    const {data,error} = await _sb.from('support_messages').select('*').eq('ticket_id',ticketId).order('created_at',{ascending:true});
+    if(error)throw error;
+    const msgs = data||[];
+    const container = document.getElementById('userChatMessages');
+    if(!container) return;
+    const wasAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 60;
+    if(msgs.length !== _lastUserChatMsgCount || forceScroll){
+      container.innerHTML = msgs.length ? msgs.map(m=>`
+        <div style="display:flex;justify-content:${m.sender==='user'?'flex-end':'flex-start'};">
+          <div style="max-width:78%;">
+            <div style="padding:9px 12px;border-radius:14px;font-size:13px;line-height:1.5;word-break:break-word;white-space:pre-wrap;${m.sender==='user'?'background:var(--yellow,#FFD700);color:#1a1400;border-bottom-right-radius:3px;':'background:#1c1c1c;color:#eee;border:1px solid rgba(255,215,0,0.15);border-bottom-left-radius:3px;'}">${esc(m.message)}</div>
+            <div style="font-size:9px;opacity:0.6;margin-top:3px;text-align:right;">${new Date(m.created_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</div>
+          </div>
+        </div>`).join('') : '<div style="text-align:center;color:var(--dim);font-size:12px;margin-top:20px;">No messages yet</div>';
+      if(forceScroll||wasAtBottom) container.scrollTop = container.scrollHeight;
+      _lastUserChatMsgCount = msgs.length;
+    }
+  }catch(e){console.error('chat load error',e);}
+}
+let _sendingUserChat=false;
+async function sendUserChatMessage(){
+  if(_sendingUserChat || !_myOpenTicketId) return;
+  const input = document.getElementById('userChatInput');
+  const msg = (input?.value||'').trim();
+  if(!msg) return;
+  _sendingUserChat=true;
+  const btn = document.getElementById('userChatSendBtn');
+  if(btn) btn.disabled=true;
+  if(input) input.value='';
+  try{
+    const {error} = await _sb.from('support_messages').insert({id:crypto.randomUUID(),ticket_id:_myOpenTicketId,sender:'user',message:msg,created_at:Date.now()});
+    if(error)throw error;
+    await _sb.from('support_requests').update({last_message_at:Date.now(), unread_by_admin:true}).eq('id',_myOpenTicketId);
+    await loadUserChatMessages(_myOpenTicketId,true);
+  }catch(e){
+    toast('Failed to send','error');
+    if(input) input.value = msg;
+  }finally{ _sendingUserChat=false; if(btn) btn.disabled=false; }
 }
 
 // ====== PRIVACY ======
@@ -1914,7 +2097,7 @@ function openModal(html){
   document.getElementById('modalContent').innerHTML=html;
   document.getElementById('modalOverlay').classList.add('show');
 }
-function closeModal(){document.getElementById('modalOverlay').classList.remove('show');}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('show');if(_userChatPollInterval){clearInterval(_userChatPollInterval);_userChatPollInterval=null;_myOpenTicketId=null;}}
 function closeModalOutside(e){if(e.target===document.getElementById('modalOverlay'))closeModal();}
 
 // ====== TOAST ======
