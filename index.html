@@ -1558,14 +1558,16 @@ function viewTournament(id){
     <button class="btn btn-outline btn-full" style="margin-top:8px;" onclick="closeModal()">Close</button>
   `);
 }
+let _joiningTournament = {};
 async function joinTournament(id){
+  if(_joiningTournament[id]) return; // full-duration lock, prevents race on slow networks
   if(!U||!UD){toast('Please wait...','info');return;}
   if(!UD.approved){toast('Profile not approved yet. Wait for admin verification.','error');return;}
   if(UD.profileUpdatePending){toast('Profile update pending approval. Please wait.','error');return;}
   const t=allTournaments[id];if(!t)return;
   if(t.status!=='upcoming'){toast('Tournament is not open for joining','error');return;}
   if((t.filledSlots||0)>=(t.maxSlots||0)){toast('Tournament is full','error');return;}
-  // Check already joined
+  _joiningTournament[id] = true;
   try{
     const ex=await db.ref('joinRequests').orderByChild('uid').equalTo(U.uid).once('value');
     const exV=ex.val()||{};
@@ -1599,6 +1601,7 @@ async function joinTournament(id){
     closeModal();
     toast('Join request submitted! Awaiting approval.','success');
   }catch(e){toast('Error: '+e.message,'error');}
+  finally{ delete _joiningTournament[id]; }
 }
 
 // ====== LEADERBOARD ======
