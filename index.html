@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta charset="UTF-8">
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Mini eSports</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
@@ -1403,7 +1404,9 @@ function renderAddMoneyModal(){
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
         ${[50,100,200,500].map(v=>'<button onclick="setAddAmt('+v+')" style="padding:9px 0;border-radius:10px;border:1px solid var(--byellow);background:transparent;color:var(--yellow);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation;">₹'+v+'</button>').join('')}
       </div>
-      <button class="btn btn-yellow btn-full" style="padding:13px;" onclick="addMoneyNext()">Continue →</button>
+      <button class="btn btn-yellow btn-full" style="padding:13px;" id="razorpayPayBtn" onclick="payWithRazorpay()">⚡ Pay Instantly (Card/UPI/NetBanking)</button>
+      <div style="text-align:center;color:var(--dim);font-size:11px;margin:10px 0;">— OR —</div>
+      <button class="btn btn-outline btn-full" style="padding:13px;" onclick="addMoneyNext()">Pay via UPI QR / Manual →</button>
       <button class="btn btn-outline btn-full" style="margin-top:8px;" onclick="closeModal()">Cancel</button>`;
   }else if(addMoneyStep===2){
     const upi=paymentSettings.upiId||'example@upi';
@@ -1465,6 +1468,65 @@ function addMoneyNext(){
   if(amt>maxAmt){toast('Maximum amount is ₹'+maxAmt,'error');return;}
   addMoneyAmount=amt;addMoneyStep=2;renderAddMoneyModal();
 }
+let _razorpayProcessing=false;
+async function payWithRazorpay(){
+  if(_razorpayProcessing)return;
+  const minAmt=paymentSettings.minDeposit||10;
+  const maxAmt=paymentSettings.maxDeposit||50000;
+  const amt=parseInt(document.getElementById('addAmountInput')?.value);
+  if(!amt||amt<minAmt){toast('Minimum amount is ₹'+minAmt,'error');return;}
+  if(amt>maxAmt){toast('Maximum amount is ₹'+maxAmt,'error');return;}
+  if(typeof Razorpay==='undefined'){toast('Payment gateway failed to load. Check your connection.','error');return;}
+  _razorpayProcessing=true;
+  const btn=document.getElementById('razorpayPayBtn');
+  const origHTML=btn?btn.innerHTML:'';
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="btn-spinner"></span> Opening...';}
+  try{
+    const {data:{session}}=await _sb.auth.getSession();
+    if(!session)throw new Error('Session expired. Please log in again.');
+    const res=await fetch(SUPABASE_URL+'/functions/v1/razorpay-create-order',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+      body:JSON.stringify({amount:amt})
+    });
+    const data=await res.json();
+    if(!res.ok)throw new Error(data.error||'Could not start payment');
+
+    const rzp=new Razorpay({
+      key:data.key_id,
+      amount:amt*100,
+      currency:'INR',
+      name:'Mini eSports',
+      description:'Add ₹'+amt+' to wallet',
+      order_id:data.order_id,
+      prefill:{name:UD?.displayName||'',email:UD?.email||''},
+      theme:{color:'#FFD700'},
+      handler:async function(response){
+        try{
+          const vRes=await fetch(SUPABASE_URL+'/functions/v1/razorpay-verify-payment',{
+            method:'POST',
+            headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+            body:JSON.stringify({
+              razorpay_order_id:response.razorpay_order_id,
+              razorpay_payment_id:response.razorpay_payment_id,
+              razorpay_signature:response.razorpay_signature
+            })
+          });
+          const vData=await vRes.json();
+          if(!vRes.ok)throw new Error(vData.error||'Payment verification failed');
+          closeModal();
+          toast('₹'+amt+' added to your wallet!','success');
+          listenUserData();
+        }catch(e){ toast('Verification failed: '+e.message+'. Contact support if amount was deducted.','error'); }
+      },
+      modal:{ ondismiss:function(){ _razorpayProcessing=false; if(btn){btn.disabled=false;btn.innerHTML=origHTML;} } }
+    });
+    rzp.on('payment.failed', function(resp){ toast('Payment failed: '+(resp.error?.description||'Please try again'),'error'); });
+    rzp.open();
+  }catch(e){ toast('Error: '+e.message,'error'); }
+  finally{ _razorpayProcessing=false; if(btn){btn.disabled=false;btn.innerHTML=origHTML;} }
+}
+
 let _submittingDeposit=false;
 async function submitAddMoney(){
   if(_submittingDeposit)return; // ignore duplicate clicks
