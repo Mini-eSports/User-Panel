@@ -102,6 +102,17 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .t-card-topbar::after{content:'';position:absolute;top:0;left:-40%;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.55),transparent);animation:topbarShine 3.2s ease-in-out infinite;}
 @keyframes topbarShine{0%{left:-40%;}55%{left:110%;}100%{left:110%;}}
 .t-prize-glow{text-shadow:0 0 12px currentColor;}
+.trophy-glow-icon{
+  display:inline-block;font-size:15px;
+  filter:drop-shadow(0 0 4px #FFD700) drop-shadow(0 0 8px rgba(100,180,255,0.6));
+  animation:trophyFloat 2.4s ease-in-out infinite;
+}
+@keyframes trophyFloat{
+  0%,100%{transform:translateY(0) rotate(0deg);filter:drop-shadow(0 0 4px #FFD700) drop-shadow(0 0 8px rgba(100,180,255,0.5));}
+  50%{transform:translateY(-2px) rotate(-4deg);filter:drop-shadow(0 0 8px #FFD700) drop-shadow(0 0 14px rgba(100,180,255,0.85));}
+}
+.prize-pool-trigger:active{transform:scale(0.94);}
+.prize-dist-row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:12px;margin-bottom:8px;}
 .t-slotbar-fill{position:relative;overflow:hidden;}
 .t-slotbar-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,255,255,0) 0%,rgba(255,255,255,0.35) 50%,rgba(255,255,255,0) 100%);animation:slotShine 2.4s linear infinite;}
 @keyframes slotShine{0%{transform:translateX(-100%);}100%{transform:translateX(100%);}}
@@ -504,10 +515,12 @@ textarea.form-input{resize:none;min-height:80px}
       <div style="background:var(--card);border-radius:14px;padding:14px;margin-bottom:10px;border:1px solid rgba(255,215,0,0.2);">
         <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:12px;display:flex;align-items:center;gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="var(--yellow)"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>Duo Partner</div>
         <div class="team-members" id="duoTeam"></div>
+        <div id="duoIncomingReqs" style="display:none;"></div>
       </div>
       <div style="background:var(--card);border-radius:14px;padding:14px;margin-bottom:12px;border:1px solid rgba(255,0,0,0.2);">
         <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:12px;display:flex;align-items:center;gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="var(--red)"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>Squad Team</div>
         <div class="team-members" id="squadTeam"></div>
+        <div id="squadIncomingReqs" style="display:none;"></div>
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
@@ -717,8 +730,9 @@ class DbRef {
         let obj=camel;
         for(let j=0;j<pts.length-1;j++){if(!obj[pts[j]])obj[pts[j]]={};obj=obj[pts[j]];}
         obj[pts[pts.length-1]]=val;
-        const{error}=await _sb.from(i.table).update(toSnake(camel)).eq('id',i.id);
+        const{data:updRows,error}=await _sb.from(i.table).update(toSnake(camel)).eq('id',i.id).select('id');
         if(error)throw error;
+        if(!updRows||updRows.length===0)throw new Error('Update failed: permission denied or record not found');
       }
     }
   }
@@ -741,12 +755,14 @@ class DbRef {
         for(let j=0;j<pts.length-1;j++){if(!obj[pts[j]])obj[pts[j]]={};obj=obj[pts[j]];}
         obj[pts[pts.length-1]]=data[k];
       }
-      const{error}=await _sb.from(i.table).update(toSnake(camel)).eq('id',i.id);
+      const{data:updRows,error}=await _sb.from(i.table).update(toSnake(camel)).eq('id',i.id).select('id');
       if(error)throw error;
+      if(!updRows||updRows.length===0)throw new Error('Update failed: permission denied or record not found');
       return;
     }
-    const{error}=await _sb.from(i.table).update(toSnake(data)).eq('id',i.id);
+    const{data:updRows,error}=await _sb.from(i.table).update(toSnake(data)).eq('id',i.id).select('id');
     if(error)throw error;
+    if(!updRows||updRows.length===0)throw new Error('Update failed: permission denied or record not found');
   }
 
   async remove(){
@@ -825,7 +841,7 @@ let db_orig=db;
 let U=null, UD=null, allTournaments={}, currentSpecialTab='weekly', currentMatchTab='upcoming';
 let countdownInterval=null, dailyInterval=null, listeners=[], paymentSettings={};
 let currentLbTab='score', currentHomeTab='paid';
-let addMoneyStep=1, addMoneyAmount=0;
+let addMoneyAmount=0;
 let isGoogleUser=false;
 
 // ═══ GLOBAL BUTTON CLICK GUARD — prevents double/rapid taps on ANY button ═══
@@ -1150,9 +1166,12 @@ function tournamentCard(t,special=false){
           statusBadge+
           '<div class="t-name" style="font-size:15px;letter-spacing:0.2px;margin-top:6px;">'+esc(t.name||'Tournament')+'</div>'+
         '</div>'+
-        '<div style="text-align:right;flex-shrink:0;margin-left:8px;">'+
+        '<div class="prize-pool-trigger" onclick="event.stopPropagation();openPrizeDistribution(\''+t.id+'\')" style="text-align:right;flex-shrink:0;margin-left:8px;cursor:pointer;touch-action:manipulation;">'+
           '<div style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px;">Prize Pool</div>'+
-          '<div class="t-prize-glow" style="font-size:17px;font-weight:900;color:'+accentColor+';">'+prizeLabel+'</div>'+
+          '<div style="display:flex;align-items:center;gap:4px;justify-content:flex-end;">'+
+            '<span class="trophy-glow-icon">🏆</span>'+
+            '<span class="t-prize-glow" style="font-size:17px;font-weight:900;color:'+accentColor+';">'+prizeLabel+'</span>'+
+          '</div>'+
         '</div>'+
       '</div>'+
       '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">'+
@@ -1365,109 +1384,44 @@ function loadTxHistory(){
       </div>`).join('');
   }).catch(e=>console.error(e));
 
-  db.ref('users/'+U.uid+'/coinHistory').limitToLast(15).once('value').then(snap=>{
-    const arr=snap.val()?Object.values(snap.val()).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)):[];
-    document.getElementById('coinHistory').innerHTML=arr.length?arr.map(c=>`
-      <div class="tx-item">
-        <div class="tx-amount" style="color:var(--yellow)">+${c.amount||0} 🪙</div>
-        <div style="font-size:10px;color:var(--dim)">${c.type||'coins'}</div>
+  db.ref('coinHistory').orderByChild('uid').equalTo(U.uid).limitToLast(30).once('value').then(snap=>{
+    const arr=[];
+    if(snap.exists())snap.forEach(c=>arr.push(c.val()));
+    arr.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    const typeLabels={daily_claim:'Daily Claim',voucher:'Voucher Redeemed',referral:'Referral Reward',tournament:'Tournament Reward',admin_adjustment:'Admin Adjustment'};
+    document.getElementById('coinHistory').innerHTML=arr.length?arr.map(c=>{
+      const isNeg=(c.amount||0)<0;
+      return `<div class="tx-item">
+        <div class="tx-amount" style="color:${isNeg?'var(--red)':'var(--yellow)'}">${isNeg?'':'+'}${c.amount||0} 🪙</div>
+        <div style="font-size:10px;color:var(--dim)">${typeLabels[c.type]||c.type||'Coins'}</div>
         <div style="font-size:10px;color:var(--dim2)">${fmtDate(c.createdAt)}</div>
-      </div>`).join(''):'<div class="empty-state"><div class="msg">No coin history</div></div>';
+      </div>`;
+    }).join(''):'<div class="empty-state"><div class="msg">No coin transactions found.</div></div>';
+  }).catch(e=>{
+    console.error('coin history error',e);
+    document.getElementById('coinHistory').innerHTML='<div class="empty-state"><div class="msg">No coin transactions found.</div></div>';
   });
 }
 
 // ====== ADD MONEY ======
 function openAddMoney(){
-  addMoneyStep=1;addMoneyAmount=0;
+  addMoneyAmount=0;
   renderAddMoneyModal();
-  // Load payment settings in background (non-blocking)
-  loadPaymentSettings().catch(()=>{});
-}
-function amSteps(){
-  const s=addMoneyStep;
-  return `<div class="steps">
-    <div class="step-dot ${s>=1?s>1?'done':'active':''}">${ s>1?'✓':'1'}</div>
-    <div class="step-line ${s>1?'done':''}"></div>
-    <div class="step-dot ${s>=2?s>2?'done':'active':''}">${ s>2?'✓':'2'}</div>
-    <div class="step-line ${s>2?'done':''}"></div>
-    <div class="step-dot ${s>=3?'active':''}">3</div>
-  </div>`;
 }
 function renderAddMoneyModal(){
   const minAmt=paymentSettings.minDeposit||10;
   const maxAmt=paymentSettings.maxDeposit||50000;
-  let body='';
-  if(addMoneyStep===1){
-    body=`<h3 style="margin-bottom:4px;">Enter Amount</h3>
-      <p style="font-size:12px;color:var(--yellow);margin-bottom:12px;">Amount (₹) — Min ₹${minAmt} · Max ₹${maxAmt}</p>
-      <input class="form-input" type="number" id="addAmountInput" min="${minAmt}" max="${maxAmt}" placeholder="Enter amount" value="${addMoneyAmount||''}" style="margin-bottom:12px;">
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
-        ${[50,100,200,500].map(v=>'<button onclick="setAddAmt('+v+')" style="padding:9px 0;border-radius:10px;border:1px solid var(--byellow);background:transparent;color:var(--yellow);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation;">₹'+v+'</button>').join('')}
-      </div>
-      <button class="btn btn-yellow btn-full" style="padding:13px;" id="razorpayPayBtn" onclick="payWithRazorpay()">⚡ Pay Instantly (Card/UPI/NetBanking)</button>
-      <div style="text-align:center;color:var(--dim);font-size:11px;margin:10px 0;">— OR —</div>
-      <button class="btn btn-outline btn-full" style="padding:13px;" onclick="addMoneyNext()">Pay via UPI QR / Manual →</button>
-      <button class="btn btn-outline btn-full" style="margin-top:8px;" onclick="closeModal()">Cancel</button>`;
-  }else if(addMoneyStep===2){
-    const upi=paymentSettings.upiId||'example@upi';
-    const enc=encodeURIComponent(upi);
-    body=`<h3 style="margin-bottom:12px;">Pay ₹${addMoneyAmount}</h3>
-      <div style="background:rgba(255,215,0,0.07);border:1px solid var(--byellow);border-radius:12px;padding:14px;margin-bottom:14px;">
-        <div style="font-size:10px;color:var(--dim);margin-bottom:5px;">PAY TO</div>
-        <div style="font-size:16px;font-weight:800;color:#fff;margin-bottom:3px;">${esc(upi)}</div>
-        <div style="font-size:12px;color:var(--dim);">Amount: <strong style="color:var(--yellow);">₹${addMoneyAmount}</strong></div>
-        <button class="copy-btn" style="margin-top:8px;" onclick="copyText('${esc(upi)}')">⎘ Copy UPI ID</button>
-      </div>
-      <div style="font-size:12px;font-weight:700;color:var(--yellow);margin-bottom:10px;">⚡ Choose Payment App:</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
-        <a href="gpay://upi/pay?pa=${enc}&pn=MinieSports&am=${addMoneyAmount}&cu=INR" style="display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;border-radius:11px;border:1px solid #333;background:#111;color:#fff;font-weight:700;font-size:12px;text-decoration:none;">G Google Pay</a>
-        <a href="phonepe://pay?pa=${enc}&pn=MinieSports&am=${addMoneyAmount}&cu=INR" style="display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;border-radius:11px;border:1px solid #333;background:#111;color:#fff;font-weight:700;font-size:12px;text-decoration:none;">♥ PhonePe</a>
-        <a href="paytmmp://pay?pa=${enc}&pn=MinieSports&am=${addMoneyAmount}&cu=INR" style="display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;border-radius:11px;border:1px solid #333;background:#111;color:#fff;font-weight:700;font-size:12px;text-decoration:none;">● Paytm</a>
-        <a href="upi://pay?pa=${enc}&pn=MinieSports&am=${addMoneyAmount}&cu=INR" style="display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;border-radius:11px;border:1px solid var(--byellow);background:#111;color:var(--yellow);font-weight:700;font-size:12px;text-decoration:none;">⊛ Any UPI App</a>
-      </div>
-      <p style="font-size:11px;color:var(--dim);margin-bottom:12px;">! Pay in the app, then come back and tap "I Have Paid".</p>
-      <button class="btn btn-yellow btn-full" style="padding:13px;" onclick="addMoneyStep=3;renderAddMoneyModal()">✓ I Have Paid →</button>
-      <button class="btn btn-outline btn-full" style="margin-top:8px;" onclick="closeModal()">Cancel</button>`;
-  }else{
-    body=`<h3 style="margin-bottom:12px;">Enter Transaction Details</h3>
-      <div class="form-group">
-        <label style="color:var(--yellow);">UTR Number (Mandatory)</label>
-        <input class="form-input" type="text" id="utrInput" placeholder="Enter 12-digit UTR" maxlength="12" inputmode="numeric" pattern="[0-9]{12}" style="margin-top:5px;">
-        <p style="font-size:10px;color:var(--dim);margin-top:3px;">Find UTR in your UPI app payment history</p>
-      </div>
-      <div class="form-group">
-        <label style="color:var(--yellow);">Payment Screenshot (Mandatory)</label>
-        <div id="ssUploadBox" onclick="document.getElementById('ssInput').click()" style="margin-top:5px;border:2px dashed #444;border-radius:12px;padding:24px;text-align:center;cursor:pointer;touch-action:manipulation;">
-          <div id="ssPreview" style="display:none;"><img id="ssPreviewImg" style="max-width:100%;max-height:110px;border-radius:8px;"></div>
-          <div id="ssUploadLabel"><div style="font-size:26px;margin-bottom:5px;">↑</div><div style="font-size:12px;color:var(--dim);">Tap to upload screenshot</div></div>
-        </div>
-        <input type="file" accept="image/*" id="ssInput" style="display:none;" onchange="previewSS(event)">
-      </div>
-      <button class="btn btn-yellow btn-full" style="padding:13px;" id="submitAddMoneyBtn" onclick="submitAddMoney()">Submit for Verification</button>
-      <button class="btn btn-outline btn-full" style="margin-top:8px;" id="cancelAddMoneyBtn" onclick="closeModal()">Cancel</button>`;
-  }
-  openModal(`<div class="modal-bar"></div>${amSteps()}${body}`);
-}
-function previewSS(e){
-  const file=e.target.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=ev=>{
-    document.getElementById('ssPreviewImg').src=ev.target.result;
-    document.getElementById('ssPreview').style.display='block';
-    document.getElementById('ssUploadLabel').style.display='none';
-  };
-  reader.readAsDataURL(file);
+  const body=`<h3 style="margin-bottom:4px;">Add Money</h3>
+    <p style="font-size:12px;color:var(--yellow);margin-bottom:12px;">Amount (₹) — Min ₹${minAmt} · Max ₹${maxAmt}</p>
+    <input class="form-input" type="number" id="addAmountInput" min="${minAmt}" max="${maxAmt}" placeholder="Enter amount" value="${addMoneyAmount||''}" style="margin-bottom:12px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
+      ${[50,100,200,500].map(v=>'<button onclick="setAddAmt('+v+')" style="padding:9px 0;border-radius:10px;border:1px solid var(--byellow);background:transparent;color:var(--yellow);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation;">₹'+v+'</button>').join('')}
+    </div>
+    <button class="btn btn-yellow btn-full" style="padding:13px;" id="razorpayPayBtn" onclick="payWithRazorpay()">⚡ Pay Instantly (Card/UPI/NetBanking)</button>
+    <button class="btn btn-outline btn-full" style="margin-top:8px;" onclick="closeModal()">Cancel</button>`;
+  openModal(`<div class="modal-bar"></div>${body}`);
 }
 function setAddAmt(v){const inp=document.getElementById('addAmountInput');if(inp)inp.value=v;addMoneyAmount=v;}
-function addMoneyNext(){
-  const minAmt=paymentSettings.minDeposit||10;
-  const maxAmt=paymentSettings.maxDeposit||50000;
-  const val=document.getElementById('addAmountInput')?.value;
-  const amt=parseInt(val);
-  if(!amt||amt<minAmt){toast('Minimum amount is ₹'+minAmt,'error');return;}
-  if(amt>maxAmt){toast('Maximum amount is ₹'+maxAmt,'error');return;}
-  addMoneyAmount=amt;addMoneyStep=2;renderAddMoneyModal();
-}
 let _razorpayProcessing=false;
 async function payWithRazorpay(){
   if(_razorpayProcessing)return;
@@ -1476,10 +1430,20 @@ async function payWithRazorpay(){
   const amt=parseInt(document.getElementById('addAmountInput')?.value);
   if(!amt||amt<minAmt){toast('Minimum amount is ₹'+minAmt,'error');return;}
   if(amt>maxAmt){toast('Maximum amount is ₹'+maxAmt,'error');return;}
-  if(typeof Razorpay==='undefined'){toast('Payment gateway failed to load. Check your connection.','error');return;}
-  _razorpayProcessing=true;
   const btn=document.getElementById('razorpayPayBtn');
   const origHTML=btn?btn.innerHTML:'';
+  if(typeof Razorpay==='undefined'){
+    // SDK may still be loading on a slow connection — wait briefly before giving up
+    if(btn){btn.disabled=true;btn.innerHTML='<span class="btn-spinner"></span> Loading payment gateway...';}
+    let waited=0;
+    while(typeof Razorpay==='undefined' && waited<6000){ await new Promise(r=>setTimeout(r,300)); waited+=300; }
+    if(typeof Razorpay==='undefined'){
+      if(btn){btn.disabled=false;btn.innerHTML=origHTML;}
+      toast('Payment gateway failed to load. Check your connection and tap the button to retry.','error');
+      return;
+    }
+  }
+  _razorpayProcessing=true;
   if(btn){btn.disabled=true;btn.innerHTML='<span class="btn-spinner"></span> Opening...';}
   try{
     const {data:{session}}=await _sb.auth.getSession();
@@ -1527,47 +1491,6 @@ async function payWithRazorpay(){
   finally{ _razorpayProcessing=false; if(btn){btn.disabled=false;btn.innerHTML=origHTML;} }
 }
 
-let _submittingDeposit=false;
-async function submitAddMoney(){
-  if(_submittingDeposit)return; // ignore duplicate clicks
-  const btn=document.getElementById('submitAddMoneyBtn');
-  const cancelBtn=document.getElementById('cancelAddMoneyBtn');
-  const utr=document.getElementById('utrInput')?.value.trim();
-  if(!utr){toast('UTR number is required','error');return;}
-  if(!/^\d{12}$/.test(utr)){toast('UTR must be exactly 12 digits','error');return;}
-  const fi=document.getElementById('ssInput');
-  if(!fi||!fi.files.length){toast('Please upload payment screenshot','error');return;}
-  const file=fi.files[0];
-  if(file.size>5000000){toast('File too large (max 5MB)','error');return;}
-
-  // Instant response: lock the button immediately, no waiting for network
-  _submittingDeposit=true;
-  if(btn){btn.disabled=true;btn.innerHTML='<span class="btn-spinner"></span> Processing...';}
-  if(cancelBtn)cancelBtn.disabled=true;
-
-  const doSubmit=async(retryCount)=>{
-    try{
-      if(btn)btn.innerHTML='<span class="btn-spinner"></span> Uploading screenshot...';
-      const base64=await fileToBase64(file);
-      if(btn)btn.innerHTML='<span class="btn-spinner"></span> Submitting...';
-      await db.ref('addMoneyRequests').push({uid:U.uid,amount:addMoneyAmount,utr,screenshotBase64:base64,status:'pending',createdAt:Date.now()});
-      closeModal();toast('Payment submitted! Awaiting verification.','success');
-      _submittingDeposit=false;
-    }catch(e){
-      if(retryCount<2 && (!navigator.onLine || /network|fetch/i.test(e.message||''))){
-        if(btn)btn.innerHTML='<span class="btn-spinner"></span> Retrying...';
-        setTimeout(()=>doSubmit(retryCount+1), 1500);
-        return;
-      }
-      _submittingDeposit=false;
-      if(btn){btn.disabled=false;btn.innerHTML='Submit for Verification';}
-      if(cancelBtn)cancelBtn.disabled=false;
-      toast(!navigator.onLine?'No internet connection. Please try again.':'Error: '+(e.message||'Submission failed'),'error');
-    }
-  };
-  doSubmit(0);
-}
-
 // ====== WITHDRAW ======
 function openWithdraw(){
   if(!UD){toast('Please wait...','info');return;}
@@ -1602,6 +1525,42 @@ async function submitWithdraw(maxAmt,minAmt,max2){
 }
 
 // ====== JOIN TOURNAMENT ======
+// ====== PRIZE DISTRIBUTION (auto-calculated 50/30/20) ======
+function buildPrizeDistributionHTML(prizePool, entryType){
+  const cur = entryType==='paid' ? '₹' : '🪙';
+  const tiers = [
+    {rank:'🥇 1st Prize',pct:50,color:'#FFD700',glow:'rgba(255,215,0,0.5)'},
+    {rank:'🥈 2nd Prize',pct:30,color:'#C0C0C0',glow:'rgba(192,192,192,0.4)'},
+    {rank:'🥉 3rd Prize',pct:20,color:'#CD7F32',glow:'rgba(205,127,50,0.4)'}
+  ];
+  return tiers.map(t=>{
+    const amt = Math.round((prizePool||0) * t.pct/100);
+    return `<div class="prize-dist-row" style="background:rgba(255,255,255,0.04);border:1px solid ${t.glow};">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:20px;filter:drop-shadow(0 0 5px ${t.glow});">${t.rank.split(' ')[0]}</span>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:#fff;">${t.rank.split(' ').slice(1).join(' ')}</div>
+          <div style="font-size:10px;color:var(--dim);">${t.pct}% of pool</div>
+        </div>
+      </div>
+      <div style="font-size:16px;font-weight:900;color:${t.color};text-shadow:0 0 8px ${t.glow};">${cur}${amt}</div>
+    </div>`;
+  }).join('');
+}
+function openPrizeDistribution(id){
+  const t=allTournaments[id];if(!t)return;
+  const cur = t.entryType==='paid' ? '₹' : '🪙';
+  openModal(`<div class="modal-bar"></div>
+    <div style="text-align:center;margin-bottom:16px;">
+      <div style="font-size:36px;margin-bottom:6px;filter:drop-shadow(0 0 10px #FFD700) drop-shadow(0 0 18px rgba(100,180,255,0.7));">🏆</div>
+      <div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px;">Total Prize Pool</div>
+      <div style="font-size:28px;font-weight:900;color:var(--yellow);text-shadow:0 0 14px rgba(255,215,0,0.5);">${cur}${t.prizePool||0}</div>
+    </div>
+    ${buildPrizeDistributionHTML(t.prizePool||0, t.entryType)}
+    <button class="btn btn-outline btn-full" style="margin-top:10px;" onclick="closeModal()">Close</button>
+  `);
+}
+
 function viewTournament(id){
   const t=allTournaments[id];if(!t)return;
   const el=t.entryType==='paid'?'₹'+(t.entryFee||0):'🪙'+(t.entryFee||0);
@@ -1614,7 +1573,9 @@ function viewTournament(id){
       ${[['Mode',t.gameMode],['Map',t.map],['Entry',el],['Prize',pl],['Slots',(t.filledSlots||0)+'/'+(t.maxSlots||0)],['Time',t.matchTime?new Date(t.matchTime).toLocaleString():'-']].map(kv=>'<div style="background:var(--card);border-radius:10px;padding:10px;"><div style="font-size:10px;color:var(--dim)">'+kv[0]+'</div><div style="font-weight:700;color:var(--yellow);font-size:13px;">'+esc(String(kv[1]||'-'))+'</div></div>').join('')}
     </div>
     ${t.description?'<p style="font-size:12px;color:var(--dim);margin-bottom:14px;">'+esc(t.description)+'</p>':''}
-    <button class="btn btn-yellow btn-full${canJoin?'':' btn-disabled'}" style="padding:13px;" onclick="joinTournament('${id}')">
+    <div style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">🏆 Prize Distribution</div>
+    ${buildPrizeDistributionHTML(t.prizePool||0, t.entryType)}
+    <button class="btn btn-yellow btn-full${canJoin?'':' btn-disabled'}" style="padding:13px;margin-top:6px;" onclick="joinTournament('${id}')">
       ${isFull?'TOURNAMENT FULL':t.status!=='upcoming'?t.status.toUpperCase():'JOIN TOURNAMENT'}
     </button>
     <button class="btn btn-outline btn-full" style="margin-top:8px;" onclick="closeModal()">Close</button>
@@ -1788,14 +1749,11 @@ function updateRankBadge(s){
 }
 function updateProfileCompletion(){
   let pct=0;
-  if(UD.ign)pct+=34;
-  if(UD.ffuid)pct+=33;
-  const hasDuo=UD.duoTeam&&Object.keys(UD.duoTeam||{}).length>0;
-  const hasSquad=UD.squadTeam&&Object.keys(UD.squadTeam||{}).length>0;
-  if(hasDuo||hasSquad)pct+=33;
+  if(UD.ign)pct+=50;
+  if(UD.ffuid)pct+=50;
   document.getElementById('profilePct').textContent=pct+'%';
   document.getElementById('profileFill').style.width=pct+'%';
-  document.getElementById('profileHint').textContent=pct>=100?'Profile complete! ★':pct>=67?'Almost there! Add team members':'Set IGN, FF UID & team to complete';
+  document.getElementById('profileHint').textContent=pct>=100?'Profile complete! ★':'Set your IGN & FF UID to complete your profile';
 }
 function updateAchievements(s){
   const score=(s.wins||0)*100+(s.kills||0)*10+(s.earnings||0);
@@ -1917,28 +1875,63 @@ async function submitProfileUpdate(){
 }
 
 // ====== TEAMS ======
-function renderTeams(){
-  if(!UD)return;
+let _incomingTeamReqs=[], _outgoingTeamReqs=[];
+async function renderTeams(){
+  if(!UD||!U)return;
   const myAv=UD?.photoURL?`<img src="${esc(UD.photoURL)}" style="width:100%;height:100%;object-fit:cover;">`:(UD?.displayName||'?').charAt(0).toUpperCase();
+
+  // Fetch current members + pending requests fresh each time (keeps UI/DB in sync)
+  let members=[], incoming=[], outgoing=[];
+  try{
+    const [mRes, inRes, outRes] = await Promise.all([
+      _sb.from('team_members').select('teammate_uid,mode,created_at').eq('uid',U.uid),
+      _sb.from('team_requests').select('id,requester_uid,mode,created_at').eq('target_uid',U.uid).eq('status','pending'),
+      _sb.from('team_requests').select('id,target_uid,mode,created_at').eq('requester_uid',U.uid).eq('status','pending')
+    ]);
+    members = mRes.data||[]; incoming = inRes.data||[]; outgoing = outRes.data||[];
+    if(members.length || incoming.length || outgoing.length){
+      const otherUids=[...new Set([...members.map(m=>m.teammate_uid),...incoming.map(r=>r.requester_uid),...outgoing.map(r=>r.target_uid)])];
+      const {data:users}=await _sb.from('users').select('id,ign,display_name,ffuid').in('id',otherUids);
+      const umap={}; (users||[]).forEach(u=>umap[u.id]=u);
+      members.forEach(m=>m._u=umap[m.teammate_uid]);
+      incoming.forEach(r=>r._u=umap[r.requester_uid]);
+      outgoing.forEach(r=>r._u=umap[r.target_uid]);
+    }
+  }catch(e){ console.error('team load error',e); }
+  _incomingTeamReqs=incoming; _outgoingTeamReqs=outgoing;
+
   ['duo','squad'].forEach(mode=>{
     const el=document.getElementById(mode+'Team');
     if(!el)return;
-    const team=UD?UD[mode+'Team']||{}:{};
     const max=mode==='duo'?1:3;
+    const myMembers=members.filter(m=>m.mode===mode);
+    const myIncoming=incoming.filter(r=>r.mode===mode);
+    const myOutgoing=outgoing.filter(r=>r.mode===mode);
+
     let html=`<div class="team-member">
       <div class="tm-avatar">${myAv}</div>
       <div class="tm-name">You</div>
       <div class="tm-crown">★</div>
     </div>`;
-    Object.entries(team).forEach(([k,v])=>{
-      const init=(v.name||v.ffuid||'?').charAt(0).toUpperCase();
+    myMembers.forEach(m=>{
+      const name=m._u?.ign||m._u?.display_name||'Player';
+      const init=name.charAt(0).toUpperCase();
       html+=`<div class="team-member">
         <div class="tm-avatar" style="font-size:18px;font-weight:700;color:#fff;background:#1a2a1a;">${init}</div>
-        <div class="tm-name">${esc(v.name||v.ffuid||'-')}</div>
-        <div class="tm-remove" onclick="removeTeammate('${mode}','${k}')">✕ Remove</div>
+        <div class="tm-name">${esc(name)}</div>
+        <div class="tm-remove" onclick="removeTeammate('${mode}','${m.teammate_uid}')">✕ Remove</div>
       </div>`;
     });
-    const remaining=max-Object.keys(team).length;
+    myOutgoing.forEach(r=>{
+      const name=r._u?.ign||r._u?.display_name||'Player';
+      html+=`<div class="team-member" style="opacity:0.7;">
+        <div class="tm-avatar" style="font-size:16px;background:#2a2410;color:var(--yellow);">⏳</div>
+        <div class="tm-name">${esc(name)}</div>
+        <div class="tm-remove" onclick="cancelTeamRequest('${r.id}')" style="color:var(--dim);">Pending · Cancel</div>
+      </div>`;
+    });
+    const filledSlots=myMembers.length+myOutgoing.length;
+    const remaining=Math.max(0,max-filledSlots);
     for(let i=0;i<remaining;i++){
       html+=`<div style="display:flex;flex-direction:column;align-items:center;">
         <div class="add-tm-btn" onclick="openAddTeammate('${mode}')">+</div>
@@ -1946,27 +1939,78 @@ function renderTeams(){
       </div>`;
     }
     el.innerHTML=html;
+
+    // Incoming requests for this mode
+    const inEl=document.getElementById(mode+'IncomingReqs');
+    if(inEl){
+      inEl.innerHTML = myIncoming.length ? myIncoming.map(r=>{
+        const name=r._u?.ign||r._u?.display_name||'Player';
+        return `<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(255,215,0,0.06);border:1px solid var(--byellow);border-radius:10px;padding:9px 11px;margin-top:8px;">
+          <span style="font-size:12px;color:#fff;">📨 <strong>${esc(name)}</strong> wants to be your ${mode} partner</span>
+          <div style="display:flex;gap:6px;flex-shrink:0;">
+            <button onclick="respondTeamRequest('${r.id}',true)" style="background:var(--yellow);color:#000;border:none;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700;">Accept</button>
+            <button onclick="respondTeamRequest('${r.id}',false)" style="background:transparent;color:var(--red);border:1px solid var(--red);border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700;">Reject</button>
+          </div>
+        </div>`;
+      }).join('') : '';
+      inEl.style.display = myIncoming.length ? 'block' : 'none';
+    }
   });
 }
-async function removeTeammate(mode,key){
-  try{await db.ref(`users/${U.uid}/${mode}Team/${key}`).remove();toast('Teammate removed','success');}
-  catch(e){toast('Error: '+e.message,'error');}
+async function removeTeammate(mode,teammateUid){
+  try{
+    const {error}=await _sb.rpc('remove_teammate',{p_teammate_uid:teammateUid,p_mode:mode});
+    if(error)throw error;
+    toast('Teammate removed','success');
+    renderTeams();
+  }catch(e){toast('Error: '+(e.message||'Could not remove teammate'),'error');}
+}
+async function cancelTeamRequest(id){
+  try{
+    const {error}=await _sb.rpc('cancel_team_request',{p_request_id:id});
+    if(error)throw error;
+    toast('Request cancelled','success');
+    renderTeams();
+  }catch(e){toast('Error: '+(e.message||'Could not cancel'),'error');}
+}
+let _respondingTeamReq=false;
+async function respondTeamRequest(id,accept){
+  if(_respondingTeamReq)return;
+  _respondingTeamReq=true;
+  try{
+    const {error}=await _sb.rpc('respond_team_request',{p_request_id:id,p_accept:accept});
+    if(error)throw error;
+    toast(accept?'Partner added! ✓':'Request rejected','success');
+    renderTeams();
+  }catch(e){toast('Error: '+(e.message||'Could not respond'),'error');}
+  finally{ _respondingTeamReq=false; }
 }
 function openAddTeammate(mode){
   openModal(`<div class="modal-bar"></div>
     <h3>Add Teammate (${mode==='duo'?'Duo':'Squad'})</h3>
     <div class="form-group"><label>Teammate's FF UID</label><input class="form-input" type="text" id="tmFFUID" placeholder="Enter FF UID (8-12 digits)" inputmode="numeric" style="margin-top:5px;"></div>
-    <button class="btn btn-yellow btn-full" style="padding:13px;" onclick="submitTeammate('${mode}')">Send Request</button>
+    <p style="font-size:11px;color:var(--dim);margin-top:-6px;margin-bottom:10px;">They must already be a registered Mini eSports player. They'll get a request to accept.</p>
+    <button class="btn btn-yellow btn-full" style="padding:13px;" id="tmSendBtn" onclick="submitTeammate('${mode}')">Send Request</button>
     <button class="btn btn-outline btn-full" style="margin-top:8px;" onclick="closeModal()">Cancel</button>
   `);
 }
+let _sendingTeamReq=false;
 async function submitTeammate(mode){
+  if(_sendingTeamReq)return;
   const ffuid=(document.getElementById('tmFFUID')?.value||'').trim();
   if(!ffuid||!/^\d{8,12}$/.test(ffuid)){toast('FF UID must be 8-12 digits','error');return;}
+  if(UD?.ffuid && ffuid===UD.ffuid){toast('You cannot add yourself','error');return;}
+  _sendingTeamReq=true;
+  const btn=document.getElementById('tmSendBtn');
+  const origHTML=btn?btn.innerHTML:'';
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="btn-spinner"></span> Sending...';}
   try{
-    await db.ref('teamRequests').push({uid:U.uid,mode,teammateFFUID:ffuid,status:'pending',createdAt:Date.now()});
+    const {error}=await _sb.rpc('send_team_request',{p_teammate_ffuid:ffuid,p_mode:mode});
+    if(error)throw error;
     closeModal();toast('Team request sent!','success');
-  }catch(e){toast('Error: '+e.message,'error');}
+    renderTeams();
+  }catch(e){toast(e.message||'Could not send request','error');}
+  finally{ _sendingTeamReq=false; if(btn){btn.disabled=false;btn.innerHTML=origHTML;} }
 }
 
 // ====== AVATAR ======
