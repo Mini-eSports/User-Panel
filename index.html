@@ -91,10 +91,52 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;cursor:pointer;color:#555;font-size:10px;font-weight:600;transition:color .1s ease;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 .nav-item.active{color:var(--red)}
 .nav-item svg{width:22px;height:22px;fill:currentColor}
+
+/* ============ RESPONSIVE: TABLET & DESKTOP (Change 22) ============ */
+/* Mobile (<=767px) is untouched — these only apply from tablet width upward. */
+@media (min-width: 768px) {
+  html, body { overflow-x: hidden; }
+  .app-wrap { max-width: 720px; }
+  #homeMatchList, #myMatchesList, #specialList {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start;
+  }
+  .modal { max-width: 480px; margin: 0 auto; border-radius: 20px; }
+}
+@media (min-width: 1024px) {
+  .app-wrap { max-width: 100vw; width: 100vw; padding-left: 220px; box-sizing: border-box; }
+  #homeMatchList, #myMatchesList, #specialList { grid-template-columns: 1fr 1fr 1fr; max-width: 1400px; margin: 0 auto; }
+  .screen { max-width: 1400px; margin: 0 auto; width: 100%; }
+  .content-area { padding-bottom: 24px; }
+
+  /* Bottom nav becomes a left sidebar on desktop */
+  .bottom-nav {
+    position: fixed; left: 0; top: 0; bottom: 0; width: 220px;
+    flex-direction: column; justify-content: flex-start; gap: 4px;
+    padding: 24px 0; border-top: none; border-right: 1px solid rgba(255,215,0,0.12);
+    transform: none;
+  }
+  .nav-item { flex: none; flex-direction: row; gap: 12px; padding: 12px 24px; font-size: 13px; justify-content: flex-start; width: 100%; box-sizing: border-box; }
+  .nav-item svg { width: 20px; height: 20px; }
+}
+@media (min-width: 1400px) {
+  .app-wrap { padding-left: 260px; }
+  .bottom-nav { width: 260px; }
+}
 /* APPROVAL BANNER */
 .approval-banner{background:rgba(255,215,0,0.08);border:1px solid var(--byellow);border-radius:10px;padding:10px 12px;margin:10px 14px 0;text-align:center;font-size:12px;color:var(--yellow)}
 /* CARDS — Premium Esports Style */
-.t-card{background:var(--card);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:10px;margin-bottom:12px;position:relative;transition:transform .15s ease, box-shadow .15s ease;touch-action:manipulation;box-shadow:0 4px 18px rgba(0,0,0,0.35);}
+.mode-filter-box{
+  text-align:center;padding:10px 14px;border-radius:11px;font-size:12px;font-weight:800;letter-spacing:0.5px;
+  background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.08);color:#888;
+  cursor:pointer;touch-action:manipulation;transition:all .15s ease;flex-shrink:0;white-space:nowrap;
+}
+.mode-filter-box.active{
+  background:linear-gradient(135deg,rgba(255,215,0,0.18),rgba(255,180,0,0.06));
+  border-color:var(--yellow);color:var(--yellow);
+  box-shadow:0 0 12px rgba(255,215,0,0.15);
+}
+.mode-filter-box:active{transform:scale(0.95);}
+.t-card{background:var(--card);border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:10px;margin-bottom:12px;position:relative;transition:transform .15s ease, box-shadow .15s ease;touch-action:manipulation;box-shadow:0 4px 18px rgba(0,0,0,0.35);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
 .t-card:active{transform:scale(0.98)}
 .t-card-special{border:1px solid;border-image:linear-gradient(135deg,var(--yellow),var(--red)) 1;box-shadow:0 0 22px rgba(255,215,0,0.15), 0 4px 18px rgba(0,0,0,0.4);animation:specialGlow 3s ease-in-out infinite;}
 @keyframes specialGlow{0%,100%{box-shadow:0 0 18px rgba(255,215,0,0.12), 0 4px 18px rgba(0,0,0,0.4);}50%{box-shadow:0 0 30px rgba(255,215,0,0.26), 0 4px 18px rgba(0,0,0,0.4);}}
@@ -371,14 +413,20 @@ textarea.form-input{resize:none;min-height:80px}
           <div style="font-size:10px;color:var(--dim);margin-top:2px;">Play with Coins</div>
         </div>
       </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;" id="homeCategoryFilter">
+        <div class="mode-filter-box active" data-cat="Battle Royale" onclick="selectHomeCategory('Battle Royale')">🪂 BR</div>
+        <div class="mode-filter-box" data-cat="Clash Squad" onclick="selectHomeCategory('Clash Squad')">⚔️ CS</div>
+        <div class="mode-filter-box" data-cat="Lone Wolf" onclick="selectHomeCategory('Lone Wolf')">🐺 LW</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;" id="homeModeFilter"></div>
             <div id="homeMatchList"><div class="empty-state"><div class="emoji">★</div><div class="msg">Loading matches...</div></div></div>
     </div>
 
     <!-- SPECIAL -->
     <div class="screen" id="screen-special">
       <div class="tabs">
-        <div class="tab active" onclick="switchSpecialTab('weekly',this)">Weekly</div>
-        <div class="tab" onclick="switchSpecialTab('monthly',this)">Monthly</div>
+        <div class="tab active" onclick="switchSpecialTab('weekly',this)">🏆 Sunday Special</div>
+        <div class="tab" onclick="switchSpecialTab('monthly',this)">👑 Monthly Special</div>
       </div>
       <div id="specialCountdownWrap">
         <div style="font-size:10px;color:var(--dim);text-align:center;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;" id="cdLabel">Next Match Starts In</div>
@@ -389,17 +437,13 @@ textarea.form-input{resize:none;min-height:80px}
           <div class="cd-box"><div class="cd-num" id="cdS">00</div><div class="cd-label">Secs</div></div>
         </div>
       </div>
+      <div id="specialEligibilityBanner" style="margin-bottom:12px;"></div>
       <div id="specialList"><div class="empty-state"><div class="emoji">★</div><div class="msg">No special tournaments yet</div></div></div>
     </div>
 
     <!-- MY MATCHES -->
     <div class="screen" id="screen-mymatches">
-      <div class="tabs">
-        <div class="tab active" onclick="switchMatchTab('upcoming',this)">Upcoming</div>
-        <div class="tab" onclick="switchMatchTab('live',this)"><span class="live-dot"></span> Live</div>
-        <div class="tab" onclick="switchMatchTab('completed',this)">Completed</div>
-      </div>
-      <div id="myMatchesList"><div class="empty-state"><div class="emoji">▶</div><div class="msg">No upcoming matches</div></div></div>
+      <div id="myMatchesList"><div class="empty-state"><div class="emoji">▶</div><div class="msg">No matches joined yet</div></div></div>
     </div>
 
     <!-- WALLET -->
@@ -423,6 +467,7 @@ textarea.form-input{resize:none;min-height:80px}
         <div class="wallet-label">Coin Balance</div>
         <div class="wallet-amount yellow" style="display:flex;align-items:center;gap:6px;"><span style="font-size:26px;" class="coin-3d">🪙</span><span id="wCoins">0</span></div>
         <button class="daily-btn available" id="dailyBtn" onclick="dailyClaim()" style="display:flex;align-items:center;justify-content:center;gap:7px;">🪙 Daily Claim (+10 Coins)</button>
+        <button class="btn btn-outline" style="width:100%;margin-top:8px;padding:10px;" onclick="openConvertCoins()">🔄 Convert Coins to Money</button>
       </div>
       <div class="section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><polyline points="3 6 4 7 6 5"/><polyline points="3 12 4 13 6 11"/><polyline points="3 18 4 19 6 17"/></svg> Transaction History</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
@@ -481,14 +526,7 @@ textarea.form-input{resize:none;min-height:80px}
         <div id="pRankBadge" style="display:inline-flex;align-items:center;gap:5px;padding:4px 14px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(255,215,0,0.1);border:1px solid var(--byellow);color:var(--yellow);margin-top:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1L3 5v6c0 5.25 3.75 10.15 9 11.25C17.25 21.15 21 16.25 21 11V5l-9-4z"/></svg>Bronze</div>
       </div>
 
-      <div class="profile-progress">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:12px;font-weight:700;color:#fff;">Profile Completion</span>
-          <span id="profilePct" style="font-size:12px;font-weight:700;color:var(--yellow);">0%</span>
-        </div>
-        <div class="progress-bar"><div class="progress-fill" id="profileFill" style="width:0%"></div></div>
-        <div id="profileHint" style="font-size:10px;color:var(--dim);">Set IGN, FF UID & team to complete</div>
-      </div>
+      <div id="profileProgressCardSlot"></div>
 
       <div class="stats-row">
         <div class="stat-box"><div class="stat-val yellow" id="pMatches">0</div><div class="stat-label">Matches</div></div>
@@ -590,11 +628,13 @@ function toSnake(obj) {
     displayName:'display_name', tournamentId:'tournament_id', tournamentName:'tournament_name',
     entryType:'entry_type', entryFee:'entry_fee', prizePool:'prize_pool', maxSlots:'max_slots',
     filledSlots:'filled_slots', matchTime:'match_time', roomId:'room_id', roomPassword:'room_password',
-    roomLocked:'room_locked', isSpecial:'is_special', gameMode:'game_mode', createdAt:'created_at',
+    roomLocked:'room_locked', isSpecial:'is_special', gameMode:'game_mode', createdAt:'created_at', matchCategory:'match_category',
     photoURL:'photo_url', profileUpdatePending:'profile_update_pending', lastDailyClaim:'last_daily_claim',
     realMoney:'real_money', duoTeam:'duo_team', squadTeam:'squad_team',
     isGoogleUser:'is_google_user', lastSeen:'last_seen',
     teammateFFUID:'teammate_ffuid', userUpiId:'user_upi_id', screenshotBase64:'screenshot_base64',
+    lastMessageAt:'last_message_at', unreadByAdmin:'unread_by_admin', unreadByUser:'unread_by_user',
+    playerName:'player_name',
   };
   const result = {};
   for(const k in obj) result[map[k]||k] = obj[k];
@@ -606,11 +646,13 @@ function toCamel(obj) {
     display_name:'displayName', tournament_id:'tournamentId', tournament_name:'tournamentName',
     entry_type:'entryType', entry_fee:'entryFee', prize_pool:'prizePool', max_slots:'maxSlots',
     filled_slots:'filledSlots', match_time:'matchTime', room_id:'roomId', room_password:'roomPassword',
-    room_locked:'roomLocked', is_special:'isSpecial', game_mode:'gameMode', created_at:'createdAt',
+    room_locked:'roomLocked', is_special:'isSpecial', game_mode:'gameMode', created_at:'createdAt', match_category:'matchCategory',
     photo_url:'photoURL', profile_update_pending:'profileUpdatePending', last_daily_claim:'lastDailyClaim',
     real_money:'realMoney', duo_team:'duoTeam', squad_team:'squadTeam',
     is_google_user:'isGoogleUser', last_seen:'lastSeen',
     teammate_ffuid:'teammateFFUID', user_upi_id:'userUpiId', screenshot_base64:'screenshotBase64',
+    last_message_at:'lastMessageAt', unread_by_admin:'unreadByAdmin', unread_by_user:'unreadByUser',
+    player_name:'playerName',
   };
   const result = {};
   for(const k in obj) result[map[k]||k] = obj[k];
@@ -838,9 +880,9 @@ let auth={
 
 let db_orig=db;
 
-let U=null, UD=null, allTournaments={}, currentSpecialTab='weekly', currentMatchTab='upcoming';
+let U=null, UD=null, allTournaments={}, currentSpecialTab='weekly';
 let countdownInterval=null, dailyInterval=null, listeners=[], paymentSettings={};
-let currentLbTab='score', currentHomeTab='paid';
+let currentLbTab='score', currentHomeTab='paid', currentHomeMode='All', currentHomeCategory='Battle Royale';
 let addMoneyAmount=0;
 let isGoogleUser=false;
 
@@ -877,9 +919,21 @@ window.addEventListener('load',()=>{
   };
   setTimeout(hideSplash, 1200);
 
+  let _userSessionInitialized = null; // tracks which user uid we've already booted for
   auth.onAuthStateChanged(async(user)=>{
     // Only allow Google-authenticated users
     if(user && user.app_metadata && user.app_metadata.provider){
+      // Supabase re-fires this callback on token refresh (automatic, ~every 50-60 min) and
+      // on tab/app focus regain — not just on an actual new login. Re-running boot() on every
+      // one of those re-fires (which happens a lot on mobile, since backgrounding the app is
+      // constant) was stacking a fresh tournament/ticker polling interval and a fresh
+      // visibility-change listener on top of the previous ones every time, which is exactly
+      // what was causing intermittent "keeps reloading/jumps around" behavior. Only the first
+      // time we see this specific user should actually boot the app.
+      if(_userSessionInitialized === user.uid){
+        isGoogleUser = user.app_metadata.provider === 'google';
+        return;
+      }
       isGoogleUser = user.app_metadata.provider === 'google';
       const meta = user.user_metadata || {};
       U = {
@@ -888,6 +942,7 @@ window.addEventListener('load',()=>{
         email: user.email || '',
         photoURL: meta.avatar_url || meta.picture || ''
       };
+      _userSessionInitialized = user.uid;
       document.getElementById('loginScreen').classList.remove('show');
       document.getElementById('loginScreen').classList.add('hide');
       document.getElementById('authLoading').classList.remove('show');
@@ -897,6 +952,7 @@ window.addEventListener('load',()=>{
       await boot();
     } else {
       // Not signed in OR anonymous — show login screen
+      _userSessionInitialized = null;
       cleanupListeners();
       U = null; UD = null;
       document.getElementById('mainApp').classList.remove('show');
@@ -946,11 +1002,18 @@ async function doLogout(){
 // ====== BOOT ======
 async function boot(){
   document.getElementById('mainApp').classList.add('show');
-  // Show home immediately, load data in parallel
-  go('home');
+  // Restore whichever screen the user was last on (URL hash first, then localStorage),
+  // so a browser refresh doesn't incorrectly bounce them back to Home.
+  const validScreens=['home','special','mymatches','wallet','rank','profile'];
+  let restoreScreen='home';
+  const hashScreen=(location.hash||'').replace('#','');
+  if(validScreens.includes(hashScreen)) restoreScreen=hashScreen;
+  else { try{ const saved=localStorage.getItem('mes_active_screen'); if(validScreens.includes(saved)) restoreScreen=saved; }catch(e){} }
+  go(restoreScreen);
   listenTournaments();
   listenTicker();
   loadPaymentSettings();
+  setupVisibilityRefresh();
   try{
     const snap = await db.ref('users/'+U.uid).once('value');
     if(!snap.exists()){
@@ -1010,11 +1073,68 @@ function listenUserData(){
     updateApprovalBanner();
   });
   listeners.push(()=>ref.off('value',cb));
+  refreshMyJoinedTournaments().then(()=>renderHome());
+}
+// Mobile browsers throttle/freeze timers when a tab is backgrounded for a long time.
+// When the user returns after a long gap, force an immediate fresh data fetch + full
+// re-render instead of waiting for the next poll tick — fixes stale UI (e.g. missing
+// trophy/prize effects) after the app has been in the background for hours.
+let _hiddenSince = null;
+let _visibilityRefreshSetup = false;
+function setupVisibilityRefresh(){
+  if(_visibilityRefreshSetup) return; // never attach a second copy of these listeners
+  _visibilityRefreshSetup = true;
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.visibilityState === 'hidden') {
+      _hiddenSince = Date.now();
+    } else if(document.visibilityState === 'visible') {
+      const wasHiddenMs = _hiddenSince ? (Date.now() - _hiddenSince) : 0;
+      _hiddenSince = null;
+      if(wasHiddenMs > 15000) { // background for >15s: force a full fresh reload of live data
+        forceRefreshAllData();
+      }
+    }
+  });
+  // Belt-and-suspenders: some mobile browsers restore pages from bfcache via 'pageshow'
+  // without firing visibilitychange reliably.
+  window.addEventListener('pageshow', (e)=>{ if(e.persisted) forceRefreshAllData(); });
+}
+async function forceRefreshAllData(){
+  try{
+    const tSnap = await db.ref('tournaments').once('value');
+    allTournaments = tSnap.val()||{};
+    if(U) await refreshMyJoinedTournaments();
+    renderHome(); renderSpecial(); renderMyMatches();
+    if(U){
+      const uSnap = await db.ref('users/'+U.uid).once('value');
+      UD = uSnap.val()||UD;
+      updateHeader(); updateWallet(); updateProfile(); updateApprovalBanner();
+    }
+  }catch(e){ console.error('visibility refresh error', e); }
+}
+let myJoinedTournamentIds = new Set();
+async function refreshMyJoinedTournaments(){
+  if(!U) return;
+  try{
+    const snap = await db.ref('joinRequests').orderByChild('uid').equalTo(U.uid).once('value');
+    const v = snap.val()||{};
+    const ids = new Set(Object.values(v).filter(r=>r.status==='pending'||r.status==='approved').map(r=>r.tournamentId));
+    // Also include matches where the user was added as a team member (not the captain)
+    const {data: memberRows} = await _sb.from('match_team_members').select('join_request_id').eq('uid', U.uid).eq('role','member');
+    if(memberRows && memberRows.length){
+      const jrIds = memberRows.map(r=>r.join_request_id);
+      const {data: jrs} = await _sb.from('join_requests').select('tournament_id,status').in('id', jrIds);
+      (jrs||[]).forEach(r=>{ if(r.status==='pending'||r.status==='approved') ids.add(r.tournament_id); });
+    }
+    myJoinedTournamentIds = ids;
+  }catch(e){ console.error('joined-tournaments fetch error', e); }
 }
 function listenTournaments(){
   const ref=db.ref('tournaments');
+  let _firstLoad=true;
   const cb=ref.on('value',snap=>{
     allTournaments=snap.val()||{};
+    if(_firstLoad){ renderHomeModeFilter(); _firstLoad=false; }
     renderHome();
     renderSpecial();
     renderMyMatches();
@@ -1035,8 +1155,13 @@ function listenTicker(){
 window.addEventListener('popstate', function(e){
   if(e.state&&e.state.screen) goInternal(e.state.screen);
 });
-function go(screen, push=true){
-  if(push) history.pushState({screen},'',location.pathname+'#'+screen);
+function go(screen){
+  // Tab switches use replaceState (not pushState) — bottom-nav tabs are a switcher, not a
+  // stack of pages. Using pushState here was creating a new history entry on every tab
+  // change, so any browser/OS "back" gesture (edge-swipe, mouse back button, trackpad
+  // swipe, wheel-tilt) would pop back through screens and land on Home unexpectedly.
+  history.replaceState({screen}, '', location.pathname+'#'+screen);
+  try{ localStorage.setItem('mes_active_screen', screen); }catch(e){}
   goInternal(screen);
 }
 function goInternal(screen){
@@ -1101,6 +1226,33 @@ function selectHomeFilter(filter){
   }
   renderHome();
 }
+const HOME_CATEGORY_MODES = {
+  'Battle Royale': ['All','Solo','Duo','Squad'],
+  'Clash Squad': ['All','1v1','2v2','4v4'],
+  'Lone Wolf': ['All','1v1','2v2']
+};
+function selectHomeCategory(cat){
+  currentHomeCategory = cat;
+  currentHomeMode = 'All';
+  document.querySelectorAll('#homeCategoryFilter .mode-filter-box').forEach(b=>{
+    b.classList.toggle('active', b.dataset.cat===cat);
+  });
+  renderHomeModeFilter();
+  renderHome();
+}
+function renderHomeModeFilter(){
+  const modes = HOME_CATEGORY_MODES[currentHomeCategory] || HOME_CATEGORY_MODES['Battle Royale'];
+  document.getElementById('homeModeFilter').innerHTML = modes.map(m=>
+    `<div class="mode-filter-box${m===currentHomeMode?' active':''}" data-mode="${m}" onclick="selectHomeMode('${m}')">${m.toUpperCase()}</div>`
+  ).join('');
+}
+function selectHomeMode(mode){
+  currentHomeMode=mode;
+  document.querySelectorAll('#homeModeFilter .mode-filter-box').forEach(b=>{
+    b.classList.toggle('active', b.dataset.mode===mode);
+  });
+  renderHome();
+}
 // dropdown listener removed
 function switchHomeTab(tab){ selectHomeFilter(tab); }
 function renderHome(){
@@ -1109,54 +1261,57 @@ function renderHome(){
     if(t.isSpecial)return;
     if(currentHomeTab==='paid'&&t.entryType!=='paid')return;
     if(currentHomeTab==='coin'&&t.entryType==='paid')return;
+    if((t.matchCategory||'Battle Royale')!==currentHomeCategory)return;
+    if(currentHomeMode!=='All' && (t.gameMode||'Solo')!==currentHomeMode)return;
     all.push({id,...t});
   });
-  function getStatus(t){
-    if(!t.matchTime) return t.status||'upcoming';
-    const now=Date.now(),mt=t.matchTime,live=20*60*1000;
-    if(now<mt)return'upcoming';if(now<mt+live)return'live';return'completed';
-  }
   all.sort((a,b)=>{
-    const order={live:0,upcoming:1,completed:2};
-    return (order[getStatus(a)]||1)-(order[getStatus(b)]||1);
+    const order={live:0,upcoming:1,ended:2,completed:3,cancelled:4};
+    return (order[getMatchStatus(a)]??1)-(order[getMatchStatus(b)]??1);
   });
   const listEl=document.getElementById('homeMatchList');
   if(listEl)listEl.innerHTML=all.length?all.map(t=>tournamentCard(t)).join(''):emptyState(currentHomeTab==='paid'?'No paid matches yet':'No coin matches yet',currentHomeTab==='paid'?'★':'◎');
 }
 
-function tournamentCard(t,special=false){
+function tournamentCard(t,special=false,elig=null){
   const isFull=(t.filledSlots||0)>=(t.maxSlots||0);
   const pct=t.maxSlots?Math.min(100,((t.filledSlots||0)/t.maxSlots)*100):0;
   const diff=t.matchTime?t.matchTime-Date.now():0;
   const timeStr=diff>0?formatCountdown(diff):'';
   const isPaid=t.entryType==='paid';
-  const entryLabel=isPaid?'₹'+(t.entryFee||0):'🪙'+(t.entryFee||0);
+  const entryLabel=special?'FREE':isPaid?'₹'+(t.entryFee||0):'🪙'+(t.entryFee||0);
   const prizeLabel=isPaid?'₹'+(t.prizePool||0):'🪙'+(t.prizePool||0);
-  // Compute live status from matchTime
-  function computeLiveStatus(t){
-    if(!t.matchTime) return t.status||'upcoming';
-    const now=Date.now(), mt=t.matchTime, live=20*60*1000;
-    if(now < mt) return 'upcoming';
-    if(now < mt+live) return 'live';
-    return 'completed';
-  }
-  const liveStatus = computeLiveStatus(t);
-  const statusBadge=liveStatus==='live'?'<span class="badge badge-live"><span class="live-dot"></span>LIVE</span>':liveStatus==='completed'?'<span class="badge badge-completed">✓ DONE</span>':'<span class="badge badge-upcoming">⏰ UPCOMING</span>';
-  const canJoin=UD&&UD.approved&&!UD.profileUpdatePending&&liveStatus==='upcoming'&&!isFull;
-  const modeIcon=t.gameMode==='duo'?'👥':t.gameMode==='squad'?'⚔️':'🎯';
+  // Compute live status using single canonical function (was duplicated 3x before, causing badge/status mismatches)
+  const liveStatus = getMatchStatus(t);
+  const statusBadgeMap={
+    live:'<span class="badge badge-live"><span class="live-dot"></span>LIVE</span>',
+    upcoming:'<span class="badge badge-upcoming">🟡 UPCOMING</span>',
+    ended:'<span class="badge badge-completed" style="background:rgba(255,255,255,0.08);">⚫ ENDED</span>',
+    completed:'<span class="badge badge-completed">🟢 COMPLETED</span>',
+    cancelled:'<span class="badge" style="background:rgba(255,0,0,0.12);color:var(--red);">❌ CANCELLED</span>'
+  };
+  const statusBadge=statusBadgeMap[liveStatus]||statusBadgeMap.upcoming;
+  const alreadyJoined = myJoinedTournamentIds.has(t.id);
+  const isEligible = !special || (elig && elig.eligible);
+  const canJoin=UD&&UD.approved&&!UD.profileUpdatePending&&liveStatus==='upcoming'&&!isFull&&isEligible;
   const borderColor=special?'linear-gradient(135deg,var(--yellow),var(--red))':isPaid?'rgba(255,215,0,0.2)':'rgba(100,200,255,0.2)';
   const accentColor=isPaid?'var(--yellow)':'#64c8ff';
   const dateStr = t.matchTime ? new Date(t.matchTime).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) : '';
   const timeHtml = dateStr ? '<span style="background:rgba(255,255,255,0.06);border-radius:20px;padding:4px 10px;font-size:10px;color:#bbb;display:inline-flex;align-items:center;gap:3px;">📅 '+dateStr+'</span>' : '';
-  const cdHtml = (timeStr&&t.status==='upcoming') ? '<span style="background:rgba(220,30,30,0.18);border:1px solid rgba(255,40,40,0.3);border-radius:20px;padding:4px 10px;font-size:10px;font-weight:800;color:#ff4444;display:inline-flex;align-items:center;gap:3px;">⏱ '+timeStr+'</span>' : '';
+  const cdHtml = (timeStr&&liveStatus==='upcoming') ? '<span style="background:rgba(220,30,30,0.18);border:1px solid rgba(255,40,40,0.3);border-radius:20px;padding:4px 10px;font-size:10px;font-weight:800;color:#ff4444;display:inline-flex;align-items:center;gap:3px;">⏱ '+timeStr+'</span>' : '';
   const joinOnclick = canJoin ? 'joinTournament(\'' + t.id + '\')' : '';
-  const joinLabel = isFull ? '🔴 FULL' : (liveStatus==='completed' ? '✓ ENDED' : liveStatus==='live' ? '🔴 LIVE' : '⚡ JOIN');
-  const joinStyle = canJoin ? '' : 'background:#222;color:#555;border:1px solid #333;cursor:not-allowed;';
-  const joinClass = canJoin ? 'btn btn-yellow' : 'btn';
+  const joinLabel = alreadyJoined ? '✓ REGISTERED' : (special&&!isEligible) ? '🔒 LOCKED' : isFull ? '🔴 FULL' : (liveStatus==='completed' ? '✓ ENDED' : liveStatus==='live' ? '🔴 LIVE' : '⚡ JOIN');
+  const joinStyle = alreadyJoined ? 'background:rgba(0,200,120,0.12);color:#00c878;border:1px solid rgba(0,200,120,0.4);cursor:default;' : canJoin ? '' : 'background:#222;color:#555;border:1px solid #333;cursor:not-allowed;';
+  const joinClass = (canJoin&&!alreadyJoined) ? 'btn btn-yellow' : 'btn';
   const topBar = special ? 'linear-gradient(90deg,var(--yellow),var(--red))' : (isPaid ? 'linear-gradient(90deg,var(--yellow3),var(--yellow))' : 'linear-gradient(90deg,#3399ff,#64c8ff)');
   const cardBorder = isPaid ? 'rgba(255,215,0,0.18)' : 'rgba(100,200,255,0.18)';
   const slotBarBg = pct>=90 ? 'var(--red)' : (isPaid ? 'linear-gradient(90deg,var(--yellow3),var(--yellow))' : 'linear-gradient(90deg,#3399ff,#64c8ff)');
-  const pillBg = isPaid ? 'rgba(255,215,0,0.1)' : 'rgba(100,200,255,0.1)';
+  const pillBg = special?'rgba(0,200,120,0.12)':isPaid ? 'rgba(255,215,0,0.1)' : 'rgba(100,200,255,0.1)';
+  const eligBadge = special && elig ? (
+    elig.eligible
+      ? '<span style="background:rgba(255,80,80,0.12);border-radius:20px;padding:4px 10px;font-size:10px;font-weight:700;color:#ff5050;">'+(currentSpecialTab==='monthly'?'🔵 Monthly Eligible':'🔴 Sunday Eligible')+'</span>'
+      : '<span style="background:rgba(255,255,255,0.06);border-radius:20px;padding:4px 10px;font-size:10px;font-weight:700;color:#888;">🔒 Top '+elig.reqRank+' · Lvl '+elig.reqLevel+'+</span>'
+  ) : '';
 
   return '<div class="t-card'+(special?' t-card-special':'')+'" data-name="'+esc(t.name||'')+'" style="border:1px solid '+cardBorder+';background:linear-gradient(135deg,#0d0d0d 0%,#111 100%);padding:0;overflow:hidden;margin-bottom:12px;">'+
     '<div class="t-card-topbar" style="height:3px;background:'+topBar+';"></div>'+
@@ -1175,9 +1330,9 @@ function tournamentCard(t,special=false){
         '</div>'+
       '</div>'+
       '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">'+
-        '<span style="background:rgba(255,255,255,0.06);border-radius:20px;padding:4px 10px;font-size:10px;font-weight:600;color:#ccc;">'+modeIcon+' '+esc(t.gameMode||'Solo')+'</span>'+
+        eligBadge+
         '<span style="background:rgba(255,255,255,0.06);border-radius:20px;padding:4px 10px;font-size:10px;font-weight:600;color:#ccc;">🗺 '+esc(t.map||'-')+'</span>'+
-        '<span style="background:'+pillBg+';border-radius:20px;padding:4px 10px;font-size:10px;font-weight:700;color:'+accentColor+';">Entry: '+entryLabel+'</span>'+
+        '<span style="background:'+pillBg+';border-radius:20px;padding:4px 10px;font-size:10px;font-weight:700;color:'+(special?'#00c878':accentColor)+';">'+(special?'🎁 FREE ENTRY':'Entry: '+entryLabel)+'</span>'+
         timeHtml+cdHtml+
       '</div>'+
       '<div style="margin-bottom:12px;">'+
@@ -1189,6 +1344,7 @@ function tournamentCard(t,special=false){
           '<div class="t-slotbar-fill" style="height:100%;width:'+pct+'%;background:'+slotBarBg+';border-radius:4px;transition:width .4s ease;"></div>'+
         '</div>'+
       '</div>'+
+      (special && elig && !elig.eligible ? '<div style="background:rgba(255,50,50,0.08);border:1px solid rgba(255,50,50,0.25);border-radius:10px;padding:8px 10px;margin-bottom:10px;font-size:10px;color:var(--dim);">Required: Top '+elig.reqRank+' Rank & Level '+elig.reqLevel+'+ &nbsp;|&nbsp; Your: Rank '+(elig.myRank!=null?'#'+elig.myRank:'-')+' · Level '+elig.myLevel+'</div>' : '')+
       '<div style="display:flex;gap:8px;">'+
         '<button class="btn btn-outline" style="flex:1;padding:11px;border-radius:10px;" onclick="viewTournament(\''+t.id+'\')">📋 Details</button>'+
         '<button class="'+joinClass+'" style="flex:1;padding:11px;border-radius:10px;'+joinStyle+'" onclick="'+joinOnclick+'">'+joinLabel+'</button>'+
@@ -1198,15 +1354,62 @@ function tournamentCard(t,special=false){
 }
 
 // ====== SPECIAL ======
-function renderSpecial(){
+// ====== LEVEL / XP SYSTEM ======
+const LEVEL_THRESHOLDS = [
+  {level:1,xp:0,rank:'Bronze'},{level:2,xp:100,rank:'Bronze'},{level:3,xp:250,rank:'Bronze'},
+  {level:4,xp:450,rank:'Bronze'},{level:5,xp:700,rank:'Silver'},{level:6,xp:1000,rank:'Silver'},
+  {level:7,xp:1400,rank:'Silver'},{level:8,xp:1850,rank:'Gold'},{level:9,xp:2350,rank:'Gold'},
+  {level:10,xp:3000,rank:'Gold'}
+];
+function getLevelInfo(xp){
+  xp = xp||0;
+  let cur = LEVEL_THRESHOLDS[0], next = LEVEL_THRESHOLDS[1];
+  for(let i=0;i<LEVEL_THRESHOLDS.length;i++){
+    if(xp >= LEVEL_THRESHOLDS[i].xp) cur = LEVEL_THRESHOLDS[i];
+    next = LEVEL_THRESHOLDS[i+1] || null;
+  }
+  const intoLevel = xp - cur.xp;
+  const forNext = next ? (next.xp - cur.xp) : 0;
+  return {level:cur.level, rankName:cur.rank, xp, intoLevel, forNext, isMax: !next};
+}
+let myRank = null;
+async function refreshMyRankAndLevel(){
+  if(!U) return;
+  try{
+    const {data} = await _sb.rpc('get_user_rank', {p_uid: U.uid});
+    myRank = data;
+  }catch(e){ myRank = null; }
+}
+function eligibilityFor(tab){
+  const reqRank = tab==='monthly' ? 30 : 15;
+  const reqLevel = tab==='monthly' ? 10 : 5;
+  const info = getLevelInfo(UD?.xp||0);
+  const eligible = myRank!=null && myRank<=reqRank && info.level>=reqLevel;
+  return {eligible, reqRank, reqLevel, myRank, myLevel:info.level};
+}
+
+async function renderSpecial(){
+  await refreshMyRankAndLevel();
+  const elig = eligibilityFor(currentSpecialTab);
+  const bannerEl = document.getElementById('specialEligibilityBanner');
+  if(bannerEl){
+    bannerEl.innerHTML = elig.eligible
+      ? `<div style="background:rgba(0,200,120,0.08);border:1px solid rgba(0,200,120,0.3);border-radius:12px;padding:10px 14px;text-align:center;">
+          <span style="color:#00c878;font-weight:800;font-size:12px;">${currentSpecialTab==='monthly'?'🔵 Monthly Eligible':'🔴 Sunday Eligible'}</span>
+        </div>`
+      : `<div style="background:rgba(255,50,50,0.08);border:1px solid rgba(255,50,50,0.3);border-radius:12px;padding:10px 14px;">
+          <div style="color:var(--red);font-weight:800;font-size:12px;text-align:center;margin-bottom:4px;">🔒 Not Eligible</div>
+          <div style="font-size:11px;color:var(--dim);text-align:center;">Required: Top ${elig.reqRank} Rank · Level ${elig.reqLevel}+ &nbsp;|&nbsp; Your: Rank ${elig.myRank!=null?'#'+elig.myRank:'-'} · Level ${elig.myLevel}</div>
+        </div>`;
+  }
   const list=[];let nextTime=null;
   Object.entries(allTournaments).forEach(([id,t])=>{
     if(!t.isSpecial)return;
     if((t.specialType||'weekly')!==currentSpecialTab)return;
     list.push({id,...t});
-    if(t.status==='upcoming'&&t.matchTime&&(!nextTime||t.matchTime<nextTime))nextTime=t.matchTime;
+    if(getMatchStatus(t)==='upcoming'&&t.matchTime&&(!nextTime||t.matchTime<nextTime))nextTime=t.matchTime;
   });
-  document.getElementById('specialList').innerHTML=list.length?list.map(t=>tournamentCard(t,true)).join(''):emptyState('No special tournaments yet','★');
+  document.getElementById('specialList').innerHTML=list.length?list.map(t=>tournamentCard(t,true,elig)).join(''):emptyState('No special tournaments yet','★');
   startSpecialCountdown(nextTime);
 }
 function switchSpecialTab(tab,el){
@@ -1232,55 +1435,125 @@ function startSpecialCountdown(targetTime){
 }
 
 // ====== MY MATCHES ======
-function renderMyMatches(){
+async function renderMyMatches(){
   if(!U)return;
-  db.ref('joinRequests').orderByChild('uid').equalTo(U.uid).once('value').then(snap=>{
+  try{
+    const snap = await db.ref('joinRequests').orderByChild('uid').equalTo(U.uid).once('value');
     const reqs=snap.val()||{};
     const matches=[];
+    const seenTournamentIds=new Set();
+    const myJoinRequestByTournament={};
     Object.entries(reqs).forEach(([id,r])=>{
-      if(r.status!=='approved')return;
+      if(r.status==='rejected')return;
       const t=allTournaments[r.tournamentId];
       if(!t)return;
-      matches.push({...t,id:r.tournamentId,joinId:id});
+      matches.push({...t,id:r.tournamentId,joinId:id,myRole:'Captain',reqStatus:r.status,teamSize:r.teamSize||1});
+      seenTournamentIds.add(r.tournamentId);
+      myJoinRequestByTournament[r.tournamentId]=id;
     });
-    function getMatchStatus(m){
-      if(!m.matchTime)return m.status||'upcoming';
-      const now=Date.now(),mt=m.matchTime,lv=20*60*1000;
-      if(now<mt)return'upcoming';if(now<mt+lv)return'live';return'completed';
+    // Also include matches where the user was added as a team member (not the captain)
+    const {data: memberRows} = await _sb.from('match_team_members').select('join_request_id').eq('uid', U.uid).eq('role','member');
+    if(memberRows && memberRows.length){
+      const jrIds = memberRows.map(r=>r.join_request_id);
+      const {data: jrs} = await _sb.from('join_requests').select('id,tournament_id,status,team_size').in('id', jrIds);
+      (jrs||[]).forEach(r=>{
+        if(r.status!=='rejected' && !seenTournamentIds.has(r.tournament_id)){
+          const t=allTournaments[r.tournament_id];
+          if(t){ matches.push({...t,id:r.tournament_id,joinId:r.id,myRole:'Team Member',reqStatus:r.status,teamSize:r.team_size||1}); seenTournamentIds.add(r.tournament_id); myJoinRequestByTournament[r.tournament_id]=r.id; }
+        }
+      });
     }
-    const filtered=matches.filter(m=>{const s=getMatchStatus(m);return currentMatchTab==='live'?s==='live':currentMatchTab==='completed'?s==='completed':s==='upcoming';});
-    const emptyMsg=currentMatchTab==='live'?'No live matches':'No '+currentMatchTab+' matches';
-    document.getElementById('myMatchesList').innerHTML=filtered.length?filtered.map(m=>myMatchCard(m)).join(''):emptyState(emptyMsg,'▶');
-  }).catch(e=>console.error(e));
+    matches.sort((a,b)=>{
+      const order={live:0,upcoming:1,ended:2,completed:3,cancelled:4};
+      const sa=getMatchStatus(a), sb=getMatchStatus(b);
+      if(order[sa]!==order[sb]) return order[sa]-order[sb];
+      return (a.matchTime||0)-(b.matchTime||0);
+    });
+
+    if(!matches.length){ document.getElementById('myMatchesList').innerHTML=emptyState('No matches joined yet','▶'); return; }
+
+    // Batch-fetch team rosters for every match's join request
+    const allJoinIds = Object.values(myJoinRequestByTournament);
+    const { data: allMembers } = await _sb.from('match_team_members').select('join_request_id,uid,ign,role').in('join_request_id', allJoinIds);
+    const rosterByJoinId = {};
+    (allMembers||[]).forEach(m=>{ (rosterByJoinId[m.join_request_id] = rosterByJoinId[m.join_request_id]||[]).push(m); });
+
+    // Batch-fetch room credentials — RLS only returns rows this user is authorized to see
+    // (joined AND within 15 minutes of start, or match already live). Server-time-enforced,
+    // so a match not yet in the window simply returns no row here — nothing to leak.
+    const tIds = matches.map(m=>m.id);
+    const { data: rooms } = await _sb.from('match_rooms').select('tournament_id,room_id,room_password').in('tournament_id', tIds);
+    const roomByTid = {}; (rooms||[]).forEach(r=>{ roomByTid[r.tournament_id]=r; });
+
+    document.getElementById('myMatchesList').innerHTML = matches.map(m=>{
+      const roster = rosterByJoinId[myJoinRequestByTournament[m.id]] || [];
+      const room = roomByTid[m.id] || null;
+      return myMatchCard(m, roster, room);
+    }).join('');
+  }catch(e){console.error(e);}
 }
-function myMatchCard(m){
-  const statusBadge=m.status==='live'?'<span class="badge badge-live"><span class="live-dot"></span>LIVE</span>':m.status==='completed'?'<span class="badge badge-completed">COMPLETED</span>':'<span class="badge badge-upcoming">⏰ UPCOMING</span>';
+
+function myMatchCard(m, roster, room){
+  const status=getMatchStatus(m);
+  const statusBadgeMap={
+    live:'<span class="badge badge-live"><span class="live-dot"></span>LIVE</span>',
+    upcoming:'<span class="badge badge-upcoming">🟡 UPCOMING</span>',
+    ended:'<span class="badge badge-completed" style="background:rgba(255,255,255,0.08);">⚫ ENDED</span>',
+    completed:'<span class="badge badge-completed">⚪ COMPLETED</span>',
+    cancelled:'<span class="badge" style="background:rgba(255,0,0,0.12);color:var(--red);">❌ CANCELLED</span>'
+  };
+  const statusBadge=statusBadgeMap[status]||statusBadgeMap.upcoming;
+  const joinedBadge = m.reqStatus==='pending'
+    ? '<span class="badge" style="background:rgba(255,215,0,0.08);color:var(--yellow);">⏳ PENDING</span>'
+    : '<span class="badge" style="background:rgba(0,200,120,0.1);color:#00c878;">✓ JOINED</span>';
+
+  const captain = roster.find(p=>p.role==='captain');
+  const teammates = roster.filter(p=>p.role==='member');
+  const captainHtml = m.myRole==='Captain'
+    ? `<div class="uc-row"><span>👑</span><span style="font-weight:700;color:var(--yellow);">YOU (CAPTAIN)</span></div>
+       <div class="uc-row"><span>🆔</span><span style="font-family:monospace;">${esc(m.ffuid||UD?.ffuid||'-')}</span></div>`
+    : `<div class="uc-row"><span>👑</span><span style="font-weight:700;color:#fff;">${esc(captain?.ign||'Captain')}</span></div>
+       <div class="uc-row"><span>👤</span><span style="font-weight:700;color:var(--yellow);">YOU (TEAM MEMBER)</span></div>`;
+  const teammatesForDisplay = m.myRole==='Captain' ? teammates : [captain, ...teammates].filter(p=>p && p.uid!==U.uid);
+  const teamHtml = teammatesForDisplay.length
+    ? `<div style="font-size:10px;color:var(--dim);margin:8px 0 4px;">👥 TEAMMATES</div>
+       <div style="display:flex;flex-wrap:wrap;gap:6px;">${teammatesForDisplay.map(p=>`<span style="background:rgba(255,255,255,0.05);border-radius:20px;padding:4px 10px;font-size:11px;color:#fff;">${esc((p.ign||'?').charAt(0).toUpperCase())} ${esc(p.ign||'Player')}</span>`).join('')}</div>`
+    : '';
+
+  // Room section — timing enforced server-side (RLS on match_rooms); this only decides
+  // how to LABEL what we already got back, never a security boundary itself.
   let roomHtml='';
-  if(m.status==='live'){
-    roomHtml=!m.roomLocked&&m.roomId
-      ?`<div class="room-box"><div style="font-size:10px;color:var(--dim);margin-bottom:4px;">ROOM DETAILS</div><div class="room-val">ID: ${esc(m.roomId)} · Pass: ${esc(m.roomPassword||'-')}</div></div>`
-      :'<div class="room-box locked"><div class="room-val">🔒 Room ID will be revealed soon</div></div>';
+  if(status==='cancelled'){
+    roomHtml='';
+  } else if(room && (room.room_id || room.room_password)){
+    roomHtml=`<div class="room-box"><div style="font-size:10px;color:var(--dim);margin-bottom:4px;">🔐 ROOM DETAILS</div>
+      <div class="room-val" style="display:flex;justify-content:space-between;align-items:center;">ROOM ID: <strong>${esc(room.room_id||'-')}</strong> <button onclick="copyText('${esc(room.room_id||'')}')" style="background:none;border:none;color:var(--yellow);">📋</button></div>
+      <div class="room-val" style="display:flex;justify-content:space-between;align-items:center;">PASSWORD: <strong>${esc(room.room_password||'-')}</strong> <button onclick="copyText('${esc(room.room_password||'')}')" style="background:none;border:none;color:var(--yellow);">📋</button></div>
+    </div>`;
+  } else if(status==='upcoming' && m.matchTime){
+    const diff=m.matchTime-Date.now();
+    const mins=Math.round(diff/60000);
+    roomHtml = mins<=15
+      ? '<div class="room-box locked"><div class="room-val">🔒 Room details unlocking...</div></div>'
+      : `<div class="room-box locked"><div class="room-val">🔒 ROOM LOCKED</div><div style="font-size:10px;color:var(--dim);margin-top:3px;">Unlocks 15 minutes before start · Available in ${formatCountdown(diff-15*60*1000)}</div></div>`;
   }
+
   let countdown='';
-  if(m.status==='upcoming'&&m.matchTime){
+  if(status==='upcoming'&&m.matchTime){
     const diff=m.matchTime-Date.now();
     if(diff>0)countdown=`<div style="font-size:11px;color:var(--yellow);margin-top:6px;">⏱ Starts in ${formatCountdown(diff)}</div>`;
   }
   return `<div class="t-card" data-name="${esc(m.name||'')}">
-    ${statusBadge}
+    <div style="display:flex;justify-content:space-between;align-items:center;">${statusBadge}${joinedBadge}</div>
     <div class="t-name">${esc(m.name||'Tournament')}</div>
-    <div class="t-meta">
-      <span>${esc(m.gameMode||'-')} · ${esc(m.map||'-')}</span>
-      <span>Time: <strong>${m.matchTime?new Date(m.matchTime).toLocaleString():'-'}</strong></span>
+    ${captainHtml}
+    ${teamHtml}
+    <div class="t-meta" style="margin-top:8px;">
+      <span>🎮 ${esc(m.gameMode||'-')} · 💎 ${m.entryType==='paid'?'₹':''}${m.entryFee||0} · 🗺 ${esc(m.map||'-')}</span>
     </div>
     ${countdown}${roomHtml}
+    <button class="btn btn-outline" style="width:100%;margin-top:10px;padding:9px;" onclick="viewTournament('${m.id}')">ℹ DETAILS</button>
   </div>`;
-}
-function switchMatchTab(tab,el){
-  currentMatchTab=tab;
-  el.parentElement.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  renderMyMatches();
 }
 
 // ====== WALLET ======
@@ -1340,15 +1613,23 @@ function updateDailyBtn(){
 function getNextMidnight(lastClaim){
   const d=new Date(lastClaim||0);d.setDate(d.getDate()+1);d.setHours(0,0,0,0);return d.getTime();
 }
+let _claimingDaily = false;
 async function dailyClaim(){
-  if(!U||!UD)return;
+  if(!U||!UD||_claimingDaily)return;
   if(Date.now()<getNextMidnight(UD.lastDailyClaim||0)){toast('Already claimed today','info');return;}
-  const coins=(UD.appDailyCoins||UD.dailyCoins||10);
+  _claimingDaily = true;
+  const btn = document.getElementById('dailyBtn');
+  const origHTML = btn?btn.innerHTML:'';
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="btn-spinner"></span> Claiming...';}
   try{
-    await db.ref('users/'+U.uid).update({coins:(UD.coins||0)+coins,lastDailyClaim:Date.now()});
-    await db.ref('users/'+U.uid+'/coinHistory').push({type:'daily_claim',amount:coins,createdAt:Date.now()});
-    toast('+'+coins+' Coins claimed!','success');
-  }catch(e){toast('Claim failed: '+e.message,'error');}
+    const {data, error} = await _sb.rpc('claim_daily_bonus');
+    if(error) throw error;
+    toast('+'+data.coins+' Coins claimed!','success');
+    await forceRefreshAllData();
+  }catch(e){
+    toast(e.message||'Claim failed','error');
+    if(btn){btn.disabled=false;btn.innerHTML=origHTML;}
+  } finally { _claimingDaily = false; }
 }
 function switchTxTab(tab){
   const mt=document.getElementById('txTabMoney'),ct=document.getElementById('txTabCoins');
@@ -1480,7 +1761,11 @@ async function payWithRazorpay(){
           if(!vRes.ok)throw new Error(vData.error||'Payment verification failed');
           closeModal();
           toast('₹'+amt+' added to your wallet!','success');
-          listenUserData();
+          if(U){
+            const uSnap = await db.ref('users/'+U.uid).once('value');
+            UD = uSnap.val()||UD;
+            updateHeader(); updateWallet(); updateProfile(); updateApprovalBanner();
+          }
         }catch(e){ toast('Verification failed: '+e.message+'. Contact support if amount was deducted.','error'); }
       },
       modal:{ ondismiss:function(){ _razorpayProcessing=false; if(btn){btn.disabled=false;btn.innerHTML=origHTML;} } }
@@ -1492,6 +1777,72 @@ async function payWithRazorpay(){
 }
 
 // ====== WITHDRAW ======
+// ====== CONVERT COINS TO MONEY ======
+let _coinConvertRate = 10;
+async function openConvertCoins(){
+  if(!UD){toast('Please wait...','info');return;}
+  try{
+    const {data} = await _sb.from('app_config').select('value').eq('key','coinToMoneyRate').maybeSingle();
+    if(data?.value) _coinConvertRate = Number(data.value)||10;
+  }catch(e){}
+  const coins = UD.coins||0;
+  openModal(`<div class="modal-bar"></div>
+    <h3 style="margin-bottom:4px;">🔄 Convert Coins to Money</h3>
+    <p style="font-size:12px;color:var(--dim);margin-bottom:14px;">Rate: ${_coinConvertRate} Coins = ₹1</p>
+    <div style="background:var(--card);border-radius:12px;padding:12px;margin-bottom:14px;text-align:center;">
+      <div style="font-size:10px;color:var(--dim);">Available Coins</div>
+      <div style="font-size:22px;font-weight:900;color:var(--yellow);">🪙 ${coins}</div>
+    </div>
+    <div class="form-group">
+      <label>Coins to Convert</label>
+      <input class="form-input" type="number" id="convertCoinsInput" min="1" max="${coins}" placeholder="Enter coin amount" style="margin-top:5px;" oninput="updateConvertPreview()">
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <button class="btn btn-outline btn-xs" style="flex:1;" onclick="setConvertAmt(Math.floor(${coins}*0.25))">25%</button>
+        <button class="btn btn-outline btn-xs" style="flex:1;" onclick="setConvertAmt(Math.floor(${coins}*0.5))">50%</button>
+        <button class="btn btn-outline btn-xs" style="flex:1;" onclick="setConvertAmt(${coins})">MAX</button>
+      </div>
+    </div>
+    <div id="convertPreview" style="text-align:center;font-size:13px;color:var(--dim);margin:12px 0;">You'll receive ₹0</div>
+    <button class="btn btn-yellow btn-full" style="padding:13px;" id="convertCoinsBtn" onclick="submitConvertCoins()">Convert Now</button>
+    <button class="btn btn-outline btn-full" style="margin-top:8px;" onclick="closeModal()">Cancel</button>
+  `);
+}
+function setConvertAmt(v){
+  const inp=document.getElementById('convertCoinsInput');
+  if(inp){inp.value=Math.max(0,v);updateConvertPreview();}
+}
+function updateConvertPreview(){
+  const coins = parseInt(document.getElementById('convertCoinsInput')?.value)||0;
+  const money = (coins/_coinConvertRate).toFixed(2);
+  const el = document.getElementById('convertPreview');
+  if(el) el.textContent = `You'll receive ₹${money}`;
+}
+let _convertingCoins = false;
+async function submitConvertCoins(){
+  if(_convertingCoins) return;
+  const coins = parseInt(document.getElementById('convertCoinsInput')?.value)||0;
+  if(!coins || coins<=0){toast('Enter a valid coin amount','error');return;}
+  if(coins > (UD.coins||0)){toast('You don\'t have enough coins','error');return;}
+  _convertingCoins = true;
+  const btn = document.getElementById('convertCoinsBtn');
+  const origHTML = btn.innerHTML;
+  btn.disabled=true; btn.innerHTML='<span class="btn-spinner"></span> Converting...';
+  try{
+    const {data, error} = await _sb.rpc('convert_coins_to_money', {p_coins: coins});
+    if(error) throw error;
+    closeModal();
+    toast(`✓ Converted! ₹${data.moneyCredited} added to your wallet`,'success');
+    if(U){
+      const uSnap = await db.ref('users/'+U.uid).once('value');
+      UD = uSnap.val()||UD;
+      updateHeader(); updateWallet(); updateProfile(); updateApprovalBanner();
+    }
+  }catch(e){
+    toast(e.message||'Conversion failed','error');
+    btn.disabled=false; btn.innerHTML=origHTML;
+  } finally { _convertingCoins = false; }
+}
+
 function openWithdraw(){
   if(!UD){toast('Please wait...','info');return;}
   const win=(UD.realMoney||{}).winnings||0;
@@ -1561,70 +1912,265 @@ function openPrizeDistribution(id){
   `);
 }
 
-function viewTournament(id){
+async function viewTournament(id){
   const t=allTournaments[id];if(!t)return;
   const el=t.entryType==='paid'?'₹'+(t.entryFee||0):'🪙'+(t.entryFee||0);
   const pl=t.entryType==='paid'?'₹'+(t.prizePool||0):'🪙'+(t.prizePool||0);
   const isFull=(t.filledSlots||0)>=(t.maxSlots||0);
-  const canJoin=UD&&UD.approved&&!UD.profileUpdatePending&&t.status==='upcoming'&&!isFull;
+  const liveStatus=getMatchStatus(t);
+  const canJoin=UD&&UD.approved&&!UD.profileUpdatePending&&liveStatus==='upcoming'&&!isFull;
+
+  let teamHtml = '';
+  let roomHtml = '';
+  if(myJoinedTournamentIds.has(id)){
+    try{
+      const jrSnap = await db.ref('joinRequests').orderByChild('uid').equalTo(U.uid).once('value');
+      const v = jrSnap.val()||{};
+      let jrId = Object.entries(v).find(([,r])=>r.tournamentId===id && r.status!=='rejected')?.[0];
+      if(!jrId){
+        const {data: mr} = await _sb.from('match_team_members').select('join_request_id').eq('uid',U.uid).eq('role','member');
+        const jrIds=(mr||[]).map(r=>r.join_request_id);
+        if(jrIds.length){ const {data:jrs}=await _sb.from('join_requests').select('id,tournament_id').in('id',jrIds); jrId = jrs?.find(j=>j.tournament_id===id)?.id; }
+      }
+      if(jrId){
+        const {data: roster} = await _sb.from('match_team_members').select('uid,ign,role').eq('join_request_id', jrId);
+        const captain = roster?.find(p=>p.role==='captain');
+        const members = roster?.filter(p=>p.role==='member') || [];
+        teamHtml = `<div style="margin-bottom:14px;">
+          <div style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;margin-bottom:6px;">Team</div>
+          <div style="font-size:12px;color:#fff;">👑 Captain: <strong>${esc(captain?.ign||'-')}</strong></div>
+          ${members.length?`<div style="font-size:12px;color:#fff;margin-top:3px;">👥 Members: ${members.map(m=>esc(m.ign||'Player')).join(', ')}</div>`:''}
+        </div>`;
+        const {data: room} = await _sb.from('match_rooms').select('room_id,room_password').eq('tournament_id', id).maybeSingle();
+        if(room && (room.room_id||room.room_password)){
+          roomHtml = `<div style="background:rgba(255,215,0,0.06);border:1px solid var(--byellow);border-radius:10px;padding:12px;margin-bottom:14px;">
+            <div style="font-size:11px;font-weight:700;color:var(--yellow);margin-bottom:6px;">🔐 ROOM DETAILS</div>
+            <div style="font-size:12px;color:#fff;">Room ID: <strong>${esc(room.room_id||'-')}</strong></div>
+            <div style="font-size:12px;color:#fff;">Password: <strong>${esc(room.room_password||'-')}</strong></div>
+          </div>`;
+        } else if(liveStatus==='upcoming'){
+          roomHtml = `<div style="background:rgba(255,255,255,0.03);border-radius:10px;padding:12px;margin-bottom:14px;text-align:center;">
+            <div style="font-size:12px;color:var(--dim);">🔒 Room details unlock 15 minutes before match start</div>
+          </div>`;
+        }
+      }
+    }catch(e){ console.error('details team/room fetch error', e); }
+  }
+
   openModal(`<div class="modal-bar"></div>
     <h3 style="color:var(--yellow);">${esc(t.name||'Tournament')}</h3>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
-      ${[['Mode',t.gameMode],['Map',t.map],['Entry',el],['Prize',pl],['Slots',(t.filledSlots||0)+'/'+(t.maxSlots||0)],['Time',t.matchTime?new Date(t.matchTime).toLocaleString():'-']].map(kv=>'<div style="background:var(--card);border-radius:10px;padding:10px;"><div style="font-size:10px;color:var(--dim)">'+kv[0]+'</div><div style="font-weight:700;color:var(--yellow);font-size:13px;">'+esc(String(kv[1]||'-'))+'</div></div>').join('')}
+      ${[['Category',t.matchCategory||'Battle Royale'],['Match Type',t.gameMode],['Map',t.map],['Entry',el],['Prize',pl],['Slots',(t.filledSlots||0)+'/'+(t.maxSlots||0)],['Time',t.matchTime?new Date(t.matchTime).toLocaleString():'-']].map(kv=>'<div style="background:var(--card);border-radius:10px;padding:10px;"><div style="font-size:10px;color:var(--dim)">'+kv[0]+'</div><div style="font-weight:700;color:var(--yellow);font-size:13px;">'+esc(String(kv[1]||'-'))+'</div></div>').join('')}
     </div>
+    ${teamHtml}
+    ${roomHtml}
     ${t.description?'<p style="font-size:12px;color:var(--dim);margin-bottom:14px;">'+esc(t.description)+'</p>':''}
     <div style="font-size:11px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">🏆 Prize Distribution</div>
     ${buildPrizeDistributionHTML(t.prizePool||0, t.entryType)}
     <button class="btn btn-yellow btn-full${canJoin?'':' btn-disabled'}" style="padding:13px;margin-top:6px;" onclick="joinTournament('${id}')">
-      ${isFull?'TOURNAMENT FULL':t.status!=='upcoming'?t.status.toUpperCase():'JOIN TOURNAMENT'}
+      ${isFull?'TOURNAMENT FULL':liveStatus!=='upcoming'?liveStatus.toUpperCase():'JOIN TOURNAMENT'}
     </button>
     <button class="btn btn-outline btn-full" style="margin-top:8px;" onclick="closeModal()">Close</button>
   `);
 }
-let _joiningTournament = {};
+function teamSizeForMode(mode){
+  if(!mode) return 1;
+  if(mode==='Duo') return 2;
+  if(mode==='Squad') return 4;
+  const vMatch = /^(\d+)v\d+$/i.exec(mode); // e.g. "2v2" -> team size 2
+  if(vMatch) return parseInt(vMatch[1])||1;
+  return 1;
+}
+// ═══════════════════════════════════════════
+// JOIN MATCH / TEAM SELECTION (Change 24)
+// ═══════════════════════════════════════════
+let _joinFlow = null; // {tournamentId, mode, teamSize, members:[{uid,ign,ffuid}]}
+
 async function joinTournament(id){
-  if(_joiningTournament[id]) return; // full-duration lock, prevents race on slow networks
   if(!U||!UD){toast('Please wait...','info');return;}
   if(!UD.approved){toast('Profile not approved yet. Wait for admin verification.','error');return;}
   if(UD.profileUpdatePending){toast('Profile update pending approval. Please wait.','error');return;}
   const t=allTournaments[id];if(!t)return;
-  if(t.status!=='upcoming'){toast('Tournament is not open for joining','error');return;}
+  if(getMatchStatus(t)!=='upcoming'){toast('Tournament is not open for joining','error');return;}
   if((t.filledSlots||0)>=(t.maxSlots||0)){toast('Tournament is full','error');return;}
-  _joiningTournament[id] = true;
-  try{
-    const ex=await db.ref('joinRequests').orderByChild('uid').equalTo(U.uid).once('value');
-    const exV=ex.val()||{};
-    for(const k in exV){
-      if(exV[k].tournamentId===id&&exV[k].status!=='rejected'){
-        toast('You have already requested to join this tournament','info');
-        closeModal();
-        return;
+  if(!UD.ign||!UD.ffuid){toast('Please set your IGN and FF UID first','error');return;}
+  if(myJoinedTournamentIds.has(id)){toast('You have already requested to join this tournament','info');return;}
+
+  const mode = (t.gameMode||'Solo');
+  const teamSize = teamSizeForMode(mode);
+  _joinFlow = { tournamentId:id, mode, teamSize, members:[] };
+  await renderJoinScreen();
+}
+
+function joinFlowBalance(){
+  const t = allTournaments[_joinFlow.tournamentId];
+  if(t.entryType==='paid'){
+    const rm=UD.realMoney||{};
+    return (rm.deposited||0)+(rm.winnings||0)+(rm.bonus||0);
+  }
+  return UD.coins||0;
+}
+
+async function renderJoinScreen(){
+  const t = allTournaments[_joinFlow.tournamentId];
+  if(!t){closeModal();return;}
+  const cur = t.entryType==='paid' ? '₹' : '🪙';
+  const requiredFee = (t.entryFee||0) * _joinFlow.teamSize;
+  const balance = joinFlowBalance();
+  const requiredExtra = _joinFlow.teamSize - 1;
+
+  // Saved persistent team (Duo/Squad partner system from Change 1/5) — offered as a quick-fill option only
+  let savedTeamHtml = '';
+  if(requiredExtra > 0 && _joinFlow.members.length === 0){
+    try{
+      const {data} = await _sb.from('team_members').select('teammate_uid').eq('uid',U.uid).eq('mode',_joinFlow.mode.toLowerCase());
+      if(data && data.length){
+        savedTeamHtml = `<div class="form-group">
+          <label style="font-size:11px;color:var(--dim);">MY SAVED TEAM</label>
+          <button class="btn btn-outline btn-full" style="margin-top:6px;" onclick="useSavedTeam()">✓ Use My Saved ${_joinFlow.mode} Team</button>
+        </div>`;
       }
+    }catch(e){}
+  }
+
+  const teamRows = [
+    `<div class="uc-row" style="background:rgba(255,215,0,0.05);border-radius:10px;padding:8px 10px;"><span>👑</span><div><div style="font-weight:700;color:var(--yellow);">You</div><div style="font-size:10px;color:var(--dim);">TEAM CAPTAIN · ${esc(UD.ign)}</div></div></div>`,
+    ..._joinFlow.members.map((m,i)=>`<div class="uc-row" style="background:rgba(255,255,255,0.03);border-radius:10px;padding:8px 10px;justify-content:space-between;">
+      <div style="display:flex;gap:8px;align-items:center;"><span>👤</span><div><div style="font-weight:700;color:#fff;">${esc(m.ign)}</div><div style="font-size:10px;color:#3ddc84;">✓ Verified · TEAM MEMBER</div></div></div>
+      <button onclick="removeJoinMember(${i})" style="background:none;border:none;color:var(--red);font-size:11px;">✕ Remove</button>
+    </div>`)
+  ];
+  for(let i=_joinFlow.members.length;i<requiredExtra;i++){
+    teamRows.push(`<button class="btn btn-outline btn-full" style="margin-top:6px;" onclick="openAddMatchTeammate()">＋ Add Player</button>`);
+  }
+
+  const teamComplete = _joinFlow.members.length === requiredExtra;
+  const canConfirm = teamComplete && balance >= requiredFee;
+
+  openModal(`<div class="modal-bar"></div>
+    <h3 style="margin-bottom:2px;">${esc(t.name||'Tournament')}</h3>
+    <div style="font-size:11px;color:var(--dim);margin-bottom:14px;">${esc(mode_display(_joinFlow.mode))} · ${esc(t.map||'')}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+      <div style="background:var(--card);border-radius:10px;padding:10px;"><div style="font-size:10px;color:var(--dim);">Entry Fee (per player)</div><div style="font-weight:800;color:var(--yellow);">${cur}${t.entryFee||0}</div></div>
+      <div style="background:var(--card);border-radius:10px;padding:10px;"><div style="font-size:10px;color:var(--dim);">Required Slots</div><div style="font-weight:800;color:var(--yellow);">${_joinFlow.teamSize}</div></div>
+      <div style="background:var(--card);border-radius:10px;padding:10px;"><div style="font-size:10px;color:var(--dim);">Your Balance</div><div style="font-weight:800;color:#fff;">${cur}${balance}</div></div>
+      <div style="background:var(--card);border-radius:10px;padding:10px;"><div style="font-size:10px;color:var(--dim);">Your IGN / UID</div><div style="font-weight:800;color:#fff;font-size:11px;">${esc(UD.ign)} · ${esc(UD.ffuid)}</div></div>
+    </div>
+    ${_joinFlow.teamSize>1?`
+    <div style="background:rgba(255,215,0,0.06);border:1px solid var(--byellow);border-radius:10px;padding:10px;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
+      <span style="font-size:18px;">👑</span><div><div style="font-weight:800;color:var(--yellow);font-size:12px;">TEAM CAPTAIN PAYS</div><div style="font-size:10px;color:var(--dim);">Full team entry fee is deducted from your wallet.</div></div>
+    </div>
+    <div style="background:rgba(255,215,0,0.06);border:1px solid var(--byellow);border-radius:10px;padding:10px;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+      <span style="font-size:18px;">🏆</span><div><div style="font-weight:800;color:var(--yellow);font-size:12px;">PRIZE GOES TO CAPTAIN</div><div style="font-size:10px;color:var(--dim);">Match winnings are credited to your wallet only.</div></div>
+    </div>
+    ${savedTeamHtml}
+    <div style="font-size:11px;color:var(--dim);margin:12px 0 6px;">${mode_display(_joinFlow.mode).toUpperCase()} TEAM</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">${teamRows.join('')}</div>
+    `:''}
+    <div style="background:var(--card);border-radius:12px;padding:12px;margin-top:16px;">
+      <div style="font-size:11px;font-weight:700;color:var(--dim);margin-bottom:8px;">MATCH JOIN SUMMARY</div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="color:var(--dim);">Team Type</span><span style="font-weight:700;">${esc(mode_display(_joinFlow.mode))}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="color:var(--dim);">Players</span><span style="font-weight:700;">${1+_joinFlow.members.length} / ${_joinFlow.teamSize}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="color:var(--dim);">Entry Fee (Total)</span><span style="font-weight:700;color:var(--yellow);">${cur}${requiredFee}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="color:var(--dim);">Captain</span><span style="font-weight:700;">You (${esc(UD.ign)})</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--dim);">Payment / Prize</span><span style="font-weight:700;">Captain Pays / Receives</span></div>
+    </div>
+    ${!teamComplete?'<p style="font-size:11px;color:var(--dim);text-align:center;margin-top:10px;">Add '+(requiredExtra-_joinFlow.members.length)+' more player(s) to continue</p>'
+      : balance<requiredFee?`<div style="background:rgba(255,50,50,0.1);border:1px solid rgba(255,50,50,0.3);border-radius:10px;padding:10px;margin-top:10px;text-align:center;"><div style="color:var(--red);font-weight:700;font-size:12px;">⚠️ Insufficient Captain Balance</div><div style="font-size:11px;color:var(--dim);margin-top:2px;">Required: ${cur}${requiredFee} · Available: ${cur}${balance}</div></div>`
+      :''}
+    <button class="btn btn-yellow btn-full" style="padding:13px;margin-top:12px;${canConfirm?'':'opacity:0.4;pointer-events:none;'}" id="confirmJoinBtn" onclick="confirmMatchJoin()">✓ CONFIRM JOIN — ${_joinFlow.teamSize} SLOT${_joinFlow.teamSize>1?'S':''}</button>
+    <button class="btn btn-outline btn-full" style="margin-top:8px;" onclick="closeModal()">Cancel</button>
+  `);
+}
+function mode_display(m){ return m==='Duo'?'Duo':m==='Squad'?'Squad':'Solo'; }
+
+function useSavedTeam(){
+  (async()=>{
+    try{
+      const {data} = await _sb.from('team_members').select('teammate_uid').eq('uid',U.uid).eq('mode',_joinFlow.mode.toLowerCase());
+      const uids = (data||[]).map(r=>r.teammate_uid).slice(0,_joinFlow.teamSize-1);
+      if(!uids.length){toast('No saved team found','error');return;}
+      const {data:users} = await _sb.from('users').select('id,ign,ffuid').in('id',uids);
+      _joinFlow.members = (users||[]).map(u=>({uid:u.id, ign:u.ign, ffuid:u.ffuid}));
+      renderJoinScreen();
+    }catch(e){toast('Could not load saved team','error');}
+  })();
+}
+function removeJoinMember(i){
+  _joinFlow.members.splice(i,1);
+  renderJoinScreen();
+}
+
+function openAddMatchTeammate(){
+  openModal(`<div class="modal-bar"></div>
+    <h3>Add Match Teammate</h3>
+    <p style="font-size:11px;color:var(--dim);margin-bottom:10px;">This player is added for this match only — not saved to your permanent team.</p>
+    <div class="form-group"><label>FF UID</label><input class="form-input" type="text" id="matchTmFFUID" placeholder="Enter FF UID" inputmode="numeric" style="margin-top:5px;"></div>
+    <button class="btn btn-outline btn-full" onclick="lookupMatchTeammate()">🔍 Find Player</button>
+    <div id="matchTmResult" style="margin-top:12px;"></div>
+    <button class="btn btn-outline btn-full" style="margin-top:10px;" onclick="renderJoinScreen()">Cancel</button>
+  `);
+}
+let _matchTmFound = null;
+async function lookupMatchTeammate(){
+  const ffuid = (document.getElementById('matchTmFFUID')?.value||'').trim();
+  _matchTmFound = null;
+  const resultEl = document.getElementById('matchTmResult');
+  if(!ffuid){toast('Enter an FF UID','error');return;}
+  resultEl.innerHTML = '<div style="text-align:center;color:var(--dim);font-size:12px;">Searching...</div>';
+  try{
+    const {data} = await _sb.from('users').select('id,ign,ffuid,approved').eq('ffuid',ffuid).maybeSingle();
+    if(!data){
+      resultEl.innerHTML = `<div style="background:rgba(255,50,50,0.1);border:1px solid rgba(255,50,50,0.3);border-radius:10px;padding:12px;text-align:center;"><div style="color:var(--red);font-weight:700;">✕ UID NOT FOUND</div></div>`;
+      return;
     }
-    // Check balance
-    if(t.entryType==='paid'){
-      const rm=UD.realMoney||{};
-      const balance=(rm.deposited||0)+(rm.winnings||0)+(rm.bonus||0);
-      if(balance<(t.entryFee||0)){toast('Insufficient balance. Add money first.','error');return;}
-    }else{
-      if((UD.coins||0)<(t.entryFee||0)){toast('Not enough coins','error');return;}
+    if(data.id===U.uid){
+      resultEl.innerHTML = `<div style="background:rgba(255,50,50,0.1);border:1px solid rgba(255,50,50,0.3);border-radius:10px;padding:12px;text-align:center;"><div style="color:var(--red);font-weight:700;">You cannot add yourself</div></div>`;
+      return;
     }
-    if(!UD.ign||!UD.ffuid){toast('Please set your IGN and FF UID first','error');return;}
-    await db.ref('joinRequests').push({
-      uid:U.uid,
-      tournamentId:id,
-      tournamentName:t.name||'',
-      entryType:t.entryType||'paid',
-      entryFee:t.entryFee||0,
-      ign:UD.ign||'',
-      ffuid:UD.ffuid||'',
-      status:'pending',
-      createdAt:Date.now()
+    if(_joinFlow.members.some(m=>m.uid===data.id)){
+      resultEl.innerHTML = `<div style="background:rgba(255,50,50,0.1);border:1px solid rgba(255,50,50,0.3);border-radius:10px;padding:12px;text-align:center;"><div style="color:var(--red);font-weight:700;">Already added to this team</div></div>`;
+      return;
+    }
+    _matchTmFound = {uid:data.id, ign:data.ign||'Player', ffuid:data.ffuid};
+    resultEl.innerHTML = `<div style="background:rgba(0,200,120,0.08);border:1px solid rgba(0,200,120,0.3);border-radius:10px;padding:12px;">
+      <div style="color:#00c878;font-weight:700;font-size:12px;margin-bottom:6px;">✓ Player Found</div>
+      <div style="font-size:13px;color:#fff;">IGN: <strong>${esc(data.ign||'-')}</strong></div>
+      <div style="font-size:12px;color:var(--dim);">FF UID: ${esc(data.ffuid)}</div>
+      <div style="font-size:11px;color:${data.approved?'#00c878':'var(--red)'};margin-top:2px;">Status: ${data.approved?'✓ Verified':'Not Approved Yet'}</div>
+      <button class="btn btn-yellow btn-full" style="margin-top:10px;padding:10px;" ${data.approved?'':'disabled style="opacity:0.4;"'} onclick="confirmAddMatchTeammate()">＋ Add to This Match</button>
+    </div>`;
+  }catch(e){ resultEl.innerHTML = '<div style="color:var(--red);font-size:12px;text-align:center;">Lookup failed</div>'; }
+}
+function confirmAddMatchTeammate(){
+  if(!_matchTmFound) return;
+  _joinFlow.members.push(_matchTmFound);
+  _matchTmFound = null;
+  renderJoinScreen();
+}
+
+let _confirmingJoin = false;
+async function confirmMatchJoin(){
+  if(_confirmingJoin || !_joinFlow) return;
+  _confirmingJoin = true;
+  const btn = document.getElementById('confirmJoinBtn');
+  const origHTML = btn?btn.innerHTML:'';
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="btn-spinner"></span> Joining...';}
+  try{
+    const membersPayload = _joinFlow.members.map(m=>({uid:m.uid, ign:m.ign, ffuid:m.ffuid}));
+    const {data, error} = await _sb.rpc('confirm_match_join', {
+      p_tournament_id: _joinFlow.tournamentId, p_team_members: membersPayload
     });
+    if(error) throw error;
     closeModal();
+    myJoinedTournamentIds.add(_joinFlow.tournamentId);
+    renderHome();
     toast('Join request submitted! Awaiting approval.','success');
-  }catch(e){toast('Error: '+e.message,'error');}
-  finally{ delete _joiningTournament[id]; }
+    _joinFlow = null;
+  }catch(e){
+    toast(e.message||'Could not join','error');
+    if(btn){btn.disabled=false;btn.innerHTML=origHTML;}
+  } finally { _confirmingJoin = false; }
 }
 
 // ====== LEADERBOARD ======
@@ -1748,12 +2294,33 @@ function updateRankBadge(s){
   b.textContent=tier.label;b.style.color=tier.color;b.style.borderColor=tier.color;b.style.background='rgba(128,128,128,0.08)';
 }
 function updateProfileCompletion(){
-  let pct=0;
-  if(UD.ign)pct+=50;
-  if(UD.ffuid)pct+=50;
-  document.getElementById('profilePct').textContent=pct+'%';
-  document.getElementById('profileFill').style.width=pct+'%';
-  document.getElementById('profileHint').textContent=pct>=100?'Profile complete! ★':'Set your IGN & FF UID to complete your profile';
+  const slot = document.getElementById('profileProgressCardSlot');
+  if(!slot) return;
+  const complete = !!(UD.ign && UD.ffuid);
+  if(!complete){
+    let pct=0;
+    if(UD.ign)pct+=50;
+    if(UD.ffuid)pct+=50;
+    slot.innerHTML = `<div class="profile-progress">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:12px;font-weight:700;color:#fff;">Profile Completion</span>
+        <span style="font-size:12px;font-weight:700;color:var(--yellow);">${pct}%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div style="font-size:10px;color:var(--dim);">Set your IGN & FF UID to complete your profile</div>
+    </div>`;
+  } else {
+    const info = getLevelInfo(UD.xp||0);
+    const pct = info.isMax ? 100 : Math.min(100, Math.round((info.intoLevel/info.forNext)*100));
+    slot.innerHTML = `<div class="profile-progress">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:12px;font-weight:700;color:#fff;">🏅 Level ${info.level} — ${info.rankName}</span>
+        <span style="font-size:12px;font-weight:700;color:var(--yellow);">${info.isMax?'MAX':info.intoLevel+' / '+info.forNext+' XP'}</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      <div style="font-size:10px;color:var(--dim);">${info.isMax?'Maximum level reached! 🏆':'Play matches to earn XP and level up'}</div>
+    </div>`;
+  }
 }
 function updateAchievements(s){
   const score=(s.wins||0)*100+(s.kills||0)*10+(s.earnings||0);
@@ -2057,30 +2624,28 @@ function openRedeemVoucher(){
     <h3 style="color:#6464ff;display:flex;align-items:center;gap:8px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:#6464ff"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v2z"/></svg>Redeem Voucher</h3>
     <p style="color:var(--dim);font-size:13px;margin-bottom:14px;">Enter your voucher code to get coins or money bonus.</p>
     <div class="form-group"><label>Voucher Code</label><input class="form-input" type="text" id="voucherCode" placeholder="Enter voucher code" style="text-transform:uppercase;letter-spacing:2px;margin-top:5px;"></div>
-    <button class="btn btn-full" style="background:linear-gradient(135deg,#3030cc,#6464ff);color:#fff;padding:13px;" onclick="submitVoucher()">Redeem Now</button>
+    <button class="btn btn-full" id="redeemVoucherBtn" style="background:linear-gradient(135deg,#3030cc,#6464ff);color:#fff;padding:13px;" onclick="submitVoucher()">Redeem Now</button>
     <button class="btn btn-outline btn-full" style="margin-top:8px;" onclick="closeModal()">Cancel</button>
   `);
 }
+let _redeemingVoucher = false;
 async function submitVoucher(){
+  if(_redeemingVoucher) return;
   const code=(document.getElementById('voucherCode')?.value||'').trim().toUpperCase();
   if(!code){toast('Enter voucher code','error');return;}
+  _redeemingVoucher = true;
+  const btn = document.getElementById('redeemVoucherBtn');
+  const origHTML = btn?btn.innerHTML:'';
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="btn-spinner"></span> Redeeming...';}
   try{
-    const snap=await db.ref('vouchers/'+code).once('value');
-    if(!snap.exists()){toast('Invalid voucher code','error');return;}
-    const v=snap.val();
-    if(v.used){toast('Voucher already used','error');return;}
-    if(v.expiry&&Date.now()>v.expiry){toast('Voucher expired','error');return;}
-    await db.ref('vouchers/'+code).update({used:true,usedBy:U.uid,usedAt:Date.now()});
-    if(v.coins){
-      await db.ref('users/'+U.uid).update({coins:(UD?.coins||0)+v.coins});
-      await db.ref('users/'+U.uid+'/coinHistory').push({type:'voucher',amount:v.coins,code,createdAt:Date.now()});
-    }
-    if(v.money){
-      const rm=UD?.realMoney||{};
-      await db.ref('users/'+U.uid+'/realMoney').update({bonus:(rm.bonus||0)+v.money});
-    }
-    closeModal();toast('Voucher redeemed! +'+(v.coins||0)+' coins'+(v.money?' + ₹'+v.money:''),'success');
-  }catch(e){toast('Error: '+e.message,'error');}
+    const {data, error} = await _sb.rpc('redeem_voucher', {p_code: code});
+    if(error) throw error;
+    closeModal();toast('Voucher redeemed! +'+(data.coins||0)+' coins'+(data.money?' + ₹'+data.money:''),'success');
+    await forceRefreshAllData();
+  }catch(e){
+    toast(e.message||'Redemption failed','error');
+    if(btn){btn.disabled=false;btn.innerHTML=origHTML;}
+  } finally { _redeemingVoucher = false; }
 }
 
 // ====== SUPPORT (WhatsApp-style chat) ======
@@ -2131,11 +2696,13 @@ async function submitSupport(){
   try{
     const res = await db.ref('supportRequests').push({uid:U.uid,ign:UD?.ign||'',playerName:UD?.displayName||'',type,message:msg,status:'pending',unreadByAdmin:true,lastMessageAt:Date.now(),createdAt:Date.now()});
     const ticketId = res.key;
-    await _sb.from('support_messages').insert({id:crypto.randomUUID(), ticket_id:ticketId, sender:'user', message:msg, created_at:Date.now()});
+    const { error: msgErr } = await _sb.from('support_messages').insert({id:crypto.randomUUID(), ticket_id:ticketId, sender:'user', message:msg, created_at:Date.now()});
+    if(msgErr) throw msgErr;
     toast('Support request sent!','success');
     openSupportChat(ticketId, type);
   }catch(e){
-    toast('Error: '+e.message,'error');
+    console.error('submitSupport error',e);
+    toast(friendlyDbError(e),'error');
     _submittingSupport=false;
     if(btn){btn.disabled=false;btn.innerHTML=origHTML;}
   }
@@ -2188,6 +2755,13 @@ async function loadUserChatMessages(ticketId, forceScroll){
   }catch(e){console.error('chat load error',e);}
 }
 let _sendingUserChat=false;
+function friendlyDbError(e){
+  const msg = e?.message||'';
+  if(/schema cache|PGRST/i.test(msg)) return 'Server is syncing, please try again in a moment.';
+  if(/row-level security|permission denied/i.test(msg)) return 'Session issue. Please log out and log back in.';
+  if(!navigator.onLine) return 'No internet connection. Please try again.';
+  return 'Something went wrong. Please try again.';
+}
 async function sendUserChatMessage(){
   if(_sendingUserChat || !_myOpenTicketId) return;
   const input = document.getElementById('userChatInput');
@@ -2197,15 +2771,21 @@ async function sendUserChatMessage(){
   const btn = document.getElementById('userChatSendBtn');
   if(btn) btn.disabled=true;
   if(input) input.value='';
-  try{
-    const {error} = await _sb.from('support_messages').insert({id:crypto.randomUUID(),ticket_id:_myOpenTicketId,sender:'user',message:msg,created_at:Date.now()});
-    if(error)throw error;
-    await _sb.from('support_requests').update({last_message_at:Date.now(), unread_by_admin:true}).eq('id',_myOpenTicketId);
-    await loadUserChatMessages(_myOpenTicketId,true);
-  }catch(e){
-    toast('Failed to send','error');
-    if(input) input.value = msg;
-  }finally{ _sendingUserChat=false; if(btn) btn.disabled=false; }
+  const doSend = async(retry)=>{
+    try{
+      const {error} = await _sb.from('support_messages').insert({id:crypto.randomUUID(),ticket_id:_myOpenTicketId,sender:'user',message:msg,created_at:Date.now()});
+      if(error)throw error;
+      await _sb.from('support_requests').update({last_message_at:Date.now(), unread_by_admin:true}).eq('id',_myOpenTicketId);
+      await loadUserChatMessages(_myOpenTicketId,true);
+    }catch(e){
+      if(retry<1 && /schema cache|PGRST/i.test(e.message||'')) { await new Promise(r=>setTimeout(r,900)); return doSend(retry+1); }
+      console.error('chat send error',e);
+      toast(friendlyDbError(e),'error');
+      if(input) input.value = msg;
+    }
+  };
+  await doSend(0);
+  _sendingUserChat=false; if(btn) btn.disabled=false;
 }
 
 // ====== PRIVACY ======
@@ -2240,7 +2820,17 @@ function toast(msg,type='info'){
 }
 
 // ====== HELPERS ======
-function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=String(s);return d.innerHTML;}
+// Single source of truth for match status — used everywhere (Home cards, My Matches, Details)
+// so the badge shown always matches the bucket a match is sorted/filtered into.
+function getMatchStatus(t){
+  if(t.status==='cancelled') return 'cancelled';
+  if(!t.matchTime) return t.status||'upcoming';
+  const now=Date.now(), mt=t.matchTime, liveWindow=20*60*1000;
+  if(now<mt) return 'upcoming';
+  if(now<mt+liveWindow) return 'live';
+  return t.resultSubmitted ? 'completed' : 'ended';
+}
+function esc(s){if(s===null||s===undefined)return'';if(typeof s==='object')return'';const d=document.createElement('div');d.textContent=String(s);return d.innerHTML;}
 function formatCountdown(ms){
   if(ms<=0)return'Started';
   const h=Math.floor(ms/3600000),m=Math.floor((ms%3600000)/60000);
