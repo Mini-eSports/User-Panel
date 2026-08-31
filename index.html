@@ -144,6 +144,11 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .t-card-topbar::after{content:'';position:absolute;top:0;left:-40%;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.55),transparent);animation:topbarShine 3.2s ease-in-out infinite;}
 @keyframes topbarShine{0%{left:-40%;}55%{left:110%;}100%{left:110%;}}
 .t-prize-glow{text-shadow:0 0 12px currentColor;}
+.ts-status-pill{
+  flex-shrink:0;display:inline-flex;align-items:center;gap:4px;
+  background:#fff;color:#111;font-size:9px;font-weight:900;letter-spacing:0.4px;
+  padding:5px 10px;border-radius:20px;white-space:nowrap;margin-left:8px;
+}
 .trophy-glow-icon{
   display:inline-block;font-size:15px;
   filter:drop-shadow(0 0 4px #FFD700) drop-shadow(0 0 8px rgba(100,180,255,0.6));
@@ -628,7 +633,7 @@ function toSnake(obj) {
     displayName:'display_name', tournamentId:'tournament_id', tournamentName:'tournament_name',
     entryType:'entry_type', entryFee:'entry_fee', prizePool:'prize_pool', maxSlots:'max_slots',
     filledSlots:'filled_slots', matchTime:'match_time', roomId:'room_id', roomPassword:'room_password',
-    roomLocked:'room_locked', isSpecial:'is_special', gameMode:'game_mode', createdAt:'created_at', matchCategory:'match_category',
+    roomLocked:'room_locked', isSpecial:'is_special', gameMode:'game_mode', createdAt:'created_at', matchCategory:'match_category', killReward:'kill_reward',
     photoURL:'photo_url', profileUpdatePending:'profile_update_pending', lastDailyClaim:'last_daily_claim',
     realMoney:'real_money', duoTeam:'duo_team', squadTeam:'squad_team',
     isGoogleUser:'is_google_user', lastSeen:'last_seen',
@@ -646,7 +651,7 @@ function toCamel(obj) {
     display_name:'displayName', tournament_id:'tournamentId', tournament_name:'tournamentName',
     entry_type:'entryType', entry_fee:'entryFee', prize_pool:'prizePool', max_slots:'maxSlots',
     filled_slots:'filledSlots', match_time:'matchTime', room_id:'roomId', room_password:'roomPassword',
-    room_locked:'roomLocked', is_special:'isSpecial', game_mode:'gameMode', created_at:'createdAt', match_category:'matchCategory',
+    room_locked:'roomLocked', is_special:'isSpecial', game_mode:'gameMode', created_at:'createdAt', match_category:'matchCategory', kill_reward:'killReward',
     photo_url:'photoURL', profile_update_pending:'profileUpdatePending', last_daily_claim:'lastDailyClaim',
     real_money:'realMoney', duo_team:'duoTeam', squad_team:'squadTeam',
     is_google_user:'isGoogleUser', last_seen:'lastSeen',
@@ -1280,75 +1285,87 @@ function tournamentCard(t,special=false,elig=null){
   const timeStr=diff>0?formatCountdown(diff):'';
   const isPaid=t.entryType==='paid';
   const entryLabel=special?'FREE':isPaid?'₹'+(t.entryFee||0):'🪙'+(t.entryFee||0);
-  const prizeLabel=isPaid?'₹'+(t.prizePool||0):'🪙'+(t.prizePool||0);
-  // Compute live status using single canonical function (was duplicated 3x before, causing badge/status mismatches)
   const liveStatus = getMatchStatus(t);
-  const statusBadgeMap={
-    live:'<span class="badge badge-live"><span class="live-dot"></span>LIVE</span>',
-    upcoming:'<span class="badge badge-upcoming">🟡 UPCOMING</span>',
-    ended:'<span class="badge badge-completed" style="background:rgba(255,255,255,0.08);">⚫ ENDED</span>',
-    completed:'<span class="badge badge-completed">🟢 COMPLETED</span>',
-    cancelled:'<span class="badge" style="background:rgba(255,0,0,0.12);color:var(--red);">❌ CANCELLED</span>'
+  const statusPillMap={
+    live:'<span class="ts-status-pill" style="background:#ff3b3b;color:#fff;"><span class="live-dot"></span> LIVE</span>',
+    upcoming:'<span class="ts-status-pill">🕐 UPCOMING</span>',
+    ended:'<span class="ts-status-pill" style="background:#333;color:#aaa;">⚫ ENDED</span>',
+    completed:'<span class="ts-status-pill" style="background:#2ecc71;color:#003d1a;">✓ COMPLETED</span>',
+    cancelled:'<span class="ts-status-pill" style="background:rgba(255,0,0,0.85);color:#fff;">❌ CANCELLED</span>'
   };
-  const statusBadge=statusBadgeMap[liveStatus]||statusBadgeMap.upcoming;
+  const statusPill = statusPillMap[liveStatus]||statusPillMap.upcoming;
   const alreadyJoined = myJoinedTournamentIds.has(t.id);
   const isEligible = !special || (elig && elig.eligible);
   const canJoin=UD&&UD.approved&&!UD.profileUpdatePending&&liveStatus==='upcoming'&&!isFull&&isEligible;
-  const borderColor=special?'linear-gradient(135deg,var(--yellow),var(--red))':isPaid?'rgba(255,215,0,0.2)':'rgba(100,200,255,0.2)';
-  const accentColor=isPaid?'var(--yellow)':'#64c8ff';
-  const dateStr = t.matchTime ? new Date(t.matchTime).toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) : '';
-  const timeHtml = dateStr ? '<span style="background:rgba(255,255,255,0.06);border-radius:20px;padding:4px 10px;font-size:10px;color:#bbb;display:inline-flex;align-items:center;gap:3px;">📅 '+dateStr+'</span>' : '';
-  const cdHtml = (timeStr&&liveStatus==='upcoming') ? '<span style="background:rgba(220,30,30,0.18);border:1px solid rgba(255,40,40,0.3);border-radius:20px;padding:4px 10px;font-size:10px;font-weight:800;color:#ff4444;display:inline-flex;align-items:center;gap:3px;">⏱ '+timeStr+'</span>' : '';
   const joinOnclick = canJoin ? 'joinTournament(\'' + t.id + '\')' : '';
-  const joinLabel = alreadyJoined ? '✓ REGISTERED' : (special&&!isEligible) ? '🔒 LOCKED' : isFull ? '🔴 FULL' : (liveStatus==='completed' ? '✓ ENDED' : liveStatus==='live' ? '🔴 LIVE' : '⚡ JOIN');
-  const joinStyle = alreadyJoined ? 'background:rgba(0,200,120,0.12);color:#00c878;border:1px solid rgba(0,200,120,0.4);cursor:default;' : canJoin ? '' : 'background:#222;color:#555;border:1px solid #333;cursor:not-allowed;';
-  const joinClass = (canJoin&&!alreadyJoined) ? 'btn btn-yellow' : 'btn';
-  const topBar = special ? 'linear-gradient(90deg,var(--yellow),var(--red))' : (isPaid ? 'linear-gradient(90deg,var(--yellow3),var(--yellow))' : 'linear-gradient(90deg,#3399ff,#64c8ff)');
-  const cardBorder = isPaid ? 'rgba(255,215,0,0.18)' : 'rgba(100,200,255,0.18)';
-  const slotBarBg = pct>=90 ? 'var(--red)' : (isPaid ? 'linear-gradient(90deg,var(--yellow3),var(--yellow))' : 'linear-gradient(90deg,#3399ff,#64c8ff)');
-  const pillBg = special?'rgba(0,200,120,0.12)':isPaid ? 'rgba(255,215,0,0.1)' : 'rgba(100,200,255,0.1)';
-  const eligBadge = special && elig ? (
+  const joinLabel = alreadyJoined ? '✓ REGISTERED' : (special&&!isEligible) ? '🔒 LOCKED' : isFull ? '🔴 FULL' : (liveStatus==='completed'||liveStatus==='ended' ? '✓ ENDED' : liveStatus==='live' ? '🔴 LIVE' : '⚡ JOIN');
+  const joinDisabledStyle = alreadyJoined ? 'background:rgba(0,200,120,0.15);color:#00e676;border:1px solid rgba(0,200,120,0.5);' : canJoin ? 'background:linear-gradient(135deg,#2ecc71,#27ae60);color:#00280f;' : 'background:#222;color:#555;border:1px solid #333;cursor:not-allowed;';
+
+  const catMap = {'Battle Royale':{ab:'BR',ic:'🪂'},'Clash Squad':{ab:'CS',ic:'⚔️'},'Lone Wolf':{ab:'LW',ic:'🐺'}};
+  const cat = catMap[t.matchCategory] || catMap['Battle Royale'];
+
+  const startTimeLabel = liveStatus==='live' ? 'LIVE NOW' : (liveStatus==='ended'||liveStatus==='completed') ? 'Match Ended' : (liveStatus==='cancelled') ? 'Cancelled' : (timeStr||'-');
+
+  const prizeTiers = [
+    {rank:'1ST',pct:0.5,color:'#FFD700',border:'rgba(255,215,0,0.5)',bg:'rgba(255,215,0,0.06)',icon:'🏆'},
+    {rank:'2ND',pct:0.3,color:'#7ec8ff',border:'rgba(126,200,255,0.5)',bg:'rgba(126,200,255,0.06)',icon:'🥈'},
+    {rank:'3RD',pct:0.2,color:'#ff9d4d',border:'rgba(255,157,77,0.5)',bg:'rgba(255,157,77,0.06)',icon:'🥉'}
+  ];
+  const prizeCardsHtml = prizeTiers.map(pt=>`
+    <div style="flex:1;background:${pt.bg};border:1px solid ${pt.border};border-radius:12px;padding:10px 4px;text-align:center;">
+      <div style="font-size:20px;">${pt.icon}</div>
+      <div style="font-size:9px;font-weight:800;color:${pt.color};letter-spacing:0.5px;margin:3px 0;">${pt.rank} PRIZE</div>
+      <div style="font-size:15px;font-weight:900;color:#fff;">${isPaid?'₹':'🪙'}${Math.round((t.prizePool||0)*pt.pct)}</div>
+    </div>`).join('');
+
+  const eligLine = special && elig ? (
     elig.eligible
-      ? '<span style="background:rgba(255,80,80,0.12);border-radius:20px;padding:4px 10px;font-size:10px;font-weight:700;color:#ff5050;">'+(currentSpecialTab==='monthly'?'🔵 Monthly Eligible':'🔴 Sunday Eligible')+'</span>'
-      : '<span style="background:rgba(255,255,255,0.06);border-radius:20px;padding:4px 10px;font-size:10px;font-weight:700;color:#888;">🔒 Top '+elig.reqRank+' · Lvl '+elig.reqLevel+'+</span>'
+      ? '<div style="font-size:10px;font-weight:700;color:#ff5050;margin-top:4px;">'+(currentSpecialTab==='monthly'?'🔵 Monthly Eligible':'🔴 Sunday Eligible')+'</div>'
+      : '<div style="font-size:10px;color:#888;margin-top:4px;">🔒 Requires Top '+elig.reqRank+' Rank & Level '+elig.reqLevel+'+ (You: Rank '+(elig.myRank!=null?'#'+elig.myRank:'-')+' · Lvl '+elig.myLevel+')</div>'
   ) : '';
 
-  return '<div class="t-card'+(special?' t-card-special':'')+'" data-name="'+esc(t.name||'')+'" style="border:1px solid '+cardBorder+';background:linear-gradient(135deg,#0d0d0d 0%,#111 100%);padding:0;overflow:hidden;margin-bottom:12px;">'+
-    '<div class="t-card-topbar" style="height:3px;background:'+topBar+';"></div>'+
-    '<div style="padding:14px;">'+
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">'+
-        '<div style="flex:1;min-width:0;">'+
-          statusBadge+
-          '<div class="t-name" style="font-size:15px;letter-spacing:0.2px;margin-top:6px;">'+esc(t.name||'Tournament')+'</div>'+
-        '</div>'+
-        '<div class="prize-pool-trigger" onclick="event.stopPropagation();openPrizeDistribution(\''+t.id+'\')" style="text-align:right;flex-shrink:0;margin-left:8px;cursor:pointer;touch-action:manipulation;">'+
-          '<div style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px;">Prize Pool</div>'+
-          '<div style="display:flex;align-items:center;gap:4px;justify-content:flex-end;">'+
-            '<span class="trophy-glow-icon">🏆</span>'+
-            '<span class="t-prize-glow" style="font-size:17px;font-weight:900;color:'+accentColor+';">'+prizeLabel+'</span>'+
-          '</div>'+
-        '</div>'+
+  return '<div class="t-card'+(special?' t-card-special':'')+'" data-name="'+esc(t.name||'')+'" style="background:linear-gradient(135deg,#0d0d0d 0%,#111 100%);padding:14px;margin-bottom:12px;">'+
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">'+
+      '<div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1;">'+
+        '<div style="flex-shrink:0;width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--yellow),#b8860b);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#000;">'+cat.ab+'</div>'+
+        '<div class="t-name" style="font-size:15px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(t.name||'Tournament')+'</div>'+
       '</div>'+
-      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">'+
-        eligBadge+
-        '<span style="background:rgba(255,255,255,0.06);border-radius:20px;padding:4px 10px;font-size:10px;font-weight:600;color:#ccc;">🗺 '+esc(t.map||'-')+'</span>'+
-        '<span style="background:'+pillBg+';border-radius:20px;padding:4px 10px;font-size:10px;font-weight:700;color:'+(special?'#00c878':accentColor)+';">'+(special?'🎁 FREE ENTRY':'Entry: '+entryLabel)+'</span>'+
-        timeHtml+cdHtml+
+      statusPill+
+    '</div>'+
+    '<div style="display:flex;align-items:center;gap:4px;margin-bottom:12px;">'+
+      '<span style="color:#ff4444;font-size:12px;">📍</span><span style="color:#ff4444;font-weight:700;font-size:12px;">'+esc(t.map||'-')+'</span>'+
+      '<span style="margin-left:8px;font-size:10px;color:#888;">'+cat.ic+' '+esc(t.matchCategory||'Battle Royale')+' · '+esc(t.gameMode||'Solo')+'</span>'+
+    '</div>'+
+    eligLine+
+    '<div class="prize-pool-trigger" onclick="event.stopPropagation();openPrizeDistribution(\''+t.id+'\')" style="display:flex;gap:8px;margin:10px 0 12px;cursor:pointer;touch-action:manipulation;">'+
+      prizeCardsHtml+
+    '</div>'+
+    '<div style="display:flex;justify-content:space-between;background:rgba(255,255,255,0.03);border-radius:10px;padding:10px 8px;margin-bottom:12px;">'+
+      '<div style="text-align:center;flex:1;">'+
+        '<div style="font-size:9px;color:#2ecc71;font-weight:700;">ENTRY FEE</div>'+
+        '<div style="font-size:13px;font-weight:800;color:#fff;margin-top:2px;">'+entryLabel+'</div>'+
       '</div>'+
-      '<div style="margin-bottom:12px;">'+
-        '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-bottom:5px;">'+
-          '<span style="text-transform:uppercase;letter-spacing:0.5px;">Slots Filled</span>'+
-          '<span style="color:'+(isFull?'var(--red)':'#fff')+';font-weight:800;">'+(t.filledSlots||0)+'/'+(t.maxSlots||0)+'</span>'+
-        '</div>'+
-        '<div style="height:6px;background:#1a1a1a;border-radius:4px;overflow:hidden;">'+
-          '<div class="t-slotbar-fill" style="height:100%;width:'+pct+'%;background:'+slotBarBg+';border-radius:4px;transition:width .4s ease;"></div>'+
-        '</div>'+
+      (t.killReward>0 ? '<div style="text-align:center;flex:1;border-left:1px solid rgba(255,255,255,0.08);border-right:1px solid rgba(255,255,255,0.08);">'+
+        '<div style="font-size:9px;color:#ff5050;font-weight:700;">PER KILL</div>'+
+        '<div style="font-size:13px;font-weight:800;color:#fff;margin-top:2px;">₹'+t.killReward+' / Kill</div>'+
+      '</div>' : '<div style="flex:1;"></div>')+
+      '<div style="text-align:center;flex:1;">'+
+        '<div style="font-size:9px;color:#a970ff;font-weight:700;">'+(liveStatus==='upcoming'?'STARTS IN':'STATUS')+'</div>'+
+        '<div style="font-size:12px;font-weight:800;color:#fff;margin-top:2px;">'+esc(startTimeLabel)+'</div>'+
       '</div>'+
-      (special && elig && !elig.eligible ? '<div style="background:rgba(255,50,50,0.08);border:1px solid rgba(255,50,50,0.25);border-radius:10px;padding:8px 10px;margin-bottom:10px;font-size:10px;color:var(--dim);">Required: Top '+elig.reqRank+' Rank & Level '+elig.reqLevel+'+ &nbsp;|&nbsp; Your: Rank '+(elig.myRank!=null?'#'+elig.myRank:'-')+' · Level '+elig.myLevel+'</div>' : '')+
-      '<div style="display:flex;gap:8px;">'+
-        '<button class="btn btn-outline" style="flex:1;padding:11px;border-radius:10px;" onclick="viewTournament(\''+t.id+'\')">📋 Details</button>'+
-        '<button class="'+joinClass+'" style="flex:1;padding:11px;border-radius:10px;'+joinStyle+'" onclick="'+joinOnclick+'">'+joinLabel+'</button>'+
+    '</div>'+
+    '<div style="margin-bottom:12px;">'+
+      '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-bottom:5px;">'+
+        '<span>👥 SLOTS FILLED</span>'+
+        '<span style="color:'+(isFull?'var(--red)':'#fff')+';font-weight:800;">'+(t.filledSlots||0)+'/'+(t.maxSlots||0)+'</span>'+
       '</div>'+
+      '<div style="height:7px;background:#1a1a1a;border-radius:4px;overflow:hidden;display:flex;gap:2px;padding:1px;">'+
+        '<div class="t-slotbar-fill" style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,#7c3aed,#a970ff);border-radius:3px;transition:width .4s ease;"></div>'+
+      '</div>'+
+    '</div>'+
+    '<div style="display:flex;gap:8px;">'+
+      '<button class="btn btn-outline" style="flex:1;padding:12px;border-radius:10px;" onclick="viewTournament(\''+t.id+'\')">📋 DETAILS</button>'+
+      '<button style="flex:1.4;padding:12px;border-radius:10px;border:none;font-weight:800;letter-spacing:0.5px;'+joinDisabledStyle+'" onclick="'+joinOnclick+'">⚡ '+joinLabel+'</button>'+
     '</div>'+
   '</div>';
 }
@@ -1960,7 +1977,7 @@ async function viewTournament(id){
   openModal(`<div class="modal-bar"></div>
     <h3 style="color:var(--yellow);">${esc(t.name||'Tournament')}</h3>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
-      ${[['Category',t.matchCategory||'Battle Royale'],['Match Type',t.gameMode],['Map',t.map],['Entry',el],['Prize',pl],['Slots',(t.filledSlots||0)+'/'+(t.maxSlots||0)],['Time',t.matchTime?new Date(t.matchTime).toLocaleString():'-']].map(kv=>'<div style="background:var(--card);border-radius:10px;padding:10px;"><div style="font-size:10px;color:var(--dim)">'+kv[0]+'</div><div style="font-weight:700;color:var(--yellow);font-size:13px;">'+esc(String(kv[1]||'-'))+'</div></div>').join('')}
+      ${[['Category',t.matchCategory||'Battle Royale'],['Match Type',t.gameMode],['Map',t.map],['Entry',el],['Prize',pl],['Slots',(t.filledSlots||0)+'/'+(t.maxSlots||0)],['Time',t.matchTime?new Date(t.matchTime).toLocaleString():'-'],...(t.killReward>0?[['Per Kill','₹'+t.killReward]]:[])].map(kv=>'<div style="background:var(--card);border-radius:10px;padding:10px;"><div style="font-size:10px;color:var(--dim)">'+kv[0]+'</div><div style="font-weight:700;color:var(--yellow);font-size:13px;">'+esc(String(kv[1]||'-'))+'</div></div>').join('')}
     </div>
     ${teamHtml}
     ${roomHtml}
