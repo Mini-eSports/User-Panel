@@ -146,7 +146,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .t-prize-glow{text-shadow:0 0 12px currentColor;}
 .ts-status-pill{
   flex-shrink:0;display:inline-flex;align-items:center;gap:4px;
-  background:#fff;color:#111;font-size:9px;font-weight:900;letter-spacing:0.4px;
+  background:#0a0a0a;border:1px solid rgba(255,215,0,0.3);color:var(--yellow);font-size:9px;font-weight:900;letter-spacing:0.4px;
   padding:5px 10px;border-radius:20px;white-space:nowrap;margin-left:8px;
 }
 .trophy-glow-icon{
@@ -1287,11 +1287,11 @@ function tournamentCard(t,special=false,elig=null){
   const entryLabel=special?'FREE':isPaid?'₹'+(t.entryFee||0):'🪙'+(t.entryFee||0);
   const liveStatus = getMatchStatus(t);
   const statusPillMap={
-    live:'<span class="ts-status-pill" style="background:#ff3b3b;color:#fff;"><span class="live-dot"></span> LIVE</span>',
+    live:'<span class="ts-status-pill" style="background:#0a0a0a;border-color:rgba(255,50,50,0.5);color:#ff4444;"><span class="live-dot"></span> LIVE</span>',
     upcoming:'<span class="ts-status-pill">🕐 UPCOMING</span>',
-    ended:'<span class="ts-status-pill" style="background:#333;color:#aaa;">⚫ ENDED</span>',
-    completed:'<span class="ts-status-pill" style="background:#2ecc71;color:#003d1a;">✓ COMPLETED</span>',
-    cancelled:'<span class="ts-status-pill" style="background:rgba(255,0,0,0.85);color:#fff;">❌ CANCELLED</span>'
+    ended:'<span class="ts-status-pill" style="background:#0a0a0a;border-color:#333;color:#888;">⚫ ENDED</span>',
+    completed:'<span class="ts-status-pill" style="background:#0a0a0a;border-color:rgba(46,204,113,0.5);color:#2ecc71;">✓ COMPLETED</span>',
+    cancelled:'<span class="ts-status-pill" style="background:#0a0a0a;border-color:rgba(255,50,50,0.5);color:#ff4444;">❌ CANCELLED</span>'
   };
   const statusPill = statusPillMap[liveStatus]||statusPillMap.upcoming;
   const alreadyJoined = myJoinedTournamentIds.has(t.id);
