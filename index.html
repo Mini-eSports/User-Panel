@@ -1325,17 +1325,22 @@ function tournamentCard(t,special=false,elig=null){
 
   const startTimeLabel = liveStatus==='live' ? 'LIVE NOW' : (liveStatus==='ended'||liveStatus==='completed') ? 'Match Ended' : (liveStatus==='cancelled') ? 'Cancelled' : (timeStr||'-');
 
+  // Change #8: Image 2 style prize cards
   const prizeTiers = [
-    {rank:'1ST',pct:0.5,color:'#FFD700',border:'rgba(255,215,0,0.6)',bg:'linear-gradient(135deg,rgba(255,215,0,0.12),rgba(180,140,0,0.04))',icon:'🏆',amtColor:'#FFD700'},
-    {rank:'2ND',pct:0.3,color:'#7ec8ff',border:'rgba(126,200,255,0.6)',bg:'linear-gradient(135deg,rgba(126,200,255,0.10),rgba(50,120,200,0.04))',icon:'🥈',amtColor:'#7ec8ff'},
-    {rank:'3RD',pct:0.2,color:'#ff9d4d',border:'rgba(255,157,77,0.6)',bg:'linear-gradient(135deg,rgba(255,157,77,0.10),rgba(180,80,0,0.04))',icon:'🥉',amtColor:'#ff9d4d'}
+    {rank:'1ST',pct:0.5,color:'#FFD700',border:'rgba(255,215,0,0.55)',glow:'rgba(255,215,0,0.08)',icon:'🏆',coinBg:'linear-gradient(135deg,#c8960c,#ffd700)',coinBorder:'rgba(255,215,0,0.8)'},
+    {rank:'2ND',pct:0.3,color:'#7ec8ff',border:'rgba(126,200,255,0.55)',glow:'rgba(126,200,255,0.06)',icon:'🥈',coinBg:'linear-gradient(135deg,#1a6fa0,#7ec8ff)',coinBorder:'rgba(126,200,255,0.8)'},
+    {rank:'3RD',pct:0.2,color:'#ff9d4d',border:'rgba(255,157,77,0.55)',glow:'rgba(255,157,77,0.06)',icon:'🥉',coinBg:'linear-gradient(135deg,#a05020,#ff9d4d)',coinBorder:'rgba(255,157,77,0.8)'}
   ];
+  const prizeAmt=(pct)=>Math.round((t.prizePool||0)*pct);
   const prizeCardsHtml = prizeTiers.map(pt=>`
-    <div style="flex:1;background:${pt.bg};border:1px solid ${pt.border};border-radius:12px;padding:12px 4px;text-align:center;">
-      <div style="font-size:22px;margin-bottom:4px;">${pt.icon}</div>
-      <div style="font-size:8px;font-weight:800;color:${pt.color};letter-spacing:0.8px;margin-bottom:5px;">${pt.rank} PRIZE</div>
-      <div style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,0.4);border:2px solid ${pt.border};">
-        <span style="font-size:13px;font-weight:900;color:${pt.amtColor};">${isPaid?'₹':'🪙'}${Math.round((t.prizePool||0)*pt.pct)}</span>
+    <div style="flex:1;background:linear-gradient(160deg,rgba(20,20,20,0.95),rgba(10,10,10,0.98));border:1px solid ${pt.border};border-radius:14px;padding:12px 6px 10px;text-align:center;box-shadow:0 0 12px ${pt.glow};">
+      <div style="font-size:26px;margin-bottom:5px;line-height:1;">${pt.icon}</div>
+      <div style="font-size:8px;font-weight:900;color:${pt.color};letter-spacing:1px;margin-bottom:5px;">${pt.rank} PRIZE</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:0;border-top:1px solid ${pt.border};padding-top:7px;margin-top:2px;">
+        <div style="width:26px;height:26px;border-radius:50%;background:${pt.coinBg};border:2px solid ${pt.coinBorder};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <span style="font-size:10px;font-weight:900;color:#fff;">${isPaid?'₹':'🪙'}</span>
+        </div>
+        <span style="font-size:18px;font-weight:900;color:#fff;margin-left:4px;">${prizeAmt(pt.pct)}</span>
       </div>
     </div>`).join('');
 
@@ -1345,48 +1350,71 @@ function tournamentCard(t,special=false,elig=null){
       : '<div style="font-size:10px;color:#888;margin-top:4px;">🔒 Requires Top '+elig.reqRank+' Rank & Level '+elig.reqLevel+'+ (You: Rank '+(elig.myRank!=null?'#'+elig.myRank:'-')+' · Lvl '+elig.myLevel+')</div>'
   ) : '';
 
-  return '<div class="t-card'+(special?' t-card-special':'')+'" data-name="'+esc(t.name||'')+'" style="background:linear-gradient(135deg,#0d0d0d 0%,#111 100%);padding:14px;margin-bottom:12px;">'+
-    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">'+
-      '<div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1;">'+
-        '<div style="flex-shrink:0;width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--yellow),#b8860b);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#000;">'+cat.ab+'</div>'+
-        '<div class="t-name" style="font-size:15px;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+esc(t.name||'Tournament')+'</div>'+
+  // Shield badge SVG for category
+  const badgeSvg = '<svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">'+
+    '<path d="M20 3 L35 9 L35 22 Q35 32 20 38 Q5 32 5 22 L5 9 Z" fill="#0d0900" stroke="#FFD700" stroke-width="2"/>'+
+    '<text x="20" y="26" text-anchor="middle" font-size="12" font-weight="900" fill="#FFD700" font-family="Arial">'+cat.ab+'</text>'+
+  '</svg>';
+  const modeColor = {'Solo':'#FFD700','Duo':'#ff9d4d','Squad':'#ff5050','1v1':'#7ec8ff','2v2':'#a970ff','4v4':'#2ecc71'}[t.gameMode||'Solo']||'#FFD700';
+  const statusTextMap={live:'<span style="color:#ff4444;font-weight:900;">● LIVE</span>',upcoming:'<span style="color:var(--yellow);font-weight:700;">UPCOMING</span>',ended:'<span style="color:#888;font-weight:700;">ENDED</span>',completed:'<span style="color:#2ecc71;font-weight:700;">COMPLETED</span>',cancelled:'<span style="color:#ff4444;font-weight:700;">CANCELLED</span>'};
+  const statusText = statusTextMap[liveStatus]||statusTextMap.upcoming;
+
+  return '<div class="t-card'+(special?' t-card-special':'')+'" data-name="'+esc(t.name||'')+'" style="background:linear-gradient(160deg,#0d0d0d,#111 60%,#0d0d0d);border-radius:16px;padding:14px;margin-bottom:12px;overflow:hidden;">'+
+
+    // ROW 1: Badge + Match Name + Mode/Status
+    '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">'+
+      badgeSvg+
+      '<div style="flex:1;min-width:0;">'+
+        '<div style="font-size:16px;font-weight:900;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;">'+esc(t.name||'Tournament')+'</div>'+
+        '<div style="display:flex;align-items:center;gap:4px;"><span style="color:#ff4444;font-size:11px;">📍</span><span style="color:#ff4444;font-weight:700;font-size:11px;">'+esc(t.map||'-')+'</span></div>'+
       '</div>'+
-      statusPill+
+      '<div style="text-align:right;flex-shrink:0;">'+
+        '<div style="font-size:13px;font-weight:900;color:'+modeColor+';">'+esc(t.gameMode||'Solo')+'</div>'+
+        '<div style="font-size:10px;margin-top:2px;">'+statusText+'</div>'+
+      '</div>'+
     '</div>'+
-    '<div style="display:flex;align-items:center;gap:4px;margin-bottom:12px;">'+
-      '<span style="color:#ff4444;font-size:12px;">📍</span><span style="color:#ff4444;font-weight:700;font-size:12px;">'+esc(t.map||'-')+'</span>'+
-      '<span style="margin-left:8px;font-size:10px;color:#888;">'+cat.ic+' '+esc(t.matchCategory||'Battle Royale')+' · '+esc(t.gameMode||'Solo')+'</span>'+
-    '</div>'+
+
     eligLine+
-    '<div class="prize-pool-trigger" onclick="event.stopPropagation();openPrizeDistribution(\''+t.id+'\')" style="display:flex;gap:8px;margin:10px 0 12px;cursor:pointer;touch-action:manipulation;">'+
+
+    // ROW 2: Prize Cards
+    '<div class="prize-pool-trigger" onclick="event.stopPropagation();openPrizeDistribution(\''+t.id+'\')" style="display:flex;gap:8px;margin:10px 0 10px;cursor:pointer;touch-action:manipulation;">'+
       prizeCardsHtml+
     '</div>'+
-    '<div style="display:flex;justify-content:space-between;background:rgba(255,255,255,0.03);border-radius:10px;padding:10px 8px;margin-bottom:12px;">'+
-      '<div style="text-align:center;flex:1;">'+
-        '<div style="font-size:9px;color:#2ecc71;font-weight:700;margin-bottom:3px;">🎫 ENTRY FEE</div>'+
-        '<div style="font-size:14px;font-weight:900;color:#fff;">'+entryLabel+'</div>'+
+
+    // ROW 3: Entry Fee | Per Kill | Start Time
+    '<div style="display:flex;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;overflow:hidden;margin-bottom:10px;">'+
+      '<div style="flex:1;padding:8px 4px;text-align:center;">'+
+        '<div style="width:24px;height:24px;border-radius:6px;background:rgba(0,200,100,0.15);border:1px solid rgba(0,200,100,0.4);display:flex;align-items:center;justify-content:center;margin:0 auto 4px;"><span style="font-size:12px;">🎫</span></div>'+
+        '<div style="font-size:8px;color:#2ecc71;font-weight:800;letter-spacing:0.5px;">ENTRY FEE</div>'+
+        '<div style="font-size:13px;font-weight:900;color:#fff;margin-top:2px;">'+entryLabel+'</div>'+
       '</div>'+
-      (t.killReward>0 ? '<div style="text-align:center;flex:1;border-left:1px solid rgba(255,255,255,0.08);border-right:1px solid rgba(255,255,255,0.08);">'+
-        '<div style="font-size:9px;color:#ff5050;font-weight:700;margin-bottom:3px;">🎯 PER KILL</div>'+
-        '<div style="font-size:14px;font-weight:900;color:#fff;">&#x20B9;'+t.killReward+'/Kill</div>'+
-      '</div>' : '<div style="flex:1;"></div>')+
-      '<div style="text-align:center;flex:1;">'+
-        '<div style="font-size:9px;color:#a970ff;font-weight:700;margin-bottom:3px;">🕐 '+(liveStatus==='upcoming'?'STARTS IN':'STATUS')+'</div>'+
-        '<div style="font-size:12px;font-weight:800;color:#fff;">'+esc(startTimeLabel)+'</div>'+
+      (t.killReward>0?'<div style="flex:1;padding:8px 4px;text-align:center;border-left:1px solid rgba(255,255,255,0.06);border-right:1px solid rgba(255,255,255,0.06);">'+
+        '<div style="width:24px;height:24px;border-radius:6px;background:rgba(255,50,50,0.15);border:1px solid rgba(255,50,50,0.4);display:flex;align-items:center;justify-content:center;margin:0 auto 4px;"><span style="font-size:12px;">🎯</span></div>'+
+        '<div style="font-size:8px;color:#ff5050;font-weight:800;letter-spacing:0.5px;">PER KILL</div>'+
+        '<div style="font-size:13px;font-weight:900;color:#fff;margin-top:2px;">&#x20B9;'+t.killReward+'/Kill</div>'+
+      '</div>':'<div style="flex:1;border-left:1px solid rgba(255,255,255,0.06);border-right:1px solid rgba(255,255,255,0.06);"></div>')+
+      '<div style="flex:1;padding:8px 4px;text-align:center;">'+
+        '<div style="width:24px;height:24px;border-radius:6px;background:rgba(150,80,255,0.15);border:1px solid rgba(150,80,255,0.4);display:flex;align-items:center;justify-content:center;margin:0 auto 4px;"><span style="font-size:12px;">🕐</span></div>'+
+        '<div style="font-size:8px;color:#a970ff;font-weight:800;letter-spacing:0.5px;">'+(liveStatus==='upcoming'?'STARTS IN':'START TIME')+'</div>'+
+        '<div style="font-size:12px;font-weight:800;color:#fff;margin-top:2px;">'+esc(startTimeLabel)+'</div>'+
       '</div>'+
     '</div>'+
+
+    // ROW 4: Slots
     '<div style="margin-bottom:12px;">'+
-      '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-bottom:5px;">'+
-        '<span>👥 SLOTS FILLED</span>'+
-        '<span style="color:'+(isFull?'var(--red)':'#fff')+';font-weight:800;">'+(t.filledSlots||0)+'/'+(t.maxSlots||0)+'</span>'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;margin-bottom:5px;">'+
+        '<span style="color:var(--dim);display:flex;align-items:center;gap:4px;">👥 <span style="color:#888;letter-spacing:0.5px;">SLOTS FILLED</span></span>'+
+        '<span style="color:'+(isFull?'var(--red)':'#fff')+';font-weight:800;font-size:11px;">'+(t.filledSlots||0)+' / '+(t.maxSlots||0)+'</span>'+
       '</div>'+
-      '<div style="height:7px;background:#1a1a1a;border-radius:4px;overflow:hidden;display:flex;gap:2px;padding:1px;">'+
-        '<div class="t-slotbar-fill" style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,#7c3aed,#a970ff);border-radius:3px;transition:width .4s ease;"></div>'+
+      '<div style="height:8px;background:#1a1a1a;border-radius:6px;overflow:hidden;">'+
+        '<div class="t-slotbar-fill" style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,#5b21b6,#a970ff);border-radius:6px;transition:width .4s ease;"></div>'+
       '</div>'+
     '</div>'+
+
+    // ROW 5: Buttons
     '<div style="display:flex;gap:8px;">'+
-      '<button class="btn btn-outline" style="flex:1;padding:12px;border-radius:10px;" onclick="viewTournament(\''+t.id+'\')">📋 DETAILS</button>'+
-      '<button style="flex:1.5;padding:13px;border-radius:10px;border:none;font-weight:900;letter-spacing:0.8px;font-size:13px;'+joinDisabledStyle+'" onclick="'+joinOnclick+'">⚡ '+joinLabel+'</button>'+
+      '<button class="btn btn-outline" style="flex:1;padding:12px;border-radius:12px;font-weight:800;" onclick="viewTournament(\''+t.id+'\');">📋 DETAILS</button>'+
+      '<button style="flex:1.5;padding:12px;border-radius:12px;border:none;font-weight:900;font-size:14px;letter-spacing:0.5px;'+joinDisabledStyle+'" onclick="'+joinOnclick+'">⚡ '+joinLabel+'</button>'+
     '</div>'+
   '</div>';
 }
