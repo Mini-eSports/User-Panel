@@ -1299,123 +1299,158 @@ function renderHome(){
 
 function tournamentCard(t,special=false,elig=null){
   const isFull=(t.filledSlots||0)>=(t.maxSlots||0);
-  const pct=t.maxSlots?Math.min(100,((t.filledSlots||0)/t.maxSlots)*100):0;
+  const slotPct=t.maxSlots?Math.min(100,((t.filledSlots||0)/t.maxSlots)*100):0;
   const diff=t.matchTime?t.matchTime-Date.now():0;
   const timeStr=diff>0?formatCountdown(diff):'';
   const isPaid=t.entryType==='paid';
-  const entryLabel=special?'FREE':isPaid?'₹'+(t.entryFee||0):'🪙'+(t.entryFee||0);
-  const liveStatus = getMatchStatus(t);
-  const statusPillMap={
-    live:'<span class="ts-status-pill" style="background:#0a0a0a;border-color:rgba(255,50,50,0.5);color:#ff4444;"><span class="live-dot"></span> LIVE</span>',
-    upcoming:'<span class="ts-status-pill">🕐 UPCOMING</span>',
-    ended:'<span class="ts-status-pill" style="background:#0a0a0a;border-color:#333;color:#888;">⚫ ENDED</span>',
-    completed:'<span class="ts-status-pill" style="background:#0a0a0a;border-color:rgba(46,204,113,0.5);color:#2ecc71;">✓ COMPLETED</span>',
-    cancelled:'<span class="ts-status-pill" style="background:#0a0a0a;border-color:rgba(255,50,50,0.5);color:#ff4444;">❌ CANCELLED</span>'
-  };
-  const statusPill = statusPillMap[liveStatus]||statusPillMap.upcoming;
-  const alreadyJoined = myJoinedTournamentIds.has(t.id);
-  const isEligible = !special || (elig && elig.eligible);
+  const entryLabel=special?'FREE':isPaid?'&#x20B9;'+(t.entryFee||0):'&#x1FA99;'+(t.entryFee||0);
+  const liveStatus=getMatchStatus(t);
+  const alreadyJoined=myJoinedTournamentIds.has(t.id);
+  const isEligible=!special||(elig&&elig.eligible);
   const canJoin=UD&&UD.approved&&!UD.profileUpdatePending&&liveStatus==='upcoming'&&!isFull&&isEligible;
-  const joinOnclick = canJoin ? 'joinTournament(\'' + t.id + '\')' : '';
-  const joinLabel = alreadyJoined ? '✓ REGISTERED' : (special&&!isEligible) ? '🔒 LOCKED' : isFull ? '🔴 FULL' : (liveStatus==='completed'||liveStatus==='ended' ? '✓ ENDED' : liveStatus==='live' ? '🔴 LIVE' : '⚡ JOIN');
-  const joinDisabledStyle = alreadyJoined ? 'background:rgba(0,200,120,0.15);color:#00e676;border:1px solid rgba(0,200,120,0.5);' : canJoin ? 'background:linear-gradient(135deg,#2ecc71,#27ae60);color:#00280f;' : 'background:#222;color:#555;border:1px solid #333;cursor:not-allowed;';
+  const joinOnclick=canJoin?'joinTournament(\''+t.id+'\')':'';
+  const joinLabel=alreadyJoined?'&#10003; REGISTERED':(special&&!isEligible)?'&#128274; LOCKED':isFull?'FULL':(liveStatus==='completed'||liveStatus==='ended'?'&#10003; ENDED':liveStatus==='live'?'LIVE':'JOIN');
+  const joinBg=alreadyJoined?'background:rgba(0,200,120,0.2);color:#00e676;border:1px solid rgba(0,200,120,0.5);':canJoin?'background:#2ecc71;color:#003300;':'background:#1a1a1a;color:#555;border:1px solid #333;cursor:not-allowed;';
+  const startTimeLabel=liveStatus==='live'?'LIVE NOW':(liveStatus==='ended'||liveStatus==='completed')?'Match Ended':liveStatus==='cancelled'?'Cancelled':(timeStr||'-');
+  const prizePool=t.prizePool||0;
 
-  const catMap = {'Battle Royale':{ab:'BR',ic:'🪂'},'Clash Squad':{ab:'CS',ic:'⚔️'},'Lone Wolf':{ab:'LW',ic:'🐺'}};
-  const cat = catMap[t.matchCategory] || catMap['Battle Royale'];
+  const catMap={'Battle Royale':{ab:'BR'},'Clash Squad':{ab:'CS'},'Lone Wolf':{ab:'LW'}};
+  const cat=catMap[t.matchCategory]||catMap['Battle Royale'];
 
-  const startTimeLabel = liveStatus==='live' ? 'LIVE NOW' : (liveStatus==='ended'||liveStatus==='completed') ? 'Match Ended' : (liveStatus==='cancelled') ? 'Cancelled' : (timeStr||'-');
+  // Mode pill colors
+  const modeColors={'Solo':'#FFD700','Duo':'#00e5ff','Squad':'#ff5050','1v1':'#a970ff','2v2':'#2ecc71','4v4':'#ff9d4d'};
+  const modeColor=modeColors[t.gameMode||'Solo']||'#FFD700';
 
-  // Change #8: Image 2 style prize cards
-  const prizeTiers = [
-    {rank:'1ST',pct:0.5,color:'#FFD700',border:'rgba(255,215,0,0.55)',glow:'rgba(255,215,0,0.08)',icon:'🏆',coinBg:'linear-gradient(135deg,#c8960c,#ffd700)',coinBorder:'rgba(255,215,0,0.8)'},
-    {rank:'2ND',pct:0.3,color:'#7ec8ff',border:'rgba(126,200,255,0.55)',glow:'rgba(126,200,255,0.06)',icon:'🥈',coinBg:'linear-gradient(135deg,#1a6fa0,#7ec8ff)',coinBorder:'rgba(126,200,255,0.8)'},
-    {rank:'3RD',pct:0.2,color:'#ff9d4d',border:'rgba(255,157,77,0.55)',glow:'rgba(255,157,77,0.06)',icon:'🥉',coinBg:'linear-gradient(135deg,#a05020,#ff9d4d)',coinBorder:'rgba(255,157,77,0.8)'}
-  ];
-  const prizeAmt=(pct)=>Math.round((t.prizePool||0)*pct);
-  const prizeCardsHtml = prizeTiers.map(pt=>`
-    <div style="flex:1;background:linear-gradient(160deg,rgba(20,20,20,0.95),rgba(10,10,10,0.98));border:1px solid ${pt.border};border-radius:14px;padding:12px 6px 10px;text-align:center;box-shadow:0 0 12px ${pt.glow};">
-      <div style="font-size:26px;margin-bottom:5px;line-height:1;">${pt.icon}</div>
-      <div style="font-size:8px;font-weight:900;color:${pt.color};letter-spacing:1px;margin-bottom:5px;">${pt.rank} PRIZE</div>
-      <div style="display:flex;align-items:center;justify-content:center;gap:0;border-top:1px solid ${pt.border};padding-top:7px;margin-top:2px;">
-        <div style="width:26px;height:26px;border-radius:50%;background:${pt.coinBg};border:2px solid ${pt.coinBorder};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <span style="font-size:10px;font-weight:900;color:#fff;">${isPaid?'₹':'🪙'}</span>
-        </div>
-        <span style="font-size:18px;font-weight:900;color:#fff;margin-left:4px;">${prizeAmt(pt.pct)}</span>
-      </div>
-    </div>`).join('');
+  // Status pill
+  const statusPillHtml=liveStatus==='live'?
+    '<div style="display:flex;align-items:center;gap:5px;background:rgba(255,20,20,0.85);border:1px solid #ff2020;border-radius:20px;padding:5px 10px;flex-shrink:0;"><span style="width:8px;height:8px;border-radius:50%;background:#fff;display:inline-block;animation:blink 1s infinite;"></span><span style="font-size:11px;font-weight:900;color:#fff;letter-spacing:0.5px;">LIVE</span></div>':
+    liveStatus==='upcoming'?
+    '<div style="display:flex;align-items:center;gap:4px;background:rgba(0,0,0,0.5);border:1px solid rgba(255,215,0,0.5);border-radius:20px;padding:5px 10px;flex-shrink:0;"><span style="width:7px;height:7px;border-radius:50%;background:var(--yellow);display:inline-block;"></span><span style="font-size:11px;font-weight:900;color:var(--yellow);">UPCOMING</span></div>':
+    liveStatus==='ended'||liveStatus==='completed'?
+    '<div style="background:rgba(0,0,0,0.5);border:1px solid #444;border-radius:20px;padding:5px 10px;flex-shrink:0;"><span style="font-size:11px;font-weight:900;color:#888;">ENDED</span></div>':
+    '<div style="background:rgba(255,50,50,0.15);border:1px solid rgba(255,50,50,0.4);border-radius:20px;padding:5px 10px;flex-shrink:0;"><span style="font-size:11px;font-weight:900;color:#ff5050;">CANCELLED</span></div>';
 
-  const eligLine = special && elig ? (
-    elig.eligible
-      ? '<div style="font-size:10px;font-weight:700;color:#ff5050;margin-top:4px;">'+(currentSpecialTab==='monthly'?'🔵 Monthly Eligible':'🔴 Sunday Eligible')+'</div>'
-      : '<div style="font-size:10px;color:#888;margin-top:4px;">🔒 Requires Top '+elig.reqRank+' Rank & Level '+elig.reqLevel+'+ (You: Rank '+(elig.myRank!=null?'#'+elig.myRank:'-')+' · Lvl '+elig.myLevel+')</div>'
-  ) : '';
+  // Mode pill
+  const modePillHtml='<div style="background:rgba(0,0,0,0.5);border:1.5px solid '+modeColor+';border-radius:20px;padding:5px 12px;flex-shrink:0;margin-right:6px;"><span style="font-size:11px;font-weight:900;color:'+modeColor+';">'+esc(t.gameMode||'Solo')+'</span></div>';
 
-  // Shield badge SVG for category
-  const badgeSvg = '<svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">'+
-    '<path d="M20 3 L35 9 L35 22 Q35 32 20 38 Q5 32 5 22 L5 9 Z" fill="#0d0900" stroke="#FFD700" stroke-width="2"/>'+
-    '<text x="20" y="26" text-anchor="middle" font-size="12" font-weight="900" fill="#FFD700" font-family="Arial">'+cat.ab+'</text>'+
+  // Shield badge SVG
+  const badgeSvg='<svg width="52" height="58" viewBox="0 0 52 58" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">'+
+    '<text x="10" y="9" font-size="7" fill="#FFD700">&#9733;</text>'+
+    '<text x="22" y="7" font-size="9" fill="#FFD700">&#9733;</text>'+
+    '<text x="35" y="9" font-size="7" fill="#FFD700">&#9733;</text>'+
+    '<path d="M6 12 L46 12 L46 34 Q46 50 26 57 Q6 50 6 34 Z" fill="#0d0800" stroke="#c8960c" stroke-width="2.5"/>'+
+    '<path d="M11 16 L41 16 L41 33 Q41 47 26 53 Q11 47 11 33 Z" fill="none" stroke="rgba(255,215,0,0.25)" stroke-width="1"/>'+
+    '<text x="26" y="41" text-anchor="middle" font-size="14" font-weight="900" fill="#FFD700" font-family="Arial,sans-serif">'+cat.ab+'</text>'+
   '</svg>';
-  const modeColor = {'Solo':'#FFD700','Duo':'#ff9d4d','Squad':'#ff5050','1v1':'#7ec8ff','2v2':'#a970ff','4v4':'#2ecc71'}[t.gameMode||'Solo']||'#FFD700';
-  const statusTextMap={live:'<span style="color:#ff4444;font-weight:900;">● LIVE</span>',upcoming:'<span style="color:var(--yellow);font-weight:700;">UPCOMING</span>',ended:'<span style="color:#888;font-weight:700;">ENDED</span>',completed:'<span style="color:#2ecc71;font-weight:700;">COMPLETED</span>',cancelled:'<span style="color:#ff4444;font-weight:700;">CANCELLED</span>'};
-  const statusText = statusTextMap[liveStatus]||statusTextMap.upcoming;
 
-  return '<div class="t-card'+(special?' t-card-special':'')+'" data-name="'+esc(t.name||'')+'" style="background:linear-gradient(160deg,#0d0d0d,#111 60%,#0d0d0d);border-radius:16px;padding:14px;margin-bottom:12px;overflow:hidden;">'+
+  // Prize cards - each with medal + label + divider + coin+amount
+  const prizes=[
+    {rank:'1ST',pct:0.5,label:'1ST PRIZE',color:'#FFD700',border:'rgba(255,200,0,0.7)',glow:'rgba(255,200,0,0.15)',innerBg:'linear-gradient(160deg,#1a0e00,#0d0700)',icon:'&#127942;',coinBg:'linear-gradient(135deg,#b8860b,#FFD700)',coinShadow:'rgba(255,215,0,0.5)'},
+    {rank:'2ND',pct:0.3,label:'2ND PRIZE',color:'#00c8ff',border:'rgba(0,180,255,0.7)',glow:'rgba(0,180,255,0.12)',innerBg:'linear-gradient(160deg,#001a22,#000d14)',icon:'&#129352;',coinBg:'linear-gradient(135deg,#006494,#00c8ff)',coinShadow:'rgba(0,200,255,0.5)'},
+    {rank:'3RD',pct:0.2,label:'3RD PRIZE',color:'#ff8c00',border:'rgba(255,140,0,0.7)',glow:'rgba(255,140,0,0.12)',innerBg:'linear-gradient(160deg,#1a0800,#0d0400)',icon:'&#129351;',coinBg:'linear-gradient(135deg,#8b4500,#ff8c00)',coinShadow:'rgba(255,140,0,0.5)'}
+  ];
 
-    // ROW 1: Badge + Match Name + Mode/Status
-    '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;">'+
-      badgeSvg+
-      '<div style="flex:1;min-width:0;">'+
-        '<div style="font-size:16px;font-weight:900;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;">'+esc(t.name||'Tournament')+'</div>'+
-        '<div style="display:flex;align-items:center;gap:4px;"><span style="color:#ff4444;font-size:11px;">📍</span><span style="color:#ff4444;font-weight:700;font-size:11px;">'+esc(t.map||'-')+'</span></div>'+
+  const prizeCardsHtml=prizes.map(p=>{
+    const amt=Math.round(prizePool*p.pct);
+    return '<div onclick="event.stopPropagation();openPrizeDistribution(\''+t.id+'\')" style="flex:1;background:'+p.innerBg+';border:1.5px solid '+p.border+';border-radius:14px;padding:12px 5px 10px;text-align:center;box-shadow:0 0 16px '+p.glow+',inset 0 0 20px rgba(0,0,0,0.3);cursor:pointer;touch-action:manipulation;">'+
+      '<div style="font-size:30px;line-height:1;margin-bottom:6px;">'+p.icon+'</div>'+
+      '<div style="font-size:9px;font-weight:900;color:'+p.color+';letter-spacing:1.2px;margin-bottom:6px;">'+p.label+'</div>'+
+      '<div style="display:flex;align-items:center;justify-content:center;gap:2px;margin-bottom:0px;">'+
+        '<div style="height:1px;flex:1;background:linear-gradient(90deg,transparent,'+p.border+');"></div>'+
+        '<div style="color:'+p.color+';font-size:9px;margin:0 3px;">&#9830;</div>'+
+        '<div style="height:1px;flex:1;background:linear-gradient(90deg,'+p.border+',transparent);"></div>'+
       '</div>'+
-      '<div style="text-align:right;flex-shrink:0;">'+
-        '<div style="font-size:13px;font-weight:900;color:'+modeColor+';">'+esc(t.gameMode||'Solo')+'</div>'+
-        '<div style="font-size:10px;margin-top:2px;">'+statusText+'</div>'+
+      '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:7px;">'+
+        '<div style="width:30px;height:30px;border-radius:50%;background:'+p.coinBg+';box-shadow:0 0 8px '+p.coinShadow+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'+
+          '<span style="font-size:13px;font-weight:900;color:#fff;">&#8377;</span>'+
+        '</div>'+
+        '<span style="font-size:22px;font-weight:900;color:#fff;line-height:1;">'+amt+'</span>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  // Info row
+  const infoRowHtml=
+    '<div style="display:flex;background:rgba(255,255,255,0.025);border:1px solid rgba(255,255,255,0.07);border-radius:12px;overflow:hidden;margin-bottom:10px;">'+
+      '<div style="flex:1;padding:9px 4px;text-align:center;">'+
+        '<div style="display:flex;align-items:center;justify-content:center;gap:3px;margin-bottom:3px;">'+
+          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2.5"><path d="M15 5H2v14h20V9l-7-4z"/><polyline points="15 5 15 9 20 9"/></svg>'+
+          '<span style="font-size:8px;font-weight:900;color:#2ecc71;letter-spacing:0.8px;">ENTRY FEE</span>'+
+        '</div>'+
+        '<div style="font-size:14px;font-weight:900;color:#fff;">'+entryLabel+'</div>'+
+      '</div>'+
+      (t.killReward>0?
+        '<div style="flex:1;padding:9px 4px;text-align:center;border-left:1px solid rgba(255,255,255,0.07);border-right:1px solid rgba(255,255,255,0.07);">'+
+          '<div style="display:flex;align-items:center;justify-content:center;gap:3px;margin-bottom:3px;">'+
+            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff5050" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>'+
+            '<span style="font-size:8px;font-weight:900;color:#ff5050;letter-spacing:0.8px;">PER KILL</span>'+
+          '</div>'+
+          '<div style="font-size:14px;font-weight:900;color:#fff;">&#8377;'+t.killReward+'/Kill</div>'+
+        '</div>'
+        :'<div style="flex:1;border-left:1px solid rgba(255,255,255,0.07);border-right:1px solid rgba(255,255,255,0.07);"></div>')+
+      '<div style="flex:1;padding:9px 4px;text-align:center;">'+
+        '<div style="display:flex;align-items:center;justify-content:center;gap:3px;margin-bottom:3px;">'+
+          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a970ff" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'+
+          '<span style="font-size:8px;font-weight:900;color:#a970ff;letter-spacing:0.8px;">'+(liveStatus==='upcoming'?'STARTS IN':'START TIME')+'</span>'+
+        '</div>'+
+        '<div style="font-size:13px;font-weight:900;color:#fff;">'+esc(startTimeLabel)+'</div>'+
+      '</div>'+
+    '</div>';
+
+  const eligLine=special&&elig?(
+    elig.eligible
+      ?'<div style="font-size:10px;font-weight:700;color:#ff5050;margin:6px 0;">'+(currentSpecialTab==='monthly'?'&#128309; Monthly Eligible':'&#128308; Sunday Eligible')+'</div>'
+      :'<div style="font-size:10px;color:#888;margin:6px 0;">&#128274; Requires Top '+elig.reqRank+' Rank &amp; Level '+elig.reqLevel+'+ (You: Rank '+(elig.myRank!=null?'#'+elig.myRank:'-')+' &middot; Lvl '+elig.myLevel+')</div>'
+  ):'';
+
+  return '<div class="t-card'+(special?' t-card-special':'')+'" data-name="'+esc(t.name||'')+'" style="background:linear-gradient(160deg,#0a0a0a,#0f0f0f);border-radius:18px;padding:14px;margin-bottom:14px;overflow:hidden;border:1px solid rgba(255,255,255,0.06);">'+
+
+    // TOP ROW: Badge + Name/Map + Mode/Status
+    '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;">'+
+      badgeSvg+
+      '<div style="flex:1;min-width:0;padding-top:4px;">'+
+        '<div style="font-size:17px;font-weight:900;color:#fff;letter-spacing:0.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px;">'+esc(t.name||'Tournament')+'</div>'+
+        '<div style="display:flex;align-items:center;gap:5px;">'+
+          '<span style="font-size:18px;line-height:1;">&#128506;</span>'+
+          '<span style="font-size:15px;font-weight:900;color:#ff3030;letter-spacing:0.3px;">'+esc(t.map||'Bermuda')+'</span>'+
+        '</div>'+
+      '</div>'+
+      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;padding-top:2px;">'+
+        modePillHtml+
+        statusPillHtml+
       '</div>'+
     '</div>'+
 
     eligLine+
 
-    // ROW 2: Prize Cards
-    '<div class="prize-pool-trigger" onclick="event.stopPropagation();openPrizeDistribution(\''+t.id+'\')" style="display:flex;gap:8px;margin:10px 0 10px;cursor:pointer;touch-action:manipulation;">'+
+    // PRIZE CARDS
+    '<div style="display:flex;gap:8px;margin-bottom:12px;">'+
       prizeCardsHtml+
     '</div>'+
 
-    // ROW 3: Entry Fee | Per Kill | Start Time
-    '<div style="display:flex;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;overflow:hidden;margin-bottom:10px;">'+
-      '<div style="flex:1;padding:8px 4px;text-align:center;">'+
-        '<div style="width:24px;height:24px;border-radius:6px;background:rgba(0,200,100,0.15);border:1px solid rgba(0,200,100,0.4);display:flex;align-items:center;justify-content:center;margin:0 auto 4px;"><span style="font-size:12px;">🎫</span></div>'+
-        '<div style="font-size:8px;color:#2ecc71;font-weight:800;letter-spacing:0.5px;">ENTRY FEE</div>'+
-        '<div style="font-size:13px;font-weight:900;color:#fff;margin-top:2px;">'+entryLabel+'</div>'+
-      '</div>'+
-      (t.killReward>0?'<div style="flex:1;padding:8px 4px;text-align:center;border-left:1px solid rgba(255,255,255,0.06);border-right:1px solid rgba(255,255,255,0.06);">'+
-        '<div style="width:24px;height:24px;border-radius:6px;background:rgba(255,50,50,0.15);border:1px solid rgba(255,50,50,0.4);display:flex;align-items:center;justify-content:center;margin:0 auto 4px;"><span style="font-size:12px;">🎯</span></div>'+
-        '<div style="font-size:8px;color:#ff5050;font-weight:800;letter-spacing:0.5px;">PER KILL</div>'+
-        '<div style="font-size:13px;font-weight:900;color:#fff;margin-top:2px;">&#x20B9;'+t.killReward+'/Kill</div>'+
-      '</div>':'<div style="flex:1;border-left:1px solid rgba(255,255,255,0.06);border-right:1px solid rgba(255,255,255,0.06);"></div>')+
-      '<div style="flex:1;padding:8px 4px;text-align:center;">'+
-        '<div style="width:24px;height:24px;border-radius:6px;background:rgba(150,80,255,0.15);border:1px solid rgba(150,80,255,0.4);display:flex;align-items:center;justify-content:center;margin:0 auto 4px;"><span style="font-size:12px;">🕐</span></div>'+
-        '<div style="font-size:8px;color:#a970ff;font-weight:800;letter-spacing:0.5px;">'+(liveStatus==='upcoming'?'STARTS IN':'START TIME')+'</div>'+
-        '<div style="font-size:12px;font-weight:800;color:#fff;margin-top:2px;">'+esc(startTimeLabel)+'</div>'+
-      '</div>'+
-    '</div>'+
+    // INFO ROW
+    infoRowHtml+
 
-    // ROW 4: Slots
+    // SLOTS
     '<div style="margin-bottom:12px;">'+
-      '<div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;margin-bottom:5px;">'+
-        '<span style="color:var(--dim);display:flex;align-items:center;gap:4px;">👥 <span style="color:#888;letter-spacing:0.5px;">SLOTS FILLED</span></span>'+
-        '<span style="color:'+(isFull?'var(--red)':'#fff')+';font-weight:800;font-size:11px;">'+(t.filledSlots||0)+' / '+(t.maxSlots||0)+'</span>'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'+
+        '<span style="font-size:11px;color:#888;display:flex;align-items:center;gap:5px;">'+
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="rgba(150,150,255,0.7)"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>'+
+          'SLOTS FILLED'+
+        '</span>'+
+        '<span style="font-size:13px;font-weight:900;color:'+(isFull?'var(--red)':'#fff')+';">'+(t.filledSlots||0)+'/'+(t.maxSlots||0)+'</span>'+
       '</div>'+
-      '<div style="height:8px;background:#1a1a1a;border-radius:6px;overflow:hidden;">'+
-        '<div class="t-slotbar-fill" style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,#5b21b6,#a970ff);border-radius:6px;transition:width .4s ease;"></div>'+
+      '<div style="height:5px;background:#1a1a1a;border-radius:5px;overflow:hidden;">'+
+        '<div style="height:100%;width:'+slotPct+'%;background:linear-gradient(90deg,#4c1d95,#a970ff);border-radius:5px;transition:width .4s;"></div>'+
       '</div>'+
     '</div>'+
 
-    // ROW 5: Buttons
-    '<div style="display:flex;gap:8px;">'+
-      '<button class="btn btn-outline" style="flex:1;padding:12px;border-radius:12px;font-weight:800;" onclick="viewTournament(\''+t.id+'\');">📋 DETAILS</button>'+
-      '<button style="flex:1.5;padding:12px;border-radius:12px;border:none;font-weight:900;font-size:14px;letter-spacing:0.5px;'+joinDisabledStyle+'" onclick="'+joinOnclick+'">⚡ '+joinLabel+'</button>'+
+    // BUTTONS
+    '<div style="display:flex;gap:10px;">'+
+      '<button onclick="viewTournament(\''+t.id+'\');" style="flex:1;padding:13px 8px;border-radius:12px;border:1.5px solid rgba(255,215,0,0.6);background:rgba(255,215,0,0.05);color:#FFD700;font-weight:900;font-size:13px;cursor:pointer;touch-action:manipulation;">&#128203; DETAILS</button>'+
+      '<button onclick="'+joinOnclick+';" style="flex:1.5;padding:13px 8px;border-radius:12px;border:none;font-weight:900;font-size:14px;letter-spacing:0.5px;cursor:'+(canJoin?'pointer':'not-allowed')+';touch-action:manipulation;'+joinBg+'">&#9889; '+joinLabel+'</button>'+
     '</div>'+
+
   '</div>';
 }
 
