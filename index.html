@@ -1353,7 +1353,7 @@ function tournamentCard(t,special=false,elig=null){
   const prizeCardsHtml=prizes.map(p=>{
     const amt=Math.round(prizePool*p.pct);
     const symbol=isPaid?'&#8377;':'&#129689;';
-    return '<div onclick="event.stopPropagation();openPrizeDistribution(''+t.id+'')" style="flex:1;background:'+p.bg+';border:1.5px solid '+p.border+';border-radius:14px;padding:14px 6px 12px;text-align:center;cursor:pointer;touch-action:manipulation;">'+
+    return '<div onclick="event.stopPropagation();openPrizeDistribution(\'' + t.id + '\')" style="flex:1;background:'+p.bg+';border:1.5px solid '+p.border+';border-radius:14px;padding:14px 6px 12px;text-align:center;cursor:pointer;touch-action:manipulation;">'+
       '<div style="font-size:32px;line-height:1;margin-bottom:8px;">'+p.icon+'</div>'+
       '<div style="font-size:9px;font-weight:900;color:'+p.color+';letter-spacing:1.2px;margin-bottom:8px;">'+p.label+'</div>'+
       '<div style="font-size:20px;font-weight:900;color:#fff;">'+symbol+amt+'</div>'+
