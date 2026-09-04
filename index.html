@@ -1345,27 +1345,18 @@ function tournamentCard(t,special=false,elig=null){
 
   // Prize cards - each with medal + label + divider + coin+amount
   const prizes=[
-    {rank:'1ST',pct:0.5,label:'1ST PRIZE',color:'#FFD700',border:'rgba(255,200,0,0.7)',glow:'rgba(255,200,0,0.15)',innerBg:'linear-gradient(160deg,#1a0e00,#0d0700)',icon:'&#127942;',coinBg:'linear-gradient(135deg,#b8860b,#FFD700)',coinShadow:'rgba(255,215,0,0.5)'},
-    {rank:'2ND',pct:0.3,label:'2ND PRIZE',color:'#00c8ff',border:'rgba(0,180,255,0.7)',glow:'rgba(0,180,255,0.12)',innerBg:'linear-gradient(160deg,#001a22,#000d14)',icon:'&#129352;',coinBg:'linear-gradient(135deg,#006494,#00c8ff)',coinShadow:'rgba(0,200,255,0.5)'},
-    {rank:'3RD',pct:0.2,label:'3RD PRIZE',color:'#ff8c00',border:'rgba(255,140,0,0.7)',glow:'rgba(255,140,0,0.12)',innerBg:'linear-gradient(160deg,#1a0800,#0d0400)',icon:'&#129351;',coinBg:'linear-gradient(135deg,#8b4500,#ff8c00)',coinShadow:'rgba(255,140,0,0.5)'}
+    {label:'1ST PRIZE',pct:0.5,color:'#FFD700',border:'rgba(255,200,0,0.65)',bg:'linear-gradient(160deg,#1a0e00,#0d0800)',icon:'&#127942;'},
+    {label:'2ND PRIZE',pct:0.3,color:'#5bc4ff',border:'rgba(91,196,255,0.65)',bg:'linear-gradient(160deg,#001520,#000c16)',icon:'&#129352;'},
+    {label:'3RD PRIZE',pct:0.2,color:'#ff8c00',border:'rgba(255,140,0,0.65)',bg:'linear-gradient(160deg,#1a0800,#0d0400)',icon:'&#129351;'}
   ];
 
   const prizeCardsHtml=prizes.map(p=>{
     const amt=Math.round(prizePool*p.pct);
-    return '<div onclick="event.stopPropagation();openPrizeDistribution(\''+t.id+'\')" style="flex:1;background:'+p.innerBg+';border:1.5px solid '+p.border+';border-radius:14px;padding:12px 5px 10px;text-align:center;box-shadow:0 0 16px '+p.glow+',inset 0 0 20px rgba(0,0,0,0.3);cursor:pointer;touch-action:manipulation;">'+
-      '<div style="font-size:30px;line-height:1;margin-bottom:6px;">'+p.icon+'</div>'+
-      '<div style="font-size:9px;font-weight:900;color:'+p.color+';letter-spacing:1.2px;margin-bottom:6px;">'+p.label+'</div>'+
-      '<div style="display:flex;align-items:center;justify-content:center;gap:2px;margin-bottom:0px;">'+
-        '<div style="height:1px;flex:1;background:linear-gradient(90deg,transparent,'+p.border+');"></div>'+
-        '<div style="color:'+p.color+';font-size:9px;margin:0 3px;">&#9830;</div>'+
-        '<div style="height:1px;flex:1;background:linear-gradient(90deg,'+p.border+',transparent);"></div>'+
-      '</div>'+
-      '<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:7px;">'+
-        '<div style="width:30px;height:30px;border-radius:50%;background:'+p.coinBg+';box-shadow:0 0 8px '+p.coinShadow+';display:flex;align-items:center;justify-content:center;flex-shrink:0;">'+
-          '<span style="font-size:13px;font-weight:900;color:#fff;">&#8377;</span>'+
-        '</div>'+
-        '<span style="font-size:22px;font-weight:900;color:#fff;line-height:1;">'+amt+'</span>'+
-      '</div>'+
+    const symbol=isPaid?'&#8377;':'&#129689;';
+    return '<div onclick="event.stopPropagation();openPrizeDistribution(''+t.id+'')" style="flex:1;background:'+p.bg+';border:1.5px solid '+p.border+';border-radius:14px;padding:14px 6px 12px;text-align:center;cursor:pointer;touch-action:manipulation;">'+
+      '<div style="font-size:32px;line-height:1;margin-bottom:8px;">'+p.icon+'</div>'+
+      '<div style="font-size:9px;font-weight:900;color:'+p.color+';letter-spacing:1.2px;margin-bottom:8px;">'+p.label+'</div>'+
+      '<div style="font-size:20px;font-weight:900;color:#fff;">'+symbol+amt+'</div>'+
     '</div>';
   }).join('');
 
