@@ -423,7 +423,7 @@ textarea.form-input{resize:none;min-height:80px}
         <div class="mode-filter-box" data-cat="Clash Squad" onclick="selectHomeCategory('Clash Squad')">⚔️ CS</div>
         <div class="mode-filter-box" data-cat="Lone Wolf" onclick="selectHomeCategory('Lone Wolf')">🐺 LW</div>
       </div>
-      <div style="display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;" id="homeModeFilter"></div>
+      <div style="display:grid;margin-bottom:14px;" id="homeModeFilter"></div>
             <div id="homeMatchList"><div class="empty-state"><div class="emoji">★</div><div class="msg">Loading matches...</div></div></div>
     </div>
 
@@ -485,16 +485,19 @@ textarea.form-input{resize:none;min-height:80px}
     <!-- RANK -->
     <div class="screen" id="screen-rank">
       <!-- My Rank Banner -->
-      <div style="background:linear-gradient(135deg,#1a1000,#110a00);border:1px solid rgba(255,215,0,0.3);border-radius:14px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:12px;">
-        <div id="myRankAvatar" style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--yellow3),var(--yellow));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#000;flex-shrink:0;overflow:hidden;position:relative;"></div>
+      <!-- Change #5: Rank box - Bronze badge removed, premium look -->
+      <div style="background:linear-gradient(135deg,#1a1000,#0d0800);border:1px solid rgba(255,215,0,0.4);border-radius:14px;padding:14px;margin-bottom:12px;display:flex;align-items:center;gap:14px;box-shadow:0 0 16px rgba(255,215,0,0.08);">
+        <div style="position:relative;flex-shrink:0;">
+          <div style="font-size:18px;position:absolute;top:-12px;left:50%;transform:translateX(-50%);">👑</div>
+          <div id="myRankAvatar" style="width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,#c8960c,#FFD700);border:2.5px solid var(--yellow);box-shadow:0 0 12px rgba(255,215,0,0.4);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#000;overflow:hidden;position:relative;margin-top:8px;"></div>
+        </div>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Your Rank</div>
-          <div style="font-size:20px;font-weight:900;color:var(--yellow);" id="myRankDisplay">#-</div>
+          <div style="font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:3px;">YOUR RANK</div>
+          <div style="font-size:24px;font-weight:900;color:var(--yellow);line-height:1;" id="myRankDisplay">#-</div>
         </div>
         <div style="text-align:right;">
-          <div style="font-size:10px;color:var(--dim);margin-bottom:2px;">Points</div>
-          <div style="font-size:16px;font-weight:800;color:#fff;" id="myScoreDisplay">0 pts</div>
-          <div id="myTierBadge" style="font-size:10px;font-weight:700;color:var(--yellow);margin-top:2px;">◉ Bronze</div>
+          <div style="font-size:9px;color:var(--dim);margin-bottom:3px;letter-spacing:1px;">POINTS</div>
+          <div style="font-size:18px;font-weight:900;color:#fff;" id="myScoreDisplay">0 pts</div>
         </div>
       </div>
       <!-- Category Tabs -->
@@ -539,15 +542,19 @@ textarea.form-input{resize:none;min-height:80px}
         <div class="stat-box"><div class="stat-val" id="pRankNum">-</div><div class="stat-label">Rank #</div></div>
       </div>
 
-      <div class="section-title" style="margin-top:4px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="color:var(--yellow);flex-shrink:0"><path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94A5.01 5.01 0 0 0 11 15.9V18H7v2h10v-2h-4v-2.1a5.01 5.01 0 0 0 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zm-2 3c0 1.65-1.35 3-3 3s-3-1.35-3-3V5h6v3z"/></svg>Achievements</div>
-      <div class="badge-row" id="achBadges">
-        <div class="ach-badge locked" style="background:rgba(120,80,0,0.2);border:1px solid rgba(120,80,0,0.4);color:#a06020;"><div style="font-size:20px;">🥉</div><div>Bronze</div></div>
-        <div class="ach-badge locked" style="background:rgba(150,150,150,0.15);border:1px solid rgba(150,150,150,0.3);color:#aaa;"><div style="font-size:20px;">🥈</div><div>Silver</div></div>
-        <div class="ach-badge locked" style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.25);color:var(--yellow);"><div style="font-size:20px;">🥇</div><div>Gold</div></div>
-        <div class="ach-badge locked" style="background:rgba(100,200,255,0.1);border:1px solid rgba(100,200,255,0.25);color:#64c8ff;"><div style="font-size:20px;">💎</div><div>Platinum</div></div>
-        <div class="ach-badge locked" style="background:rgba(180,100,255,0.1);border:1px solid rgba(180,100,255,0.25);color:#b464ff;"><div style="font-size:20px;">💜</div><div>Diamond</div></div>
-        <div class="ach-badge locked" style="background:rgba(255,100,0,0.1);border:1px solid rgba(255,100,0,0.25);color:#ff6400;"><div style="font-size:20px;">🏅</div><div>Master</div></div>
-        <div class="ach-badge locked" style="background:rgba(255,50,50,0.1);border:1px solid rgba(255,50,50,0.25);color:var(--red);"><div style="font-size:20px;">👑</div><div>Legend</div></div>
+      <!-- Change #1: Level card (achievements removed, level card added) -->
+      <div id="profileLevelCard" style="background:linear-gradient(135deg,#0d0d0d,#111);border:1px solid rgba(255,215,0,0.3);border-radius:14px;padding:12px 14px;margin:10px 0;display:flex;align-items:center;gap:12px;">
+        <div style="width:42px;height:42px;background:linear-gradient(135deg,rgba(255,215,0,0.15),rgba(180,140,0,0.05));border:1.5px solid rgba(255,215,0,0.4);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px;">🏆</div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span id="pLevelText" style="font-size:16px;font-weight:900;color:var(--yellow);">Level - 1</span>
+            <span id="pXPText" style="font-size:12px;font-weight:700;color:var(--yellow);">XP - 0/50</span>
+          </div>
+          <div style="height:8px;background:#1a1a1a;border-radius:4px;overflow:hidden;margin-bottom:6px;">
+            <div id="pXPBar" style="height:100%;width:0%;background:linear-gradient(90deg,#c8960c,#FFD700);border-radius:4px;transition:width .5s ease;"></div>
+          </div>
+          <div id="pXPSubtext" style="font-size:10px;color:var(--dim);">You need 50 XP more to reach Level 2</div>
+        </div>
       </div>
 
       <div class="section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0;color:var(--yellow)"><path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94A5.01 5.01 0 0 0 11 15.9V18H7v2h10v-2h-4v-2.1a5.01 5.01 0 0 0 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zm-2 3c0 1.65-1.35 3-3 3s-3-1.35-3-3V5h6v3z"/></svg>Win History</div>
@@ -555,17 +562,23 @@ textarea.form-input{resize:none;min-height:80px}
 
       <button class="btn btn-yellow btn-full" style="margin:14px 0;padding:13px;font-size:13px;border-radius:12px;" onclick="openProfileUpdate()">&#9999; REQUEST PROFILE UPDATE</button>
 
-      <!-- Change #6: Duo Partner - Golden Theme -->
-      <div style="background:linear-gradient(135deg,#1a1200,#0d0900);border:1px solid rgba(255,215,0,0.3);border-radius:16px;padding:14px;margin-bottom:10px;box-shadow:0 0 12px rgba(255,215,0,0.06);">
-        <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:12px;display:flex;align-items:center;gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="var(--yellow)"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>Duo Partner</div>
-        <div class="team-members" id="duoTeam"></div>
+      <!-- Change #3: Duo Team - Golden circles design -->
+      <div style="background:linear-gradient(135deg,#1a1200,#0d0900);border:1px solid rgba(255,215,0,0.35);border-radius:16px;padding:16px;margin-bottom:10px;box-shadow:0 0 14px rgba(255,215,0,0.07);">
+        <div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:14px;display:flex;align-items:center;gap:7px;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="var(--yellow)"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+          Duo Team
+        </div>
+        <div class="team-members" id="duoTeam" style="gap:20px;"></div>
         <div id="duoIncomingReqs" style="display:none;"></div>
       </div>
 
-      <!-- Change #6: Squad Team - Red Theme -->
-      <div style="background:linear-gradient(135deg,#1a0000,#0d0000);border:1px solid rgba(255,0,0,0.3);border-radius:16px;padding:14px;margin-bottom:14px;box-shadow:0 0 12px rgba(255,0,0,0.06);">
-        <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:12px;display:flex;align-items:center;gap:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="var(--red)"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>Squad Team</div>
-        <div class="team-members" id="squadTeam"></div>
+      <!-- Change #3: Squad Team - Red circles design -->
+      <div style="background:linear-gradient(135deg,#1a0000,#0d0000);border:1px solid rgba(255,0,0,0.35);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 0 14px rgba(255,0,0,0.07);">
+        <div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:14px;display:flex;align-items:center;gap:7px;">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="var(--red)"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+          Squad Team
+        </div>
+        <div class="team-members" id="squadTeam" style="gap:16px;"></div>
         <div id="squadIncomingReqs" style="display:none;"></div>
       </div>
 
@@ -1266,15 +1279,24 @@ function selectHomeCategory(cat){
 }
 function renderHomeModeFilter(){
   const modes = HOME_CATEGORY_MODES[currentHomeCategory] || HOME_CATEGORY_MODES['Battle Royale'];
-  document.getElementById('homeModeFilter').innerHTML = modes.map(m=>
-    `<div class="mode-filter-box${m===currentHomeMode?' active':''}" data-mode="${m}" onclick="selectHomeMode('${m}')">${m.toUpperCase()}</div>`
+  const el = document.getElementById('homeModeFilter');
+  el.style.gridTemplateColumns = `repeat(${modes.length}, 1fr)`;
+  el.style.gap = '6px';
+  el.innerHTML = modes.map(m=>`
+    <div data-mode="${m}" onclick="selectHomeMode('${m}')" style="
+      padding:10px 4px;text-align:center;border-radius:10px;cursor:pointer;
+      font-size:12px;font-weight:800;letter-spacing:0.5px;
+      transition:all .15s ease;touch-action:manipulation;
+      ${m===currentHomeMode?
+        'background:var(--yellow);color:#000;box-shadow:0 2px 10px rgba(255,215,0,0.3);':
+        'background:rgba(255,255,255,0.05);color:#888;border:1px solid rgba(255,255,255,0.08);'
+      }
+    ">${m.toUpperCase()}</div>`
   ).join('');
 }
 function selectHomeMode(mode){
   currentHomeMode=mode;
-  document.querySelectorAll('#homeModeFilter .mode-filter-box').forEach(b=>{
-    b.classList.toggle('active', b.dataset.mode===mode);
-  });
+  renderHomeModeFilter();
   renderHome();
 }
 // dropdown listener removed
@@ -1901,34 +1923,40 @@ async function payWithRazorpay(){
 
 // ====== WITHDRAW ======
 
-// ====== CHANGE #2: TICKET SYSTEM ======
+// ====== CHANGE #2: TICKET SYSTEM (Fixed) ======
 function openTicketSystem(){
   if(!UD||!UD.approved){toast('Profile approve hone ke baad ticket use kar sakte hain','error');return;}
-  showModal(`
-    <div style="text-align:center;margin-bottom:16px;">
-      <div style="font-size:22px;margin-bottom:6px;">🎟️</div>
-      <h3 style="margin:0 0 4px;">Ticket (Send / Claim)</h3>
-      <div style="font-size:11px;color:var(--dim);">Apne friend ko coins ya money bhejo</div>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:10px;">
-      <div onclick="openCreateTicket()" style="background:linear-gradient(135deg,rgba(0,200,120,0.12),rgba(0,150,80,0.06));border:1px solid rgba(0,200,120,0.4);border-radius:14px;padding:16px;cursor:pointer;display:flex;align-items:center;gap:12px;touch-action:manipulation;">
-        <div style="font-size:28px;">🎫</div>
-        <div><div style="font-weight:800;color:#00c878;font-size:14px;">CREATE TICKET</div><div style="font-size:11px;color:var(--dim);margin-top:2px;">Send money/coins to your friend</div></div>
-        <div style="margin-left:auto;color:#00c878;">›</div>
-      </div>
-      <div onclick="openClaimTicket()" style="background:linear-gradient(135deg,rgba(0,150,220,0.12),rgba(0,100,180,0.06));border:1px solid rgba(0,150,220,0.4);border-radius:14px;padding:16px;cursor:pointer;display:flex;align-items:center;gap:12px;touch-action:manipulation;">
-        <div style="font-size:28px;">📥</div>
-        <div><div style="font-weight:800;color:#0096dc;font-size:14px;">CLAIM TICKET</div><div style="font-size:11px;color:var(--dim);margin-top:2px;">Claim ticket sent by your friend</div></div>
-        <div style="margin-left:auto;color:#0096dc;">›</div>
-      </div>
-    </div>
-    <div style="margin-top:12px;background:rgba(255,215,0,0.06);border:1px solid rgba(255,215,0,0.2);border-radius:10px;padding:10px 12px;">
-      <div style="font-size:10px;color:var(--dim);line-height:1.6;">
-        ✅ Sirf registered user UID allowed &nbsp;|&nbsp; ❌ Self UID nahi &nbsp;|&nbsp; 🔒 Ek ticket ek baar claim<br>
-        💰 Amount send hone par reserve hoga &nbsp;|&nbsp; ❌ Claim se pehle cancel kar sakte hain
-      </div>
-    </div>
-  `);
+  showModal(
+    '<div style="text-align:center;margin-bottom:16px;">'+
+      '<div style="font-size:28px;margin-bottom:6px;">🎟️</div>'+
+      '<div style="font-size:16px;font-weight:900;color:#fff;margin-bottom:4px;">TICKET</div>'+
+      '<div style="font-size:11px;color:var(--dim);">Send / Claim</div>'+
+    '</div>'+
+    '<div style="display:flex;flex-direction:column;gap:10px;">'+
+      '<div onclick="closeModal();setTimeout(openCreateTicket,200)" style="background:linear-gradient(135deg,rgba(0,200,120,0.1),rgba(0,150,80,0.05));border:1px solid rgba(0,200,120,0.45);border-radius:14px;padding:16px;cursor:pointer;display:flex;align-items:center;gap:12px;touch-action:manipulation;">'+
+        '<div style="font-size:26px;">🎫</div>'+
+        '<div>'+
+          '<div style="font-weight:900;color:#00c878;font-size:14px;">CREATE TICKET</div>'+
+          '<div style="font-size:11px;color:var(--dim);margin-top:2px;">Send money/coins to your friend</div>'+
+        '</div>'+
+        '<div style="margin-left:auto;color:#00c878;font-size:18px;">›</div>'+
+      '</div>'+
+      '<div onclick="closeModal();setTimeout(openClaimTicket,200)" style="background:linear-gradient(135deg,rgba(0,150,220,0.1),rgba(0,100,180,0.05));border:1px solid rgba(0,150,220,0.45);border-radius:14px;padding:16px;cursor:pointer;display:flex;align-items:center;gap:12px;touch-action:manipulation;">'+
+        '<div style="font-size:26px;">📥</div>'+
+        '<div>'+
+          '<div style="font-weight:900;color:#0096dc;font-size:14px;">CLAIM TICKET</div>'+
+          '<div style="font-size:11px;color:var(--dim);margin-top:2px;">Claim ticket sent by your friend</div>'+
+        '</div>'+
+        '<div style="margin-left:auto;color:#0096dc;font-size:18px;">›</div>'+
+      '</div>'+
+    '</div>'+
+    '<div style="margin-top:12px;background:rgba(255,215,0,0.05);border:1px solid rgba(255,215,0,0.2);border-radius:10px;padding:10px 12px;">'+
+      '<div style="font-size:10px;color:var(--dim);line-height:1.7;">'+
+        '✅ Sirf registered UID &nbsp;|&nbsp; ❌ Self UID nahi &nbsp;|&nbsp; 🔒 Ek baar claim<br>'+
+        '💰 Amount send hone par deduct &nbsp;|&nbsp; ❌ Claim se pehle cancel option'+
+      '</div>'+
+    '</div>'
+  );
 }
 
 function openCreateTicket(){
@@ -2619,7 +2647,7 @@ async function renderLeaderboard(sortBy){
           else av.textContent=(UD&&UD.displayName?UD.displayName:'?').charAt(0).toUpperCase();
         }
         // My tier
-        const tierEl=document.getElementById('myTierBadge');
+        const tierEl=null; // Change #5: Bronze badge removed
         if(tierEl)tierEl.textContent=getTier(myEntry.score);
       }
     }
@@ -2703,6 +2731,18 @@ function updateRankBadge(s){
   b.textContent=tier.label;b.style.color=tier.color;b.style.borderColor=tier.color;b.style.background='rgba(128,128,128,0.08)';
 }
 function updateProfileCompletion(){
+  // Change #1: Update new level card (achievements removed)
+  const xpVal = UD.xp||0;
+  const lvInfo = getLevelInfo(xpVal);
+  const lvCardEl = document.getElementById('profileLevelCard');
+  if(lvCardEl){
+    document.getElementById('pLevelText').textContent = 'Level - '+lvInfo.level;
+    document.getElementById('pXPText').textContent = 'XP - '+lvInfo.intoLevel+'/'+(lvInfo.forNext||lvInfo.intoLevel||10);
+    const pct = lvInfo.forNext>0 ? Math.min(100,Math.round((lvInfo.intoLevel/lvInfo.forNext)*100)) : 100;
+    document.getElementById('pXPBar').style.width = pct+'%';
+    const sub = lvInfo.isMax ? 'Maximum level reached! 🏆' : 'You need '+(lvInfo.forNext-lvInfo.intoLevel)+' XP more to reach Level '+(lvInfo.level+1);
+    document.getElementById('pXPSubtext').textContent = sub;
+  }
   const slot = document.getElementById('profileProgressCardSlot');
   if(!slot) return;
   const complete = !!(UD.ign && UD.ffuid);
@@ -2889,34 +2929,38 @@ async function renderTeams(){
     const myIncoming=incoming.filter(r=>r.mode===mode);
     const myOutgoing=outgoing.filter(r=>r.mode===mode);
 
-    let html=`<div class="team-member">
-      <div class="tm-avatar">${myAv}</div>
-      <div class="tm-name">You</div>
-      <div class="tm-crown">★</div>
+    // Change #3: Mode-colored circles (duo=gold, squad=red)
+    const mc = mode==='duo'?{c:'#FFD700',b:'rgba(255,215,0,0.7)',glow:'rgba(255,215,0,0.4)',dash:'rgba(255,215,0,0.5)',tc:'#FFD700'}
+                          :{c:'#ff4444',b:'rgba(255,68,68,0.7)',glow:'rgba(255,68,68,0.4)',dash:'rgba(255,68,68,0.5)',tc:'#ff4444'};
+    const avatarLetter=(UD?.displayName||UD?.email||'?').charAt(0).toUpperCase();
+    let html=`<div style="display:flex;flex-direction:column;align-items:center;">
+      <div style="width:60px;height:60px;border-radius:50%;border:2.5px solid ${mc.b};box-shadow:0 0 14px ${mc.glow};background:#111;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:${mc.c};">${avatarLetter}</div>
+      <div style="font-size:11px;color:${mc.c};margin-top:6px;font-weight:700;">You</div>
+      <div style="font-size:14px;color:${mc.c};margin-top:2px;">★</div>
     </div>`;
     myMembers.forEach(m=>{
       const name=m._u?.ign||m._u?.display_name||'Player';
       const init=name.charAt(0).toUpperCase();
-      html+=`<div class="team-member">
-        <div class="tm-avatar" style="font-size:18px;font-weight:700;color:#fff;background:#1a2a1a;">${init}</div>
-        <div class="tm-name">${esc(name)}</div>
-        <div class="tm-remove" onclick="removeTeammate('${mode}','${m.teammate_uid}')">✕ Remove</div>
+      html+=`<div style="display:flex;flex-direction:column;align-items:center;">
+        <div style="width:60px;height:60px;border-radius:50%;border:2.5px solid ${mc.b};box-shadow:0 0 10px ${mc.glow};background:#111;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:${mc.c};">${init}</div>
+        <div style="font-size:11px;color:#fff;margin-top:6px;font-weight:600;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(name)}</div>
+        <div onclick="removeTeammate('${mode}','${m.teammate_uid}')" style="font-size:10px;color:#ff4444;margin-top:2px;cursor:pointer;">✕</div>
       </div>`;
     });
     myOutgoing.forEach(r=>{
       const name=r._u?.ign||r._u?.display_name||'Player';
-      html+=`<div class="team-member" style="opacity:0.7;">
-        <div class="tm-avatar" style="font-size:16px;background:#2a2410;color:var(--yellow);">⏳</div>
-        <div class="tm-name">${esc(name)}</div>
-        <div class="tm-remove" onclick="cancelTeamRequest('${r.id}')" style="color:var(--dim);">Pending · Cancel</div>
+      html+=`<div style="display:flex;flex-direction:column;align-items:center;">
+        <div style="width:60px;height:60px;border-radius:50%;border:2px dashed ${mc.dash};background:rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:20px;">⏳</div>
+        <div style="font-size:10px;color:var(--dim);margin-top:6px;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(name)}</div>
+        <div onclick="cancelTeamRequest('${r.id}')" style="font-size:10px;color:#888;margin-top:2px;cursor:pointer;">Cancel</div>
       </div>`;
     });
     const filledSlots=myMembers.length+myOutgoing.length;
     const remaining=Math.max(0,max-filledSlots);
     for(let i=0;i<remaining;i++){
-      html+=`<div style="display:flex;flex-direction:column;align-items:center;">
-        <div class="add-tm-btn" onclick="openAddTeammate('${mode}')">+</div>
-        <div class="add-tm-label">Add</div>
+      html+=`<div style="display:flex;flex-direction:column;align-items:center;" onclick="openAddTeammate('${mode}')">
+        <div style="width:60px;height:60px;border-radius:50%;border:2px dashed ${mc.dash};background:rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center;font-size:26px;color:${mc.tc};cursor:pointer;touch-action:manipulation;">+</div>
+        <div style="font-size:11px;color:${mc.tc};margin-top:6px;">Add</div>
       </div>`;
     }
     el.innerHTML=html;
