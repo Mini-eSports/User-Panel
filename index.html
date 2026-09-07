@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<!-- ZapUPI: no JS SDK confirmed from their docs; payment uses a redirect to payment_url -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -1069,6 +1069,7 @@ async function boot(){
       db.ref('users/'+U.uid).update(updates); // non-blocking
     }
     listenUserData();
+    checkPendingZapUPIOrder();
     const ud = snap.val()||{};
     if(!ud.ign||!ud.ffuid){
       if(!sessionStorage.getItem('profilePopupShown_'+U.uid)){
@@ -1076,7 +1077,7 @@ async function boot(){
         setTimeout(()=>openFirstTimeProfile(),800);
       }
     }
-  }catch(e){ listenUserData(); }
+  }catch(e){ listenUserData(); checkPendingZapUPIOrder(); }
 }
 
 function cleanupListeners(){
@@ -1843,38 +1844,27 @@ function renderAddMoneyModal(){
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
       ${[50,100,200,500].map(v=>'<button onclick="setAddAmt('+v+')" style="padding:9px 0;border-radius:10px;border:1px solid var(--byellow);background:transparent;color:var(--yellow);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation;">₹'+v+'</button>').join('')}
     </div>
-    <button class="btn btn-yellow btn-full" style="padding:13px;" id="razorpayPayBtn" onclick="payWithRazorpay()">⚡ Pay Instantly (Card/UPI/NetBanking)</button>
+    <button class="btn btn-yellow btn-full" style="padding:13px;" id="zapupiPayBtn" onclick="payWithZapUPI()">⚡ Pay via UPI</button>
     <button class="btn btn-outline btn-full" style="margin-top:8px;" onclick="closeModal()">Cancel</button>`;
   openModal(`<div class="modal-bar"></div>${body}`);
 }
 function setAddAmt(v){const inp=document.getElementById('addAmountInput');if(inp)inp.value=v;addMoneyAmount=v;}
-let _razorpayProcessing=false;
-async function payWithRazorpay(){
-  if(_razorpayProcessing)return;
+let _zapupiProcessing=false;
+async function payWithZapUPI(){
+  if(_zapupiProcessing)return;
   const minAmt=paymentSettings.minDeposit||10;
   const maxAmt=paymentSettings.maxDeposit||50000;
-  const amt=parseInt(document.getElementById('addAmountInput')?.value);
+  const amt=parseFloat(document.getElementById('addAmountInput')?.value);
   if(!amt||amt<minAmt){toast('Minimum amount is ₹'+minAmt,'error');return;}
   if(amt>maxAmt){toast('Maximum amount is ₹'+maxAmt,'error');return;}
-  const btn=document.getElementById('razorpayPayBtn');
+  _zapupiProcessing=true;
+  const btn=document.getElementById('zapupiPayBtn');
   const origHTML=btn?btn.innerHTML:'';
-  if(typeof Razorpay==='undefined'){
-    // SDK may still be loading on a slow connection — wait briefly before giving up
-    if(btn){btn.disabled=true;btn.innerHTML='<span class="btn-spinner"></span> Loading payment gateway...';}
-    let waited=0;
-    while(typeof Razorpay==='undefined' && waited<6000){ await new Promise(r=>setTimeout(r,300)); waited+=300; }
-    if(typeof Razorpay==='undefined'){
-      if(btn){btn.disabled=false;btn.innerHTML=origHTML;}
-      toast('Payment gateway failed to load. Check your connection and tap the button to retry.','error');
-      return;
-    }
-  }
-  _razorpayProcessing=true;
-  if(btn){btn.disabled=true;btn.innerHTML='<span class="btn-spinner"></span> Opening...';}
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="btn-spinner"></span> Creating order...';}
   try{
     const {data:{session}}=await _sb.auth.getSession();
     if(!session)throw new Error('Session expired. Please log in again.');
-    const res=await fetch(SUPABASE_URL+'/functions/v1/razorpay-create-order',{
+    const res=await fetch(SUPABASE_URL+'/functions/v1/zapupi-create-order',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
       body:JSON.stringify({amount:amt})
@@ -1882,43 +1872,41 @@ async function payWithRazorpay(){
     const data=await res.json();
     if(!res.ok)throw new Error(data.error||'Could not start payment');
 
-    const rzp=new Razorpay({
-      key:data.key_id,
-      amount:amt*100,
-      currency:'INR',
-      name:'Mini eSports',
-      description:'Add ₹'+amt+' to wallet',
-      order_id:data.order_id,
-      prefill:{name:UD?.displayName||'',email:UD?.email||''},
-      theme:{color:'#FFD700'},
-      handler:async function(response){
-        try{
-          const vRes=await fetch(SUPABASE_URL+'/functions/v1/razorpay-verify-payment',{
-            method:'POST',
-            headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
-            body:JSON.stringify({
-              razorpay_order_id:response.razorpay_order_id,
-              razorpay_payment_id:response.razorpay_payment_id,
-              razorpay_signature:response.razorpay_signature
-            })
-          });
-          const vData=await vRes.json();
-          if(!vRes.ok)throw new Error(vData.error||'Payment verification failed');
-          closeModal();
-          toast('₹'+amt+' added to your wallet!','success');
-          if(U){
-            const uSnap = await db.ref('users/'+U.uid).once('value');
-            UD = uSnap.val()||UD;
-            updateHeader(); updateWallet(); updateProfile(); updateApprovalBanner();
-          }
-        }catch(e){ toast('Verification failed: '+e.message+'. Contact support if amount was deducted.','error'); }
-      },
-      modal:{ ondismiss:function(){ _razorpayProcessing=false; if(btn){btn.disabled=false;btn.innerHTML=origHTML;} } }
+    // Remember this order so we can verify it ourselves when the user comes back
+    // (in addition to ZapUPI's own webhook) — covers cases where the webhook is delayed.
+    try{ localStorage.setItem('zapupi_pending_order', data.order_id); }catch(e){}
+    toast('Redirecting to UPI payment...','success');
+    window.location.href = data.payment_url;
+  }catch(e){
+    toast('Error: '+e.message,'error');
+    _zapupiProcessing=false; if(btn){btn.disabled=false;btn.innerHTML=origHTML;}
+  }
+}
+async function checkPendingZapUPIOrder(){
+  let orderId;
+  try{ orderId = localStorage.getItem('zapupi_pending_order'); }catch(e){ return; }
+  if(!orderId) return;
+  try{ localStorage.removeItem('zapupi_pending_order'); }catch(e){}
+  try{
+    const {data:{session}}=await _sb.auth.getSession();
+    if(!session) return;
+    const res=await fetch(SUPABASE_URL+'/functions/v1/zapupi-verify-payment',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+      body:JSON.stringify({order_id:orderId})
     });
-    rzp.on('payment.failed', function(resp){ toast('Payment failed: '+(resp.error?.description||'Please try again'),'error'); });
-    rzp.open();
-  }catch(e){ toast('Error: '+e.message,'error'); }
-  finally{ _razorpayProcessing=false; if(btn){btn.disabled=false;btn.innerHTML=origHTML;} }
+    const data=await res.json();
+    if(res.ok && data.success){
+      toast('₹'+data.amount+' added to your wallet!','success');
+      if(U){
+        const uSnap = await db.ref('users/'+U.uid).once('value');
+        UD = uSnap.val()||UD;
+        updateHeader(); updateWallet(); updateProfile(); updateApprovalBanner();
+      }
+    } else if(res.ok && !data.success){
+      toast('Payment '+(data.status||'pending')+'. Check Wallet history in a moment.','info');
+    }
+  }catch(e){ console.error('zapupi verify error', e); }
 }
 
 // ====== WITHDRAW ======
