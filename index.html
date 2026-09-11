@@ -1122,14 +1122,34 @@ function setupVisibilityRefresh(){
     } else if(document.visibilityState === 'visible') {
       const wasHiddenMs = _hiddenSince ? (Date.now() - _hiddenSince) : 0;
       _hiddenSince = null;
-      if(wasHiddenMs > 15000) { // background for >15s: force a full fresh reload of live data
-        forceRefreshAllData();
-      }
+      // Any return to the app — however brief the gap — silently syncs fresh data.
+      // "Away" (>15s) additionally clears any modal that may be stuck in a stale
+      // state (e.g. a payment redirect flow interrupted mid-way).
+      handleAppResume(wasHiddenMs > 15000);
     }
   });
-  // Belt-and-suspenders: some mobile browsers restore pages from bfcache via 'pageshow'
-  // without firing visibilitychange reliably.
-  window.addEventListener('pageshow', (e)=>{ if(e.persisted) forceRefreshAllData(); });
+  // Critical: mobile browsers commonly restore a page from bfcache (e.g. after the
+  // user hits "back" from an external payment redirect) WITHOUT re-running boot() or
+  // any of our page-load JS — the DOM/JS state is frozen exactly as it was the moment
+  // the user navigated away. Without this listener, a button/modal stuck mid-request
+  // (like "Creating Order...") would stay frozen forever, and a completed payment
+  // would never get checked/credited. This is the belt-and-suspenders fix for that.
+  window.addEventListener('pageshow', (e)=>{ if(e.persisted) handleAppResume(true); });
+
+  // Hourly silent background refresh — keeps the app's data current even during a
+  // long, continuously-open foreground session (not just on resume-from-background).
+  // Never closes modals or disrupts whatever the user is doing; it only re-syncs data.
+  setInterval(()=>forceRefreshAllData(), 60*60*1000);
+}
+function handleAppResume(clearStaleUI){
+  if(clearStaleUI){
+    // Clear anything that could be a frozen leftover from before the app went away
+    // (e.g. a payment modal stuck on "Creating Order..." after a bfcache restore) —
+    // silent by design: no alert, no visible flash, the screen simply re-syncs.
+    try{ closeModal(); }catch(e){}
+  }
+  forceRefreshAllData();
+  checkPendingZapUPIOrder();
 }
 async function forceRefreshAllData(){
   try{
@@ -1838,17 +1858,48 @@ function openAddMoney(){
 function renderAddMoneyModal(){
   const minAmt=paymentSettings.minDeposit||10;
   const maxAmt=paymentSettings.maxDeposit||50000;
-  const body=`<h3 style="margin-bottom:4px;">Add Money</h3>
-    <p style="font-size:12px;color:var(--yellow);margin-bottom:12px;">Amount (₹) — Min ₹${minAmt} · Max ₹${maxAmt}</p>
-    <input class="form-input" type="number" id="addAmountInput" min="${minAmt}" max="${maxAmt}" placeholder="Enter amount" value="${addMoneyAmount||''}" style="margin-bottom:12px;">
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
-      ${[50,100,200,500].map(v=>'<button onclick="setAddAmt('+v+')" style="padding:9px 0;border-radius:10px;border:1px solid var(--byellow);background:transparent;color:var(--yellow);font-weight:700;font-size:12px;cursor:pointer;touch-action:manipulation;">₹'+v+'</button>').join('')}
+  const body=`
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
+      <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,var(--yellow),#b8860b);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">💰</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:17px;font-weight:800;color:#fff;">Add Money</div>
+        <div style="font-size:11px;color:var(--dim);">Add funds to your wallet and play more tournaments!</div>
+      </div>
     </div>
-    <button class="btn btn-yellow btn-full" style="padding:13px;" id="zapupiPayBtn" onclick="payWithZapUPI()">⚡ Pay via UPI</button>
-    <button class="btn btn-outline btn-full" style="margin-top:8px;" onclick="closeModal()">Cancel</button>`;
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+      <label style="font-size:12px;font-weight:700;color:#fff;">Amount (₹)</label>
+      <span style="font-size:11px;color:var(--yellow);">Min ₹${minAmt} - Max ₹${maxAmt}</span>
+    </div>
+    <div style="position:relative;margin-bottom:16px;">
+      <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--yellow);font-weight:700;">₹</span>
+      <input class="form-input" type="number" id="addAmountInput" min="${minAmt}" max="${maxAmt}" placeholder="Enter amount" value="${addMoneyAmount||''}" style="padding-left:30px;">
+    </div>
+    <div style="font-size:12px;font-weight:700;color:#fff;margin-bottom:8px;">Quick Amount</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:18px;" id="quickAmountGrid">
+      ${[50,100,200,500].map(v=>`<button onclick="setAddAmt(${v})" data-amt="${v}" style="padding:11px 0;border-radius:10px;border:1.5px solid ${addMoneyAmount===v?'var(--yellow)':'var(--byellow)'};background:${addMoneyAmount===v?'var(--yellow)':'transparent'};color:${addMoneyAmount===v?'#000':'var(--yellow)'};font-weight:800;font-size:13px;cursor:pointer;touch-action:manipulation;transition:all .12s ease;">₹${v}</button>`).join('')}
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <div style="font-size:12px;font-weight:700;color:#fff;">Payment Method</div>
+      <div style="font-size:11px;color:#2ecc71;display:flex;align-items:center;gap:4px;">✅ 100% Secure Payment</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;border:1.5px solid var(--yellow);border-radius:12px;padding:14px;margin-bottom:18px;background:rgba(255,215,0,0.05);">
+      <div style="width:38px;height:38px;border-radius:10px;background:#111;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🇮🇳</div>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:800;color:#fff;">Pay via UPI</div>
+        <div style="font-size:10px;color:var(--dim);">Fast • Secure • Instant</div>
+      </div>
+      <div style="width:22px;height:22px;border-radius:50%;background:var(--yellow);display:flex;align-items:center;justify-content:center;color:#000;font-weight:900;font-size:12px;flex-shrink:0;">✓</div>
+    </div>
+    <button class="btn btn-yellow btn-full" style="padding:14px;display:flex;align-items:center;justify-content:center;gap:8px;" id="zapupiPayBtn" onclick="payWithZapUPI()">⚡ PAY VIA UPI <span style="font-size:16px;">→</span></button>
+    <button class="btn btn-outline btn-full" style="margin-top:8px;" onclick="closeModal()">CANCEL</button>
+    <div style="display:flex;justify-content:space-around;margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);">
+      <div style="text-align:center;font-size:9px;color:var(--dim);"><div style="font-size:16px;margin-bottom:3px;">🛡️</div>Secure<br>Transactions</div>
+      <div style="text-align:center;font-size:9px;color:var(--dim);"><div style="font-size:16px;margin-bottom:3px;">⚡</div>Instant<br>Credit</div>
+      <div style="text-align:center;font-size:9px;color:var(--dim);"><div style="font-size:16px;margin-bottom:3px;">🔒</div>Your Data<br>is Safe</div>
+    </div>`;
   openModal(`<div class="modal-bar"></div>${body}`);
 }
-function setAddAmt(v){const inp=document.getElementById('addAmountInput');if(inp)inp.value=v;addMoneyAmount=v;}
+function setAddAmt(v){addMoneyAmount=v;renderAddMoneyModal();}
 let _zapupiProcessing=false;
 async function payWithZapUPI(){
   if(_zapupiProcessing)return;
