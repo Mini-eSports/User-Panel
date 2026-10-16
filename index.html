@@ -1963,55 +1963,45 @@ async function checkPendingZapUPIOrder(){
 // ====== WITHDRAW ======
 
 // ====== CHANGE #2: TICKET SYSTEM (Fixed) ======
-function openTicketSystem(){
+async function openTicketSystem(){
   if(!U){toast('Please login first','error');return;}
-  if(!UD||!UD.approved){
-    showModal('<div style="text-align:center;padding:8px 2px 4px;">'+
-      '<div style="font-size:38px;margin-bottom:10px;">🔒</div>'+ 
-      '<h3 style="color:var(--yellow);margin:0 0 10px;">Profile approval required</h3>'+ 
-      '<p style="color:var(--dim);font-size:13px;line-height:1.6;margin:0 0 16px;">Ticket Send/Claim abhi locked hai. Admin se profile approve karwao; approval ke baad hi Ticket use kar sakoge.</p>'+ 
-      '<button onclick="closeModal();openProfileUpdate()" style="width:100%;padding:12px;border:0;border-radius:10px;background:var(--yellow);color:#000;font-weight:900;cursor:pointer;">REQUEST PROFILE UPDATE</button>'+ 
-      '<button onclick="closeModal()" style="width:100%;padding:10px;margin-top:8px;border:1px solid #444;border-radius:10px;background:transparent;color:#ddd;cursor:pointer;">Close</button>'+ 
-      '</div>');
-    return;
-  }
-  showModal(
+
+  // Prefer the server-side approval row when available; retain the existing Firebase
+  // profile flag as fallback. Approval is never bypassed by this UI change.
+  let approved=UD?.approved===true;
+  try{
+    const {data,error}=await _sb.from('users').select('approved,profile_update_pending').eq('id',U.uid).maybeSingle();
+    if(error) console.warn('Ticket approval check failed; using profile approval state:',error.message);
+    if(data){
+      approved=data.approved===true && data.profile_update_pending!==true;
+      if(UD){UD.approved=data.approved;UD.profileUpdatePending=data.profile_update_pending;}
+    }
+  }catch(e){console.warn('Ticket approval lookup failed:',e);}
+
+  const locked=!approved || UD?.profileUpdatePending===true;
+  openModal(
     '<div style="text-align:center;margin-bottom:16px;">'+
       '<div style="font-size:28px;margin-bottom:6px;">🎟️</div>'+
-      '<div style="font-size:16px;font-weight:900;color:#fff;margin-bottom:4px;">TICKET</div>'+
-      '<div style="font-size:11px;color:var(--dim);">Send / Claim</div>'+
+      '<div style="font-size:16px;font-weight:900;color:#fff;margin-bottom:4px;">TICKET (SEND / CLAIM)</div>'+
+      '<div style="font-size:11px;color:var(--dim);">'+(locked?'Profile approval required before using tickets':'Send a ticket or claim one received from a friend')+'</div>'+
     '</div>'+
+    (locked?'<div style="margin-bottom:10px;padding:12px;border:1px solid rgba(255,190,0,.35);border-radius:10px;background:rgba(255,190,0,.06);color:#ffd75a;font-size:12px;line-height:1.6;">🔒 Ticket Send/Claim is locked until your profile is approved by Admin. This does not change your wallet or ticket balance.</div>':'')+
     '<div style="display:flex;flex-direction:column;gap:10px;">'+
-      '<div onclick="closeModal();setTimeout(openCreateTicket,200)" style="background:linear-gradient(135deg,rgba(0,200,120,0.1),rgba(0,150,80,0.05));border:1px solid rgba(0,200,120,0.45);border-radius:14px;padding:16px;cursor:pointer;display:flex;align-items:center;gap:12px;touch-action:manipulation;">'+
-        '<div style="font-size:26px;">🎫</div>'+
-        '<div>'+
-          '<div style="font-weight:900;color:#00c878;font-size:14px;">CREATE TICKET</div>'+
-          '<div style="font-size:11px;color:var(--dim);margin-top:2px;">Send money/coins to your friend</div>'+
-        '</div>'+
-        '<div style="margin-left:auto;color:#00c878;font-size:18px;">›</div>'+
-      '</div>'+
-      '<div onclick="closeModal();setTimeout(openClaimTicket,200)" style="background:linear-gradient(135deg,rgba(0,150,220,0.1),rgba(0,100,180,0.05));border:1px solid rgba(0,150,220,0.45);border-radius:14px;padding:16px;cursor:pointer;display:flex;align-items:center;gap:12px;touch-action:manipulation;">'+
-        '<div style="font-size:26px;">📥</div>'+
-        '<div>'+
-          '<div style="font-weight:900;color:#0096dc;font-size:14px;">CLAIM TICKET</div>'+
-          '<div style="font-size:11px;color:var(--dim);margin-top:2px;">Claim ticket sent by your friend</div>'+
-        '</div>'+
-        '<div style="margin-left:auto;color:#0096dc;font-size:18px;">›</div>'+
-      '</div>'+
+      '<div class="ticket-menu-option" '+(locked?'style="opacity:.45;cursor:not-allowed;background:linear-gradient(135deg,rgba(0,200,120,0.1),rgba(0,150,80,0.05));border:1px solid rgba(0,200,120,0.45);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px;touch-action:manipulation;"':'onclick="closeModal();setTimeout(openCreateTicket,200)" style="cursor:pointer;background:linear-gradient(135deg,rgba(0,200,120,0.1),rgba(0,150,80,0.05));border:1px solid rgba(0,200,120,0.45);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px;touch-action:manipulation;"')+'>'+
+        '<div style="font-size:26px;">🎫</div><div><div style="font-weight:900;color:#00c878;font-size:14px;">CREATE TICKET</div><div style="font-size:11px;color:var(--dim);margin-top:2px;">Send coins/money to a registered friend</div></div><div style="margin-left:auto;color:#00c878;font-size:18px;">›</div></div>'+
+      '<div class="ticket-menu-option" '+(locked?'style="opacity:.45;cursor:not-allowed;background:linear-gradient(135deg,rgba(0,150,220,0.1),rgba(0,100,180,0.05));border:1px solid rgba(0,150,220,0.45);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px;touch-action:manipulation;"':'onclick="closeModal();setTimeout(openClaimTicket,200)" style="cursor:pointer;background:linear-gradient(135deg,rgba(0,150,220,0.1),rgba(0,100,180,0.05));border:1px solid rgba(0,150,220,0.45);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px;touch-action:manipulation;"')+'>'+
+        '<div style="font-size:26px;">📥</div><div><div style="font-weight:900;color:#0096dc;font-size:14px;">CLAIM TICKET</div><div style="font-size:11px;color:var(--dim);margin-top:2px;">Review pending tickets and history</div></div><div style="margin-left:auto;color:#0096dc;font-size:18px;">›</div></div>'+
     '</div>'+
-    '<div style="margin-top:12px;background:rgba(255,215,0,0.05);border:1px solid rgba(255,215,0,0.2);border-radius:10px;padding:10px 12px;">'+
-      '<div style="font-size:10px;color:var(--dim);line-height:1.7;">'+
-        '✅ Sirf registered UID &nbsp;|&nbsp; ❌ Self UID nahi &nbsp;|&nbsp; 🔒 Ek baar claim<br>'+
-        '💰 Amount send hone par deduct &nbsp;|&nbsp; ❌ Claim se pehle cancel option'+
-      '</div>'+
-    '</div>'
+    (locked?'<button onclick="closeModal();openProfileUpdate()" style="width:100%;margin-top:12px;padding:12px;border:0;border-radius:10px;background:var(--yellow);color:#000;font-weight:900;cursor:pointer;">REQUEST PROFILE UPDATE</button>':'')+
+    '<button onclick="closeModal()" style="width:100%;padding:10px;margin-top:8px;border:1px solid #444;border-radius:10px;background:transparent;color:#ddd;cursor:pointer;">Close</button>'+
+    '<div style="margin-top:12px;background:rgba(255,215,0,0.05);border:1px solid rgba(255,215,0,0.2);border-radius:10px;padding:10px 12px;"><div style="font-size:10px;color:var(--dim);line-height:1.7;">✅ Registered UID only &nbsp;|&nbsp; ❌ No self-transfer &nbsp;|&nbsp; 🔒 Approval required<br>⚠️ Financial ticket transactions need server-side atomic validation.</div></div>'
   );
 }
 
 function openCreateTicket(){
   closeModal();
   setTimeout(()=>{
-    showModal(`
+    openModal(`
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;cursor:pointer;" onclick="openTicketSystem()">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
         <h3 style="margin:0;">Create Ticket</h3>
@@ -2144,7 +2134,7 @@ async function confirmSendTicket(){
     closeModal();
     updateHeader(); updateWallet(); updateProfile();
     setTimeout(()=>{
-      showModal(`
+      openModal(`
         <div style="text-align:center;padding:20px 0;">
           <div style="font-size:48px;margin-bottom:12px;">✅</div>
           <h3 style="color:#00c878;margin-bottom:8px;">Ticket Sent!</h3>
@@ -2162,7 +2152,7 @@ async function confirmSendTicket(){
 async function openClaimTicket(){
   closeModal();
   setTimeout(async()=>{
-    showModal(`<div style="text-align:center;padding:20px;"><div style="font-size:24px;">⏳</div><div style="color:var(--dim);margin-top:8px;">Loading tickets...</div></div>`);
+    openModal(`<div style="text-align:center;padding:20px;"><div style="font-size:24px;">⏳</div><div style="color:var(--dim);margin-top:8px;">Loading tickets...</div></div>`);
     try{
       const {data:pending}=await _sb.from('tickets').select('*').eq('receiver_uid',U.uid).eq('status','pending').order('created_at',{ascending:false});
       const {data:history}=await _sb.from('tickets').select('*').or(`receiver_uid.eq.${U.uid},sender_uid.eq.${U.uid}`).neq('status','pending').order('created_at',{ascending:false}).limit(20);
@@ -2183,7 +2173,7 @@ async function openClaimTicket(){
             ${!isPending?`<span style="font-size:10px;padding:2px 8px;border-radius:6px;background:${t.status==='claimed'?'rgba(0,200,120,0.15)':t.status==='cancelled'?'rgba(255,255,255,0.05)':'rgba(255,0,0,0.1)'};color:${t.status==='claimed'?'#00c878':t.status==='cancelled'?'#888':'var(--red)'};font-weight:700;">${t.status.toUpperCase()}</span>`:''}
           </div>`;
         };
-        showModal(`
+        openModal(`
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;cursor:pointer;" onclick="openTicketSystem()">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
             <h3 style="margin:0;">Claim Ticket</h3>
@@ -2773,11 +2763,15 @@ function updateProfile(){
   renderTeams();
 }
 function updateRankBadge(s){
+  // The old pRankBadge element was removed from the profile HTML, but this function
+  // still dereferenced a null element. That exception stopped updateProfile() before
+  // renderTeams() ran, leaving the Duo/Squad containers visibly empty.
+  const badge=document.getElementById('pRankBadge');
+  if(!badge) return; // Rank badge is intentionally absent in the current profile UI.
   const score=(s.wins||0)*100+(s.kills||0)*10+(s.earnings||0);
   const tiers=[{min:5000,label:'◆ Diamond',color:'#b464ff'},{min:3000,label:'◇ Platinum',color:'#64c8ff'},{min:1500,label:'★ Gold',color:'var(--yellow)'},{min:500,label:'◈ Silver',color:'#aaa'},{min:0,label:'◉ Bronze',color:'#a06020'}];
   const tier=tiers.find(t=>score>=t.min)||tiers[4];
-  const b=null; // Change #4B: pRankBadge removed
-  b.textContent=tier.label;b.style.color=tier.color;b.style.borderColor=tier.color;b.style.background='rgba(128,128,128,0.08)';
+  badge.textContent=tier.label;badge.style.color=tier.color;badge.style.borderColor=tier.color;badge.style.background='rgba(128,128,128,0.08)';
 }
 function updateProfileCompletion(){
   // Change #1: Update new level card (achievements removed)
@@ -2947,8 +2941,10 @@ async function submitProfileUpdate(){
 // ====== TEAMS ======
 let _incomingTeamReqs=[], _outgoingTeamReqs=[];
 async function renderTeams(){
-  if(!UD||!U)return;
-  const myAv=UD?.photoURL?`<img src="${esc(UD.photoURL)}" style="width:100%;height:100%;object-fit:cover;">`:(UD?.displayName||'?').charAt(0).toUpperCase();
+  // Render the local player's slots as soon as auth/profile data exists. Do not let
+  // a transient team-table/RLS/network failure hide the whole Duo/Squad UI.
+  if(!U)return;
+  const displayName=UD?.displayName||U?.displayName||UD?.email||U?.email||'Player';
 
   // Fetch current members + pending requests fresh each time (keeps UI/DB in sync)
   let members=[], incoming=[], outgoing=[];
@@ -2958,6 +2954,9 @@ async function renderTeams(){
       _sb.from('team_requests').select('id,requester_uid,mode,created_at').eq('target_uid',U.uid).eq('status','pending'),
       _sb.from('team_requests').select('id,target_uid,mode,created_at').eq('requester_uid',U.uid).eq('status','pending')
     ]);
+    // Supabase can return {error} without throwing. Keep the slot UI usable, but log
+    // the actual backend problem for diagnosis instead of silently treating it as success.
+    if(mRes.error||inRes.error||outRes.error) console.error('team load query error',mRes.error||inRes.error||outRes.error);
     members = mRes.data||[]; incoming = inRes.data||[]; outgoing = outRes.data||[];
     if(members.length || incoming.length || outgoing.length){
       const otherUids=[...new Set([...members.map(m=>m.teammate_uid),...incoming.map(r=>r.requester_uid),...outgoing.map(r=>r.target_uid)])];
@@ -2981,7 +2980,7 @@ async function renderTeams(){
     // Change #3: Mode-colored circles (duo=gold, squad=red)
     const mc = mode==='duo'?{c:'#FFD700',b:'rgba(255,215,0,0.7)',glow:'rgba(255,215,0,0.4)',dash:'rgba(255,215,0,0.5)',tc:'#FFD700'}
                           :{c:'#ff4444',b:'rgba(255,68,68,0.7)',glow:'rgba(255,68,68,0.4)',dash:'rgba(255,68,68,0.5)',tc:'#ff4444'};
-    const avatarLetter=(UD?.displayName||UD?.email||'?').charAt(0).toUpperCase();
+    const avatarLetter=displayName.charAt(0).toUpperCase();
     let html=`<div style="display:flex;flex-direction:column;align-items:center;">
       <div style="width:60px;height:60px;border-radius:50%;border:2.5px solid ${mc.b};box-shadow:0 0 14px ${mc.glow};background:#111;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:${mc.c};">${avatarLetter}</div>
       <div style="font-size:11px;color:${mc.c};margin-top:6px;font-weight:700;">You</div>
