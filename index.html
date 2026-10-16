@@ -249,7 +249,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .ach-badge{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 12px;border-radius:10px;font-size:10px;font-weight:700}
 .ach-badge.locked{opacity:0.3;filter:grayscale(1)}
 /* Team */
-.team-members{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start}
+.team-members{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start;min-width:0}.team-members>div{max-width:calc(25% - 12px)}@media(max-width:380px){.team-members{gap:10px!important}.team-members>div{max-width:calc(33.333% - 10px)}.team-members>div>div:first-child{width:52px!important;height:52px!important}}
 .team-member{display:flex;flex-direction:column;align-items:center;position:relative;min-width:56px}
 .tm-avatar{width:52px;height:52px;border-radius:50%;overflow:hidden;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;border:2.5px solid var(--yellow);box-shadow:0 0 8px rgba(255,215,0,0.25)}
 .tm-avatar img{width:100%;height:100%;object-fit:cover}
@@ -651,7 +651,7 @@ textarea.form-input{resize:none;min-height:80px}
 // ====== SUPABASE ======
 const SUPABASE_URL = 'https://qgmgaouvjavpzbbjuqye.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_hhFcscXkGSX_keKTauxSdA_eagVd_Dv';
-const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const _sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { storageKey: 'mini-esports-user-auth-v1', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
 
 // ====== FIELD MAPPERS ======
 function toSnake(obj) {
@@ -1002,7 +1002,7 @@ async function googleSignIn(){
   try{
     const {error} = await _sb.auth.signInWithOAuth({
       provider:'google',
-      options:{redirectTo: window.location.href}
+      options:{redirectTo: window.location.origin + window.location.pathname}
     });
     if(error) throw error;
   }catch(e){
@@ -1964,7 +1964,17 @@ async function checkPendingZapUPIOrder(){
 
 // ====== CHANGE #2: TICKET SYSTEM (Fixed) ======
 function openTicketSystem(){
-  if(!UD||!UD.approved){toast('Profile approve hone ke baad ticket use kar sakte hain','error');return;}
+  if(!U){toast('Please login first','error');return;}
+  if(!UD||!UD.approved){
+    showModal('<div style="text-align:center;padding:8px 2px 4px;">'+
+      '<div style="font-size:38px;margin-bottom:10px;">🔒</div>'+ 
+      '<h3 style="color:var(--yellow);margin:0 0 10px;">Profile approval required</h3>'+ 
+      '<p style="color:var(--dim);font-size:13px;line-height:1.6;margin:0 0 16px;">Ticket Send/Claim abhi locked hai. Admin se profile approve karwao; approval ke baad hi Ticket use kar sakoge.</p>'+ 
+      '<button onclick="closeModal();openProfileUpdate()" style="width:100%;padding:12px;border:0;border-radius:10px;background:var(--yellow);color:#000;font-weight:900;cursor:pointer;">REQUEST PROFILE UPDATE</button>'+ 
+      '<button onclick="closeModal()" style="width:100%;padding:10px;margin-top:8px;border:1px solid #444;border-radius:10px;background:transparent;color:#ddd;cursor:pointer;">Close</button>'+ 
+      '</div>');
+    return;
+  }
   showModal(
     '<div style="text-align:center;margin-bottom:16px;">'+
       '<div style="font-size:28px;margin-bottom:6px;">🎟️</div>'+
