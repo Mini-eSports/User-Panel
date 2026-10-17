@@ -2097,56 +2097,33 @@ async function confirmSendTicket(){
   const type=window._ticketType||'coin';
   const receiver=window._ticketReceiver;
   if(!amt||amt<1){toast('Amount daalo','error');return;}
+  if(type==='coin'&&!Number.isInteger(amt)){toast('Coins ka amount whole number hona chahiye','error');return;}
   if(!receiver){toast('Valid receiver UID daalo','error');return;}
-  // Check balance
-  const coinBal=UD?.coins||0;
-  const moneyBal=(UD?.realMoney?.deposited||0)+(UD?.realMoney?.winnings||0)+(UD?.realMoney?.bonus||0);
-  if(type==='coin'&&amt>coinBal){toast('Insufficient coins','error');return;}
-  if(type==='money'&&amt>moneyBal){toast('Insufficient money','error');return;}
   try{
-    // Deduct from sender
-    if(type==='coin'){
-      await _sb.from('users').update({coins:coinBal-amt}).eq('id',U.uid);
-    } else {
-      const rm={...((UD?.realMoney)||{deposited:0,winnings:0,bonus:0})};
-      // Deduct from bonus first, then winnings, then deposited
-      let rem=amt;
-      if(rm.bonus>=rem){rm.bonus-=rem;rem=0;}
-      else{rem-=rm.bonus;rm.bonus=0;}
-      if(rem>0&&rm.winnings>=rem){rm.winnings-=rem;rem=0;}
-      else if(rem>0){rem-=rm.winnings;rm.winnings=0;}
-      if(rem>0){rm.deposited=Math.max(0,rm.deposited-rem);}
-      await _sb.from('users').update({real_money:rm}).eq('id',U.uid);
-    }
-    // Create ticket
-    const ticketId=crypto.randomUUID();
-    await _sb.from('tickets').insert({
-      id:ticketId, sender_uid:U.uid, receiver_uid:receiver.id,
-      type, amount:amt, status:'pending', created_at:Date.now()
+    const {data:ticketId,error}=await _sb.rpc('create_ticket',{
+      p_receiver_uid:receiver.id,p_type:type,p_amount:amt
     });
-    // Notify receiver
-    await _sb.from('notifications').insert({
-      id:crypto.randomUUID(), uid:receiver.id,
+    if(error) throw error;
+    const {error:notifyError}=await _sb.from('notifications').insert({
+      id:crypto.randomUUID(),uid:receiver.id,
       title:'🎟️ Ticket Received!',
       body:`${esc(UD?.ign||UD?.displayName||'Someone')} ne aapko ${type==='coin'?amt+' Coins':'₹'+amt} ka ticket bheja hai!`,
-      is_read:false, is_global:false, created_at:Date.now()
+      is_read:false,is_global:false,created_at:Date.now()
     });
+    if(notifyError) console.warn('Ticket created but notification failed:',notifyError.message);
     closeModal();
     updateHeader(); updateWallet(); updateProfile();
-    setTimeout(()=>{
-      openModal(`
-        <div style="text-align:center;padding:20px 0;">
-          <div style="font-size:48px;margin-bottom:12px;">✅</div>
-          <h3 style="color:#00c878;margin-bottom:8px;">Ticket Sent!</h3>
-          <div style="font-size:13px;color:var(--dim);margin-bottom:16px;">
-            ${type==='coin'?amt+' Coins':'₹'+amt} ka ticket<br>
-            <strong style="color:#fff;">${esc(receiver.ign||receiver.display_name)}</strong> ko bheja gaya
-          </div>
-          <button onclick="closeModal()" style="width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#2ecc71,#27ae60);color:#000;font-weight:900;cursor:pointer;">OKAY</button>
+    setTimeout(()=>openModal(`
+      <div style="text-align:center;padding:20px 0;">
+        <div style="font-size:48px;margin-bottom:12px;">✅</div>
+        <h3 style="color:#00c878;margin-bottom:8px;">Ticket Sent!</h3>
+        <div style="font-size:13px;color:var(--dim);margin-bottom:16px;">
+          ${type==='coin'?amt+' Coins':'₹'+amt} ka ticket<br>
+          <strong style="color:#fff;">${esc(receiver.ign||receiver.display_name)}</strong> ko bheja gaya
         </div>
-      `);
-    },200);
-  } catch(e){toast('Error: '+e.message,'error');}
+        <button onclick="closeModal()" style="width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#2ecc71,#27ae60);color:#000;font-weight:900;cursor:pointer;">OKAY</button>
+      </div>`),200);
+  }catch(e){toast('Error: '+(e.message||'Ticket send failed'),'error');}
 }
 
 async function openClaimTicket(){
@@ -2201,51 +2178,13 @@ function switchTicketTab(tab){
 
 async function claimTicketAction(ticketId, action){
   try{
-    const {data:ticket}=await _sb.from('tickets').select('*').eq('id',ticketId).single();
-    if(!ticket||ticket.status!=='pending'){toast('Ticket already processed','error');return;}
-    if(action==='claim'){
-      // Add to receiver balance
-      if(ticket.type==='coin'){
-        const newCoins=(UD?.coins||0)+Number(ticket.amount);
-        await _sb.from('users').update({coins:newCoins}).eq('id',U.uid);
-      } else {
-        const rm={...((UD?.realMoney)||{deposited:0,winnings:0,bonus:0})};
-        rm.bonus=(rm.bonus||0)+Number(ticket.amount);
-        await _sb.from('users').update({real_money:rm}).eq('id',U.uid);
-      }
-      await _sb.from('tickets').update({status:'claimed',updated_at:Date.now()}).eq('id',ticketId);
-      toast('Ticket claimed! Balance updated ✅');
-    } else if(action==='reject'){
-      // Refund sender
-      const {data:sender}=await _sb.from('users').select('coins,real_money').eq('id',ticket.sender_uid).single();
-      if(sender){
-        if(ticket.type==='coin'){
-          await _sb.from('users').update({coins:(sender.coins||0)+Number(ticket.amount)}).eq('id',ticket.sender_uid);
-        } else {
-          const rm={...(sender.real_money||{deposited:0,winnings:0,bonus:0})};
-          rm.bonus=(rm.bonus||0)+Number(ticket.amount);
-          await _sb.from('users').update({real_money:rm}).eq('id',ticket.sender_uid);
-        }
-      }
-      await _sb.from('tickets').update({status:'rejected',updated_at:Date.now()}).eq('id',ticketId);
-      toast('Ticket rejected, amount returned to sender');
-    } else if(action==='cancel'){
-      // Refund sender (self)
-      if(ticket.sender_uid!==U.uid){toast('Only sender cancel kar sakta hai','error');return;}
-      if(ticket.type==='coin'){
-        const newCoins=(UD?.coins||0)+Number(ticket.amount);
-        await _sb.from('users').update({coins:newCoins}).eq('id',U.uid);
-      } else {
-        const rm={...((UD?.realMoney)||{deposited:0,winnings:0,bonus:0})};
-        rm.bonus=(rm.bonus||0)+Number(ticket.amount);
-        await _sb.from('users').update({real_money:rm}).eq('id',U.uid);
-      }
-      await _sb.from('tickets').update({status:'cancelled',updated_at:Date.now()}).eq('id',ticketId);
-      toast('Ticket cancelled, amount refunded ✅');
-    }
+    const {data,error}=await _sb.rpc('process_ticket',{p_ticket_id:ticketId,p_action:action});
+    if(error) throw error;
+    const messages={claim:'Ticket claimed! Balance updated ✅',reject:'Ticket rejected, amount returned to sender',cancel:'Ticket cancelled, amount refunded ✅'};
+    toast(messages[action]||'Ticket updated');
     updateHeader(); updateWallet(); updateProfile();
-    closeModal();
-  } catch(e){ toast('Error: '+e.message,'error'); }
+    await openClaimTicket();
+  }catch(e){toast('Error: '+(e.message||'Ticket action failed'),'error');}
 }
 // ====== END TICKET SYSTEM ======
 
