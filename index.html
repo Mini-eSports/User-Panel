@@ -82,6 +82,13 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 /* MAIN */
 #mainApp{display:none;height:100%;flex-direction:column}
 #mainApp.show{display:flex}
+#maintenanceScreen{position:fixed;inset:0;z-index:100000;background:#050505;display:none;align-items:center;justify-content:center;padding:28px;text-align:center}
+#maintenanceScreen.show{display:flex}
+.maintenance-card{width:100%;max-width:420px;border:1px solid rgba(255,215,0,.28);border-radius:22px;padding:32px 24px;background:#101010;box-shadow:0 0 28px rgba(255,215,0,.08)}
+.maintenance-icon{font-size:52px;color:var(--yellow);margin-bottom:14px}
+.maintenance-card h1{color:var(--yellow);font-size:25px;margin:0 0 12px}
+.maintenance-card p{color:var(--dim);line-height:1.7;margin:0}
+.maintenance-status{margin-top:20px;font-size:12px;color:var(--dim2)}
 .content-area{flex:1;overflow-y:auto;padding-bottom:70px}
 .screen{display:none;padding:14px;animation:fadeIn .2s}
 .screen.active{display:block}
@@ -352,6 +359,15 @@ textarea.form-input{resize:none;min-height:80px}
 </div>
 
 <!-- AUTH LOADING -->
+<div id="maintenanceScreen" role="status" aria-live="polite">
+  <div class="maintenance-card">
+    <div class="maintenance-icon">🛠️</div>
+    <h1>Under Maintenance</h1>
+    <p>Mini eSports is temporarily unavailable while we make improvements. Please check back soon.</p>
+    <div class="maintenance-status">Access will return automatically when maintenance is complete.</div>
+  </div>
+</div>
+
 <div id="authLoading">
   <div class="loader"></div>
   <p>Signing in with Google...</p>
@@ -916,6 +932,9 @@ let countdownInterval=null, dailyInterval=null, listeners=[], paymentSettings={}
 let currentLbTab='score', currentHomeTab='paid', currentHomeMode='All', currentHomeCategory='Battle Royale';
 let addMoneyAmount=0;
 let isGoogleUser=false;
+let maintenanceBlocked=false;
+let bootCompletedForUid=null;
+let maintenancePollTimer=null;
 
 // ═══ GLOBAL BUTTON CLICK GUARD — prevents double/rapid taps on ANY button ═══
 document.addEventListener('click', function(e){
@@ -940,6 +959,43 @@ document.addEventListener('touchend',e=>{
     else if(dx>0&&idx>0)go(screenOrder[idx-1]);
   }
 },{passive:true});
+
+// ====== MAINTENANCE MODE ======
+async function isMaintenanceModeEnabled(){
+  try{
+    const {data,error}=await _sb.from('app_config').select('value').eq('key','maintenanceMode').maybeSingle();
+    if(error) throw error;
+    const value=data?.value;
+    if(value===true || value===1 || value==='true') return true;
+    if(value && typeof value==='object') return value.enabled===true || value.maintenanceMode===true;
+    return false;
+  }catch(err){
+    // Fail open on config-read errors so a temporary policy/network issue does not lock everyone out.
+    console.warn('Maintenance setting could not be checked:',err?.message||err);
+    return false;
+  }
+}
+function setMaintenanceScreen(enabled){
+  maintenanceBlocked=enabled;
+  const screen=document.getElementById('maintenanceScreen');
+  const app=document.getElementById('mainApp');
+  if(screen) screen.classList.toggle('show',enabled);
+  if(enabled){app?.classList.remove('show');document.getElementById('loginScreen')?.classList.add('hide');}
+}
+async function checkMaintenanceMode(){
+  if(!U) return;
+  const enabled=await isMaintenanceModeEnabled();
+  if(enabled){setMaintenanceScreen(true);return;}
+  if(maintenanceBlocked){
+    setMaintenanceScreen(false);
+    if(bootCompletedForUid!==U.uid){await boot();bootCompletedForUid=U.uid;}
+    else document.getElementById('mainApp')?.classList.add('show');
+  }
+}
+function startMaintenancePolling(){
+  if(maintenancePollTimer) return;
+  maintenancePollTimer=setInterval(()=>{checkMaintenanceMode().catch(e=>console.warn('Maintenance poll failed:',e));},5000);
+}
 
 // ====== AUTH STATE ======
 window.addEventListener('load',()=>{
@@ -979,13 +1035,18 @@ window.addEventListener('load',()=>{
       document.getElementById('authLoading').classList.remove('show');
 
       // Avatar shown only in profile page
-
+      startMaintenancePolling();
+      const maintenanceOn = await isMaintenanceModeEnabled();
+      if(maintenanceOn){setMaintenanceScreen(true);return;}
+      setMaintenanceScreen(false);
       await boot();
+      bootCompletedForUid = user.uid;
     } else {
       // Not signed in OR anonymous — show login screen
       _userSessionInitialized = null;
       cleanupListeners();
-      U = null; UD = null;
+      U = null; UD = null; bootCompletedForUid=null; maintenanceBlocked=false;
+      document.getElementById('maintenanceScreen')?.classList.remove('show');
       document.getElementById('mainApp').classList.remove('show');
       document.getElementById('loginScreen').classList.add('show');
       document.getElementById('loginScreen').classList.remove('hide');
@@ -1755,6 +1816,23 @@ function drawDonut(){
   ctx.fillStyle='#fff';ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
   ctx.fillText('₹'+(dep+win+bon),45,45);
 }
+let dailyClaimReward = 10;
+let dailyClaimRewardLoad = null;
+async function loadDailyClaimReward(){
+  if(dailyClaimRewardLoad) return dailyClaimRewardLoad;
+  dailyClaimRewardLoad = (async()=>{
+    try{
+      const {data,error}=await _sb.from('app_config').select('value').eq('key','dailyCoins').maybeSingle();
+      if(error) throw error;
+      const raw=data?.value;
+      const configured=typeof raw==='number'?raw:(typeof raw==='string'?Number(raw):Number(raw?.value ?? raw?.dailyCoins));
+      if(Number.isFinite(configured)&&configured>0) dailyClaimReward=Math.floor(configured);
+    }catch(e){ console.warn('Could not load daily claim reward setting:',e?.message||e); }
+    finally{ dailyClaimRewardLoad=null; }
+    return dailyClaimReward;
+  })();
+  return dailyClaimRewardLoad;
+}
 function updateDailyBtn(){
   const btn=document.getElementById('dailyBtn');
   if(!btn||!UD)return;
@@ -1762,7 +1840,7 @@ function updateDailyBtn(){
   if(dailyInterval)clearInterval(dailyInterval);
   if(Date.now()>=nextClaim){
     btn.className='daily-btn available';
-    btn.textContent='★ Daily Claim (+'+((UD&&UD.dailyCoins)||10)+' Coins)';
+    btn.textContent='★ Daily Claim (+'+dailyClaimReward+' Coins)';
     btn.onclick=dailyClaim;
   }else{
     btn.className='daily-btn claimed';
@@ -1775,6 +1853,11 @@ function updateDailyBtn(){
     }
     tick();dailyInterval=setInterval(tick,60000);
   }
+  // Refresh the configured reward from the same app_config key saved by Admin Settings.
+  loadDailyClaimReward().then(()=>{
+    if(btn && UD && Date.now()>=getNextMidnight(UD.lastDailyClaim||0))
+      btn.textContent='★ Daily Claim (+'+dailyClaimReward+' Coins)';
+  });
 }
 function getNextMidnight(lastClaim){
   const d=new Date(lastClaim||0);d.setDate(d.getDate()+1);d.setHours(0,0,0,0);return d.getTime();
@@ -3100,11 +3183,20 @@ let _lastUserChatMsgCount = 0;
 
 async function openSupport(){
   try{
-    const snap = await db.ref('supportRequests').orderByChild('uid').equalTo(U.uid).once('value');
-    const tickets = snap.exists()?Object.entries(snap.val()||{}).map(([id,v])=>({id,...v})):[];
-    const openTicket = tickets.filter(t=>t.status!=='resolved').sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))[0];
-    if(openTicket){ openSupportChat(openTicket.id, openTicket.type); return; }
-  }catch(e){}
+    const {data,error} = await _sb.from('support_requests').select('*').eq('uid',U.uid).neq('status','resolved').order('created_at',{ascending:false}).limit(1);
+    if(error) throw error;
+    if(data && data.length){ openSupportChat(data[0].id,data[0].type); return; }
+    // Preserve an existing unresolved Firebase support ticket by mirroring its metadata
+    // into Supabase before opening the shared chat.
+    const legacySnap = await db.ref('supportRequests').orderByChild('uid').equalTo(U.uid).once('value');
+    const legacyTickets = legacySnap.exists()?Object.entries(legacySnap.val()||{}).map(([id,v])=>({id,...v})):[];
+    const legacy = legacyTickets.filter(t=>t.status!=='resolved').sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))[0];
+    if(legacy){
+      const {error:mirrorError}=await _sb.from('support_requests').upsert({id:legacy.id,uid:U.uid,ign:UD?.ign||legacy.ign||'',player_name:UD?.displayName||legacy.playerName||'',type:legacy.type||'other',message:legacy.message||'',status:legacy.status||'pending',created_at:Number(legacy.createdAt||Date.now()),last_message_at:Number(legacy.lastMessageAt||legacy.createdAt||Date.now()),unread_by_admin:!!legacy.unreadByAdmin,unread_by_user:!!legacy.unreadByUser},{onConflict:'id',ignoreDuplicates:true});
+      if(mirrorError) throw mirrorError;
+      openSupportChat(legacy.id,legacy.type); return;
+    }
+  }catch(e){ console.error('open support lookup',e); toast(friendlyDbError(e),'error'); return; }
   openNewSupportForm();
 }
 
@@ -3139,9 +3231,11 @@ async function submitSupport(){
   const origHTML=btn?btn.innerHTML:'';
   if(btn){btn.disabled=true;btn.innerHTML='<span class="btn-spinner"></span> Sending...';}
   try{
-    const res = await db.ref('supportRequests').push({uid:U.uid,ign:UD?.ign||'',playerName:UD?.displayName||'',type,message:msg,status:'pending',unreadByAdmin:true,lastMessageAt:Date.now(),createdAt:Date.now()});
-    const ticketId = res.key;
-    const { error: msgErr } = await _sb.from('support_messages').insert({id:crypto.randomUUID(), ticket_id:ticketId, sender:'user', message:msg, created_at:Date.now()});
+    const now = Date.now();
+    const ticketId = crypto.randomUUID();
+    const {error:ticketErr} = await _sb.from('support_requests').insert({id:ticketId,uid:U.uid,ign:UD?.ign||'',player_name:UD?.displayName||'',type,message:msg,status:'pending',unread_by_admin:true,unread_by_user:false,created_at:now,last_message_at:now});
+    if(ticketErr) throw ticketErr;
+    const {error:msgErr} = await _sb.from('support_messages').insert({id:crypto.randomUUID(),ticket_id:ticketId,sender:'user',message:msg,created_at:now});
     if(msgErr) throw msgErr;
     toast('Support request sent!','success');
     openSupportChat(ticketId, type);
@@ -3156,22 +3250,23 @@ async function submitSupport(){
 function openSupportChat(ticketId, issueType){
   _myOpenTicketId = ticketId;
   _submittingSupport=false;
+  _lastUserChatMsgCount = -1;
   openModal(`<div class="modal-bar"></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-      <h3 style="margin:0;">🎧 Admin</h3>
-      <span style="font-size:11px;color:var(--dim);">${esc(issueType||'Support')}</span>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:4px 2px 12px;border-bottom:1px solid rgba(255,215,0,.16);">
+      <div><h3 style="margin:0;display:flex;align-items:center;gap:8px;">🎧 Admin</h3><div style="font-size:11px;color:var(--dim);margin-top:4px;">${esc(issueType||'Support')} · Support Chat</div></div>
+      <button class="btn btn-outline" style="padding:8px 12px;min-width:auto;" onclick="closeUserChat()" aria-label="Close chat">✕</button>
     </div>
-    <div id="userChatMessages" style="height:46vh;overflow-y:auto;background:#0a0a0a;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;margin-bottom:10px;"></div>
-    <div style="display:flex;gap:8px;">
-      <input type="text" class="form-input" id="userChatInput" placeholder="Type a message..." style="flex:1;" onkeydown="if(event.key==='Enter'){event.preventDefault();sendUserChatMessage();}">
-      <button class="btn btn-yellow" style="flex-shrink:0;padding:0 16px;" id="userChatSendBtn" onclick="sendUserChatMessage()">➤</button>
+    <div id="userChatMessages" role="log" aria-live="polite" style="height:48vh;min-height:240px;max-height:55vh;overflow-y:auto;background:#050505;border:1px solid rgba(255,215,0,.12);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;margin:12px 0;"></div>
+    <div style="display:flex;gap:8px;align-items:center;border-top:1px solid rgba(255,215,0,.12);padding-top:10px;">
+      <input type="text" class="form-input" id="userChatInput" placeholder="Type a message..." maxlength="2000" autocomplete="off" style="flex:1;min-width:0;" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendUserChatMessage();}">
+      <button class="btn btn-yellow" style="flex-shrink:0;padding:0 18px;min-height:46px;" id="userChatSendBtn" onclick="sendUserChatMessage()" aria-label="Send message">➤</button>
     </div>
-    <button class="btn btn-outline btn-full" style="margin-top:10px;" onclick="closeUserChat()">Close</button>
+    <div style="display:flex;justify-content:flex-end;margin-top:10px;"><button class="btn btn-outline" style="min-width:110px;" onclick="closeUserChat()">Close Chat</button></div>
   `);
   loadUserChatMessages(ticketId, true);
   if(_userChatPollInterval) clearInterval(_userChatPollInterval);
   _userChatPollInterval = setInterval(()=>loadUserChatMessages(ticketId,false), 3000);
-  db.ref('supportRequests/'+ticketId).update({unreadByUser:false}).catch(()=>{});
+  _sb.rpc('mark_support_read',{p_ticket_id:ticketId}).catch(()=>{});
 }
 function closeUserChat(){
   if(_userChatPollInterval){clearInterval(_userChatPollInterval);_userChatPollInterval=null;}
@@ -3220,7 +3315,6 @@ async function sendUserChatMessage(){
     try{
       const {error} = await _sb.from('support_messages').insert({id:crypto.randomUUID(),ticket_id:_myOpenTicketId,sender:'user',message:msg,created_at:Date.now()});
       if(error)throw error;
-      await _sb.from('support_requests').update({last_message_at:Date.now(), unread_by_admin:true}).eq('id',_myOpenTicketId);
       await loadUserChatMessages(_myOpenTicketId,true);
     }catch(e){
       if(retry<1 && /schema cache|PGRST/i.test(e.message||'')) { await new Promise(r=>setTimeout(r,900)); return doSend(retry+1); }
