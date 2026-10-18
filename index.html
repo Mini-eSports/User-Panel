@@ -2160,8 +2160,10 @@ function verifyTicketReceiver(){
     if(uid===UD.ffuid){infoEl.innerHTML='<div style="color:var(--red);font-size:11px;">❌ Self UID allowed nahi hai</div>';return;}
     infoEl.innerHTML='<div style="color:var(--dim);font-size:11px;">🔍 Searching...</div>';
     try{
-      const {data}=await _sb.from('users').select('id,display_name,ign,ffuid').eq('ffuid',uid).eq('approved',true).single();
-      if(data){
+      const {data:rows,error}=await _sb.rpc('lookup_player_by_ffuid',{p_ffuid:uid});
+      if(error) throw error;
+      const data=(rows||[]).find(r=>String(r.ffuid||'').replace(/\D/g,'')===uid.replace(/\D/g,''));
+      if(data && data.approved){
         window._ticketReceiver=data;
         infoEl.innerHTML=`<div style="background:rgba(0,200,120,0.08);border:1px solid rgba(0,200,120,0.3);border-radius:8px;padding:8px 10px;display:flex;align-items:center;gap:8px;"><div style="width:30px;height:30px;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--yellow);">${(data.ign||data.display_name||'?')[0]}</div><div><div style="font-size:12px;font-weight:700;color:#fff;">${esc(data.ign||data.display_name||'User')}</div><div style="font-size:10px;color:var(--dim);">UID: ${esc(data.ffuid||uid)}</div></div><div style="margin-left:auto;background:rgba(0,200,120,0.2);color:#00c878;padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700;">Verified ✓</div></div>`;
         if(iconEl) iconEl.textContent='✅';
@@ -2584,7 +2586,8 @@ function useSavedTeam(){
       const {data} = await _sb.from('team_members').select('teammate_uid').eq('uid',U.uid).eq('mode',_joinFlow.mode.toLowerCase());
       const uids = (data||[]).map(r=>r.teammate_uid).slice(0,_joinFlow.teamSize-1);
       if(!uids.length){toast('No saved team found','error');return;}
-      const {data:users} = await _sb.from('users').select('id,ign,ffuid').in('id',uids);
+      const {data:users,error:usersError} = await _sb.rpc('get_public_player_profiles',{p_user_ids:uids});
+      if(usersError) throw usersError;
       _joinFlow.members = (users||[]).map(u=>({uid:u.id, ign:u.ign, ffuid:u.ffuid}));
       renderJoinScreen();
     }catch(e){toast('Could not load saved team','error');}
@@ -2613,7 +2616,9 @@ async function lookupMatchTeammate(){
   if(!ffuid){toast('Enter an FF UID','error');return;}
   resultEl.innerHTML = '<div style="text-align:center;color:var(--dim);font-size:12px;">Searching...</div>';
   try{
-    const {data} = await _sb.from('users').select('id,ign,ffuid,approved').eq('ffuid',ffuid).maybeSingle();
+    const {data:rows,error} = await _sb.rpc('lookup_player_by_ffuid',{p_ffuid:ffuid});
+    if(error) throw error;
+    const data=(rows||[]).find(r=>String(r.ffuid||'').replace(/\D/g,'')===ffuid.replace(/\D/g,''));
     if(!data){
       resultEl.innerHTML = `<div style="background:rgba(255,50,50,0.1);border:1px solid rgba(255,50,50,0.3);border-radius:10px;padding:12px;text-align:center;"><div style="color:var(--red);font-weight:700;">✕ UID NOT FOUND</div></div>`;
       return;
@@ -2982,7 +2987,8 @@ async function renderTeams(){
     members = mRes.data||[]; incoming = inRes.data||[]; outgoing = outRes.data||[];
     if(members.length || incoming.length || outgoing.length){
       const otherUids=[...new Set([...members.map(m=>m.teammate_uid),...incoming.map(r=>r.requester_uid),...outgoing.map(r=>r.target_uid)])];
-      const {data:users}=await _sb.from('users').select('id,ign,display_name,ffuid').in('id',otherUids);
+      const {data:users,error:usersError}=await _sb.rpc('get_public_player_profiles',{p_user_ids:otherUids});
+      if(usersError) throw usersError;
       const umap={}; (users||[]).forEach(u=>umap[u.id]=u);
       members.forEach(m=>m._u=umap[m.teammate_uid]);
       incoming.forEach(r=>r._u=umap[r.requester_uid]);
@@ -3083,11 +3089,35 @@ async function respondTeamRequest(id,accept){
 function openAddTeammate(mode){
   openModal(`<div class="modal-bar"></div>
     <h3>Add Teammate (${mode==='duo'?'Duo':'Squad'})</h3>
-    <div class="form-group"><label>Teammate's FF UID</label><input class="form-input" type="text" id="tmFFUID" placeholder="Enter FF UID (8-12 digits)" inputmode="numeric" style="margin-top:5px;"></div>
-    <p style="font-size:11px;color:var(--dim);margin-top:-6px;margin-bottom:10px;">They must already be a registered Mini eSports player. They'll get a request to accept.</p>
+    <div class="form-group"><label>Teammate's FF UID</label><input class="form-input" type="text" id="tmFFUID" placeholder="Enter FF UID (8-12 digits)" inputmode="numeric" maxlength="12" style="margin-top:5px;" oninput="scheduleTeammateLookup()"></div>
+    <div id="tmLookupInfo" style="margin:0 0 10px;"></div>
+    <p style="font-size:11px;color:var(--dim);margin-top:0;margin-bottom:10px;">Registered players ka naam UID enter karte hi yahan dikhega. Request accept hone ke baad teammate add hoga.</p>
     <button class="btn btn-yellow btn-full" style="padding:13px;" id="tmSendBtn" onclick="submitTeammate('${mode}')">Send Request</button>
     <button class="btn btn-outline btn-full" style="margin-top:8px;" onclick="closeModal()">Cancel</button>
   `);
+}
+let _tmLookupTimer=null;
+function scheduleTeammateLookup(){
+  clearTimeout(_tmLookupTimer);
+  _tmLookupTimer=setTimeout(lookupPermanentTeammate,350);
+}
+async function lookupPermanentTeammate(){
+  const input=document.getElementById('tmFFUID');
+  const info=document.getElementById('tmLookupInfo');
+  if(!input||!info)return;
+  const uid=input.value.trim().replace(/\D/g,'');
+  info.innerHTML='';
+  if(uid.length<8)return;
+  if(uid.length>12){info.innerHTML='<div style="color:var(--red);font-size:12px;">FF UID must be 8-12 digits.</div>';return;}
+  info.innerHTML='<div style="color:var(--dim);font-size:12px;">Searching player...</div>';
+  try{
+    const {data,error}=await _sb.rpc('lookup_player_by_ffuid',{p_ffuid:uid});
+    if(error)throw error;
+    const player=(data||[]).find(r=>String(r.ffuid||'').replace(/\D/g,'')===uid);
+    if(!player){info.innerHTML='<div style="color:var(--red);font-size:12px;">✕ Registered player nahi mila. UID check karo.</div>';return;}
+    if(player.id===U.uid){info.innerHTML='<div style="color:var(--red);font-size:12px;">Apni UID add nahi kar sakte.</div>';return;}
+    info.innerHTML=`<div style="display:flex;align-items:center;gap:9px;padding:10px;border:1px solid rgba(0,200,120,.35);background:rgba(0,200,120,.08);border-radius:10px;"><div style="width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--card);color:var(--yellow);font-weight:800;">${esc((player.ign||player.display_name||'P').slice(0,1).toUpperCase())}</div><div><div style="font-weight:700;color:#fff;font-size:13px;">${esc(player.ign||player.display_name||'Player')}</div><div style="font-size:11px;color:var(--dim);">FF UID: ${esc(player.ffuid||uid)}</div></div><div style="margin-left:auto;font-size:11px;color:${player.approved?'#00c878':'var(--red)'};">${player.approved?'✓ Verified':'Pending approval'}</div></div>`;
+  }catch(e){info.innerHTML=`<div style="color:var(--red);font-size:12px;">Lookup error: ${esc(e.message||'Try again')}</div>`;}
 }
 let _sendingTeamReq=false;
 async function submitTeammate(mode){
