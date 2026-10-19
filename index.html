@@ -2443,6 +2443,26 @@ async function joinTournament(id){
   const mode = (t.gameMode||'Solo');
   const teamSize = teamSizeForMode(mode);
   _joinFlow = { tournamentId:id, mode, teamSize, members:[] };
+
+  // Automatically use the user's already-saved permanent team for this match mode.
+  // Match-only additions remain in _joinFlow.members and never write to team_members.
+  if(teamSize > 1){
+    const savedMode = (mode==='Duo' || /^2v2$/i.test(mode)) ? 'duo' : (mode==='Squad' || /^4v4$/i.test(mode)) ? 'squad' : mode.toLowerCase();
+    try{
+      const {data:rows,error:teamError} = await _sb.from('team_members').select('teammate_uid,created_at').eq('uid',U.uid).eq('mode',savedMode).order('created_at',{ascending:true});
+      if(teamError) throw teamError;
+      const teammateUids = (rows||[]).map(r=>r.teammate_uid).filter(Boolean).slice(0,teamSize-1);
+      if(teammateUids.length){
+        const {data:profiles,error:profileError} = await _sb.rpc('get_public_player_profiles',{p_user_ids:teammateUids});
+        if(profileError) throw profileError;
+        const byId = new Map((profiles||[]).map(p=>[p.id,p]));
+        _joinFlow.members = teammateUids.map(uid=>byId.get(uid)).filter(p=>p && p.approved!==false).map(p=>({uid:p.id,ign:p.ign||p.display_name||'Player',ffuid:p.ffuid||''}));
+      }
+    }catch(e){
+      console.error('Could not load saved match team',e);
+      toast('Saved team could not be loaded. You can add players for this match.','info');
+    }
+  }
   await renderJoinScreen();
 }
 
@@ -2467,17 +2487,6 @@ async function renderJoinScreen(){
   const category = t.matchCategory || 'Battle Royale';
   const status = getMatchStatus(t);
   const balanceAfter = balance-requiredFee;
-
-  // Saved persistent team is only a quick-fill option; the join flow itself remains match-specific.
-  let savedTeamHtml = '';
-  if(requiredExtra > 0 && _joinFlow.members.length === 0){
-    try{
-      const {data} = await _sb.from('team_members').select('teammate_uid').eq('uid',U.uid).eq('mode',_joinFlow.mode.toLowerCase());
-      if(data && data.length){
-        savedTeamHtml = `<button class="btn btn-outline btn-full" style="margin-top:10px;border-color:rgba(255,215,0,.55);color:var(--yellow);" onclick="useSavedTeam()">⚡ Use My Saved ${esc(modeLabel)} Team</button>`;
-      }
-    }catch(e){ console.warn('Saved team quick-fill unavailable',e); }
-  }
 
   const teamRows = [`<div class="join-player-card join-captain-card"><div class="join-player-avatar">👑</div><div class="join-player-info"><div class="join-player-name">${esc(UD.ign||'You')}</div><div class="join-player-uid">🎮 ${esc(UD.ffuid||'UID unavailable')}</div><span class="join-verified">✓ Verified</span></div><span class="join-you-tag">YOU</span></div>`];
   _joinFlow.members.forEach((m,i)=>teamRows.push(`<div class="join-player-card"><div class="join-player-avatar">👤</div><div class="join-player-info"><div class="join-player-name">${esc(m.ign||'Player')}</div><div class="join-player-uid">🎮 ${esc(m.ffuid||'UID unavailable')}</div><span class="join-verified">✓ Verified</span></div><button class="join-remove" onclick="removeJoinMember(${i})" aria-label="Remove player">⋮</button></div>`));
@@ -2504,25 +2513,13 @@ async function renderJoinScreen(){
         <div class="join-metric join-metric-blue"><span class="join-metric-icon">💳</span><div><small>Your Balance</small><strong>${cur}${balance}</strong></div></div>
         <div class="join-metric join-metric-green"><span class="join-metric-icon">🎟️</span><div><small>Total Team Fee</small><strong>${cur}${requiredFee}</strong></div></div>
       </div>
-      <div class="join-balance-after"><span>💰 &nbsp;Balance After Joining</span><strong style="color:${balanceAfter>=0?'#35e58a':'#ff5c70'}">${cur}${balanceAfter}</strong></div>
 
       ${_joinFlow.teamSize>1?`<div class="join-policy-strip"><div><span>👑</span><section><strong>TEAM CAPTAIN PAYS</strong><small>Full team entry fee is deducted from your wallet.</small></section></div><i></i><div><span>🏆</span><section><strong>PRIZE GOES TO CAPTAIN</strong><small>${prizeLabel} is credited to the captain's wallet.</small></section></div></div>`:''}
 
       <div class="join-section-heading"><strong>${esc(modeLabel.toUpperCase())} TEAM (${1+_joinFlow.members.length}/${_joinFlow.teamSize})</strong>${requiredExtra>0?'<span>Invite friends</span>':''}</div>
       <div class="join-team-grid">${teamRows.join('')}</div>
-      ${savedTeamHtml}
 
-      <div class="join-summary-card"><div class="join-summary-heading">MATCH JOIN SUMMARY <span>›</span></div>
-        <div class="join-summary-grid">
-          <div><small>👥 Players</small><strong>${1+_joinFlow.members.length} / ${_joinFlow.teamSize}</strong></div>
-          <div><small>💳 Your Balance</small><strong>${cur}${balance}</strong></div>
-          <div><small>🪙 Entry Fee (per player)</small><strong>${cur}${t.entryFee||0}</strong></div>
-          <div><small>💰 Balance After Joining</small><strong style="color:${balanceAfter>=0?'#35e58a':'#ff5c70'}">${cur}${balanceAfter}</strong></div>
-          <div><small>🎟️ Total Team Fee</small><strong>${cur}${requiredFee}</strong></div>
-          <div><small>🛡️ Team Status</small><strong style="color:${teamComplete?'#35e58a':'#ff6680'}">${teamComplete?'Complete':'Incomplete'}</strong></div>
-        </div>
-      </div>
-      <div class="join-info-links"><button onclick="toast('Match rules are shown in tournament details','info')">📄 Match Rules ›</button><button onclick="toast('Refund policy depends on tournament rules','info')">🔄 Refund Policy ›</button><button onclick="toast('Your registered IGN and UID will be checked','info')">🛡️ UID Verification ›</button><button onclick="toast('Each user can register only once per match','info')">🚫 No Duplicate Registration ›</button></div>
+      <div class="join-info-links"><button onclick="toast('Match rules are shown in tournament details','info')">📄 Match Rules ›</button><button onclick="toast('Refund policy depends on tournament rules','info')">🔄 Refund Policy ›</button></div>
       ${!teamComplete?`<p class="join-helper-text">🔒 Add ${requiredExtra-_joinFlow.members.length} more player(s) to join this match.</p>`:balance<requiredFee?`<div class="join-insufficient">⚠️ Insufficient balance. Required: ${cur}${requiredFee}; available: ${cur}${balance}.</div>`:''}
       <div class="join-footer-actions"><button class="join-back-button" onclick="closeModal()">← BACK</button><button class="join-confirm-button" id="confirmJoinBtn" ${canConfirm?'':'disabled'} onclick="confirmMatchJoin()">JOIN MATCH &nbsp; →</button></div>
       ${!teamComplete?'<div class="join-footer-note">🔒 Add all '+_joinFlow.teamSize+' players to join this match</div>':''}
@@ -2785,16 +2782,9 @@ function updateProfileCompletion(){
       <div style="font-size:10px;color:var(--dim);">Set your IGN & FF UID to complete your profile</div>
     </div>`;
   } else {
-    const info = getLevelInfo(UD.xp||0);
-    const pct = info.isMax ? 100 : Math.min(100, Math.round((info.intoLevel/info.forNext)*100));
-    slot.innerHTML = `<div class="profile-progress">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:12px;font-weight:700;color:#fff;">🏅 Level ${info.level} — ${info.rankName}</span>
-        <span style="font-size:12px;font-weight:700;color:var(--yellow);">${info.isMax?'MAX':info.intoLevel+' / '+info.forNext+' XP'}</span>
-      </div>
-      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
-      <div style="font-size:10px;color:var(--dim);">${info.isMax?'Maximum level reached! 🏆':'Play matches to earn XP and level up'}</div>
-    </div>`;
+    // The compact Level / Bronze progress card is intentionally hidden.
+    // Keep the larger profileLevelCard below the stats as the single level display.
+    slot.innerHTML = '';
   }
 }
 function updateAchievements(s){
@@ -2948,17 +2938,25 @@ async function renderTeams(){
     const mc = mode==='duo'?{c:'#FFD700',b:'rgba(255,215,0,0.7)',glow:'rgba(255,215,0,0.4)',dash:'rgba(255,215,0,0.5)',tc:'#FFD700'}
                           :{c:'#ff4444',b:'rgba(255,68,68,0.7)',glow:'rgba(255,68,68,0.4)',dash:'rgba(255,68,68,0.5)',tc:'#ff4444'};
     const avatarLetter=displayName.charAt(0).toUpperCase();
+    const myAvatarUrl=UD?.photoURL||UD?.photo_url||U?.photoURL||U?.user_metadata?.avatar_url||U?.user_metadata?.picture||'';
+    const myAvatarMarkup=myAvatarUrl
+      ? `<img src="${esc(myAvatarUrl)}" alt="My profile avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;">${esc(avatarLetter)}</span>`
+      : esc(avatarLetter);
     let html=`<div style="display:flex;flex-direction:column;align-items:center;">
-      <div style="width:60px;height:60px;border-radius:50%;border:2.5px solid ${mc.b};box-shadow:0 0 14px ${mc.glow};background:#111;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:${mc.c};">${avatarLetter}</div>
+      <div style="width:60px;height:60px;border-radius:50%;border:2.5px solid ${mc.b};box-shadow:0 0 14px ${mc.glow};background:#111;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:24px;font-weight:900;color:${mc.c};">${myAvatarMarkup}</div>
       <div style="font-size:11px;color:${mc.c};margin-top:6px;font-weight:700;">You</div>
       <div style="font-size:14px;color:${mc.c};margin-top:2px;">★</div>
     </div>`;
     myMembers.forEach(m=>{
       const name=m._u?.ign||m._u?.display_name||'Player';
       const init=name.charAt(0).toUpperCase();
+      const memberAvatarUrl=m._u?.photo_url||m._u?.photoURL||m._u?.avatar_url||m._u?.picture||'';
+      const memberAvatarMarkup=memberAvatarUrl
+        ? `<img src="${esc(memberAvatarUrl)}" alt="${esc(name)} avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center;">${esc(init)}</span>`
+        : esc(init);
       const memberKey=`${mode}-${String(m.teammate_uid).replace(/[^a-zA-Z0-9_-]/g,'')}`;
       html+=`<div class="team-member-card" data-team-member="${esc(memberKey)}" data-team-mode="${mode}" data-teammate-uid="${esc(m.teammate_uid)}" style="display:flex;flex-direction:column;align-items:center;position:relative;touch-action:manipulation;user-select:none;-webkit-user-select:none;">
-        <div class="team-member-avatar" style="width:60px;height:60px;border-radius:50%;border:2.5px solid ${mc.b};box-shadow:0 0 10px ${mc.glow};background:#111;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:${mc.c};cursor:pointer;">${init}</div>
+        <div class="team-member-avatar" style="width:60px;height:60px;border-radius:50%;border:2.5px solid ${mc.b};box-shadow:0 0 10px ${mc.glow};background:#111;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:22px;font-weight:700;color:${mc.c};cursor:pointer;">${memberAvatarMarkup}</div>
         <div class="team-member-name" style="font-size:11px;color:#fff;margin-top:6px;font-weight:600;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;">${esc(name)}</div>
         <div class="team-member-hint" style="font-size:9px;color:var(--dim);margin-top:3px;">Long press to manage</div>
         <button class="team-member-remove" type="button" style="display:none;margin-top:5px;background:rgba(255,68,68,.12);border:1px solid #ff4444;color:#ff6666;border-radius:7px;padding:4px 8px;font-size:10px;font-weight:700;" onclick="event.stopPropagation();confirmRemoveTeammate('${mode}','${String(m.teammate_uid).replace(/[^a-zA-Z0-9_-]/g,'')}')">Remove</button>
