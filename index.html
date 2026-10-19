@@ -275,7 +275,10 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 /* MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .15s ease}
 .modal-overlay.show{opacity:1;pointer-events:auto}
-.modal{background:var(--bg2);border-radius:20px 20px 0 0;max-width:480px;width:100%;max-height:88vh;overflow-y:auto;padding:20px;transform:translateY(100%);transition:transform .2s cubic-bezier(0.32,0.72,0,1)}
+.modal{background:var(--bg2);border-radius:20px 20px 0 0;max-width:480px;width:100%;max-height:88vh;overflow-y:auto;padding:20px;position:relative;transform:translateY(100%);transition:transform .2s cubic-bezier(0.32,0.72,0,1)}
+.modal-global-x{position:absolute;top:12px;right:14px;z-index:20;width:36px;height:36px;border:1px solid #3a3d46;border-radius:50%;background:#11151c;color:#f5f5f5;font-size:24px;line-height:1;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 10px #0008}
+.modal-global-x:active{transform:scale(.94)}
+.modal:has(.modal-global-x) .modal-bar{margin-right:42px}
 .modal-overlay.show .modal{transform:translateY(0)}
 .modal-bar{width:40px;height:4px;background:#333;border-radius:2px;margin:0 auto 16px}
 .modal h3{font-size:17px;font-weight:800;margin-bottom:14px}
@@ -542,7 +545,6 @@ textarea.form-input{resize:none;min-height:80px}
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px;"><span>👤</span><span style="font-size:11px;color:var(--dim);">Username :</span><span id="pName" style="font-size:12px;font-weight:800;color:var(--yellow);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">-</span></div>
           <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px;"><span>✉️</span><span style="font-size:11px;color:var(--dim);">Email :</span><span id="pEmail" style="font-size:10px;font-weight:600;color:var(--yellow);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">-</span></div>
-          <div id="googleBadge" style="display:none;margin-bottom:4px;"><span style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#aaa;padding:2px 8px;border-radius:20px;font-size:9px;">🔵 Google Account</span></div>
           <div style="display:flex;align-items:center;gap:5px;margin-bottom:5px;"><span>🎮</span><span style="font-size:11px;color:var(--dim);">IGN :</span><span id="pIGNOnly" style="font-size:12px;font-weight:700;color:var(--yellow);">Not set</span></div>
           <div style="display:flex;align-items:center;gap:5px;"><span>🪪</span><span style="font-size:11px;color:var(--dim);">UID :</span><span id="pUIDOnly" style="font-size:12px;font-weight:700;color:var(--yellow);">Not set</span></div>
         </div>
@@ -572,9 +574,6 @@ textarea.form-input{resize:none;min-height:80px}
           <div id="pXPSubtext" style="font-size:10px;color:var(--dim);">You need 50 XP more to reach Level 2</div>
         </div>
       </div>
-
-      <div class="section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0;color:var(--yellow)"><path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94A5.01 5.01 0 0 0 11 15.9V18H7v2h10v-2h-4v-2.1a5.01 5.01 0 0 0 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zm-2 3c0 1.65-1.35 3-3 3s-3-1.35-3-3V5h6v3z"/></svg>Win History</div>
-      <div id="winHistory"><div class="empty-state"><div class="msg" style="font-size:12px;">No wins yet — join a tournament!</div></div></div>
 
       <button class="btn btn-yellow btn-full" style="margin:14px 0;padding:13px;font-size:13px;border-radius:12px;" onclick="openProfileUpdate()">&#9999; REQUEST PROFILE UPDATE</button>
 
@@ -1288,7 +1287,7 @@ function goInternal(screen){
   document.getElementById('contentArea').scrollTop=0;
   if(screen==='wallet'){updateWallet();setTimeout(()=>drawDonut(),50);}
   if(screen==='rank')renderLeaderboard(currentLbTab);
-  if(screen==='profile'){updateProfile();loadWinHistory();}
+  if(screen==='profile'){updateProfile();}
 }
 
 function toggleSearch(){
@@ -2059,80 +2058,35 @@ async function checkPendingZapUPIOrder(){
 // ====== CHANGE #2: TICKET SYSTEM (Fixed) ======
 async function openTicketSystem(){
   if(!U){toast('Please login first','error');return;}
-
-  // Prefer the server-side approval row when available; retain the existing Firebase
-  // profile flag as fallback. Approval is never bypassed by this UI change.
   let approved=UD?.approved===true;
   try{
     const {data,error}=await _sb.from('users').select('approved,profile_update_pending').eq('id',U.uid).maybeSingle();
-    if(error) console.warn('Ticket approval check failed; using profile approval state:',error.message);
-    if(data){
-      approved=data.approved===true && data.profile_update_pending!==true;
-      if(UD){UD.approved=data.approved;UD.profileUpdatePending=data.profile_update_pending;}
-    }
+    if(error) console.warn('Ticket approval check failed:',error.message);
+    if(data){approved=data.approved===true && data.profile_update_pending!==true;if(UD){UD.approved=data.approved;UD.profileUpdatePending=data.profile_update_pending;}}
   }catch(e){console.warn('Ticket approval lookup failed:',e);}
-
-  const locked=!approved || UD?.profileUpdatePending===true;
-  openModal(
-    '<div style="text-align:center;margin-bottom:16px;">'+
-      '<div style="font-size:28px;margin-bottom:6px;">🎟️</div>'+
-      '<div style="font-size:16px;font-weight:900;color:#fff;margin-bottom:4px;">TICKET (SEND / CLAIM)</div>'+
-      '<div style="font-size:11px;color:var(--dim);">'+(locked?'Profile approval required before using tickets':'Send a ticket or claim one received from a friend')+'</div>'+
-    '</div>'+
-    (locked?'<div style="margin-bottom:10px;padding:12px;border:1px solid rgba(255,190,0,.35);border-radius:10px;background:rgba(255,190,0,.06);color:#ffd75a;font-size:12px;line-height:1.6;">🔒 Ticket Send/Claim is locked until your profile is approved by Admin. This does not change your wallet or ticket balance.</div>':'')+
-    '<div style="display:flex;flex-direction:column;gap:10px;">'+
-      '<div class="ticket-menu-option" '+(locked?'style="opacity:.45;cursor:not-allowed;background:linear-gradient(135deg,rgba(0,200,120,0.1),rgba(0,150,80,0.05));border:1px solid rgba(0,200,120,0.45);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px;touch-action:manipulation;"':'onclick="closeModal();setTimeout(openCreateTicket,200)" style="cursor:pointer;background:linear-gradient(135deg,rgba(0,200,120,0.1),rgba(0,150,80,0.05));border:1px solid rgba(0,200,120,0.45);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px;touch-action:manipulation;"')+'>'+
-        '<div style="font-size:26px;">🎫</div><div><div style="font-weight:900;color:#00c878;font-size:14px;">CREATE TICKET</div><div style="font-size:11px;color:var(--dim);margin-top:2px;">Send coins/money to a registered friend</div></div><div style="margin-left:auto;color:#00c878;font-size:18px;">›</div></div>'+
-      '<div class="ticket-menu-option" '+(locked?'style="opacity:.45;cursor:not-allowed;background:linear-gradient(135deg,rgba(0,150,220,0.1),rgba(0,100,180,0.05));border:1px solid rgba(0,150,220,0.45);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px;touch-action:manipulation;"':'onclick="closeModal();setTimeout(openClaimTicket,200)" style="cursor:pointer;background:linear-gradient(135deg,rgba(0,150,220,0.1),rgba(0,100,180,0.05));border:1px solid rgba(0,150,220,0.45);border-radius:14px;padding:16px;display:flex;align-items:center;gap:12px;touch-action:manipulation;"')+'>'+
-        '<div style="font-size:26px;">📥</div><div><div style="font-weight:900;color:#0096dc;font-size:14px;">CLAIM TICKET</div><div style="font-size:11px;color:var(--dim);margin-top:2px;">Review pending tickets and history</div></div><div style="margin-left:auto;color:#0096dc;font-size:18px;">›</div></div>'+
-    '</div>'+
-    (locked?'<button onclick="closeModal();openProfileUpdate()" style="width:100%;margin-top:12px;padding:12px;border:0;border-radius:10px;background:var(--yellow);color:#000;font-weight:900;cursor:pointer;">REQUEST PROFILE UPDATE</button>':'')+
-    '<button onclick="closeModal()" style="width:100%;padding:10px;margin-top:8px;border:1px solid #444;border-radius:10px;background:transparent;color:#ddd;cursor:pointer;">Close</button>'+
-    '<div style="margin-top:12px;background:rgba(255,215,0,0.05);border:1px solid rgba(255,215,0,0.2);border-radius:10px;padding:10px 12px;"><div style="font-size:10px;color:var(--dim);line-height:1.7;">✅ Registered UID only &nbsp;|&nbsp; ❌ No self-transfer &nbsp;|&nbsp; 🔒 Approval required<br>⚠️ Financial ticket transactions need server-side atomic validation.</div></div>'
-  );
+  if(!approved || UD?.profileUpdatePending===true){
+    openModal('<div style="text-align:center;padding:20px 8px;"><div style="font-size:34px;">🔒</div><h3 style="color:#ffd21c;">Ticket System Locked</h3><p style="color:var(--dim);font-size:13px;">Your profile must be approved by Admin before using tickets.</p><button onclick="closeModal();openProfileUpdate()" style="width:100%;padding:13px;border:0;border-radius:12px;background:var(--yellow);font-weight:900;margin-top:12px;">REQUEST PROFILE UPDATE</button><button onclick="closeModal()" style="width:100%;padding:10px;margin-top:8px;background:transparent;color:#aaa;border:1px solid #444;border-radius:10px;">Close</button></div>');return;
+  }
+  openCreateTicket();
 }
-
+function ticketTabs(active){
+  const tabs=[['create','🎫 Create Ticket','openCreateTicket()'],['claim','📥 Claim Ticket','openClaimTicket()'],['history','📜 History','openTicketHistory()']];
+  return '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:0 0 16px;">'+tabs.map(([id,label,fn])=>'<button onclick="'+fn+'" style="min-width:0;padding:11px 4px;border-radius:12px;border:1px solid '+(active===id?(id==='create'?'#ffd21c':id==='claim'?'#d52cff':'#00bfff'):'#30323a')+';background:'+(active===id?(id==='create'?'linear-gradient(135deg,#332700,#100d04)':id==='claim'?'linear-gradient(135deg,#300b3d,#100815)':'linear-gradient(135deg,#06283b,#071018)'):'rgba(255,255,255,.025)')+';color:'+(active===id?(id==='create'?'#ffd21c':id==='claim'?'#e04dff':'#37caff'):'#9296a2')+';font-size:11px;font-weight:900;line-height:1.25;cursor:pointer;">'+label+'</button>').join('')+'</div>';
+}
+function setMaxTicketAmount(){const amt=document.getElementById('tcAmt');const bal=document.getElementById('tcBal');if(amt&&bal)amt.value=window._ticketType==='coin'?bal._coinBal:bal._moneyBal;}
 function openCreateTicket(){
-  closeModal();
-  setTimeout(()=>{
-    openModal(`
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;cursor:pointer;" onclick="openTicketSystem()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-        <h3 style="margin:0;">Create Ticket</h3>
-      </div>
-      <div style="margin-bottom:12px;">
-        <div style="font-size:11px;color:var(--dim);margin-bottom:6px;">Ticket Type</div>
-        <div style="display:flex;gap:8px;">
-          <button id="tcTypeCoin" onclick="setTicketType('coin')" style="flex:1;padding:10px;border-radius:10px;border:2px solid var(--yellow);background:rgba(255,215,0,0.12);color:var(--yellow);font-weight:800;font-size:12px;cursor:pointer;">🪙 Coin Ticket</button>
-          <button id="tcTypeMoney" onclick="setTicketType('money')" style="flex:1;padding:10px;border-radius:10px;border:2px solid #333;background:transparent;color:#888;font-weight:800;font-size:12px;cursor:pointer;">💵 Money Ticket</button>
-        </div>
-      </div>
-      <div style="margin-bottom:12px;">
-        <div style="font-size:11px;color:var(--dim);margin-bottom:6px;">Enter Amount</div>
-        <div style="background:#111;border:1px solid #333;border-radius:10px;display:flex;align-items:center;padding:10px 14px;gap:8px;">
-          <span id="tcAmtIcon" style="font-size:18px;">🪙</span>
-          <input id="tcAmt" type="number" min="1" placeholder="Amount" style="background:transparent;border:none;outline:none;color:#fff;font-size:16px;font-weight:700;width:100%;">
-        </div>
-        <div id="tcBalLabel" style="font-size:10px;color:var(--dim);margin-top:4px;">Available: <span id="tcBal">0</span></div>
-      </div>
-      <div style="margin-bottom:12px;">
-        <div style="font-size:11px;color:var(--dim);margin-bottom:6px;">Receiver UID</div>
-        <div style="background:#111;border:1px solid #333;border-radius:10px;display:flex;align-items:center;padding:10px 14px;gap:8px;">
-          <span>👤</span>
-          <input id="tcUID" type="text" placeholder="Enter UID" style="background:transparent;border:none;outline:none;color:#fff;font-size:14px;width:100%;" oninput="verifyTicketReceiver()">
-          <span id="tcVerifyIcon"></span>
-        </div>
-        <div id="tcReceiverInfo" style="margin-top:6px;"></div>
-      </div>
-      <button onclick="confirmSendTicket()" style="width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#2ecc71,#27ae60);color:#00280f;font-weight:900;font-size:14px;cursor:pointer;margin-top:4px;">CONFIRM &amp; SEND</button>
-    `);
-    window._ticketType='coin';
-    const coinBal = UD?.coins||0;
-    const moneyBal = ((UD?.realMoney?.deposited||0)+(UD?.realMoney?.winnings||0)+(UD?.realMoney?.bonus||0));
-    document.getElementById('tcBal').textContent=coinBal+' Coins';
-    document.getElementById('tcBal')._coinBal=coinBal;
-    document.getElementById('tcBal')._moneyBal=moneyBal;
-  },200);
+  openModal('<div style="position:relative;padding:2px 0 6px;">'+
+    '<div style="text-align:center;margin-bottom:16px;"><div style="font-size:48px;filter:drop-shadow(0 0 14px rgba(255,190,0,.55));">🎟️</div><div style="font-size:25px;font-weight:950;color:#fff;">Create <span style="color:#ffd21c;">Ticket</span></div><div style="font-size:12px;color:var(--dim);margin-top:5px;">Send coins or money to a registered friend</div></div>'+
+    ticketTabs('create')+
+    '<div style="font-size:13px;font-weight:800;color:#d7d9e0;margin-bottom:8px;">Ticket Type</div><div style="display:flex;gap:8px;margin-bottom:16px;">'+
+    '<button id="tcTypeCoin" onclick="setTicketType(&quot;coin&quot;)" style="flex:1;padding:14px 8px;border-radius:14px;border:2px solid #ffd21c;background:rgba(255,210,28,.09);color:#ffd21c;font-weight:900;font-size:12px;">🪙 Coin Ticket<div style="font-size:10px;font-weight:500;color:#a9a9b2;margin-top:5px;">Send coins to a friend</div></button>'+
+    '<button id="tcTypeMoney" onclick="setTicketType(&quot;money&quot;)" style="flex:1;padding:14px 8px;border-radius:14px;border:2px solid #176d48;background:rgba(0,200,120,.04);color:#e1e4eb;font-weight:900;font-size:12px;">💵 Money Ticket<div style="font-size:10px;font-weight:500;color:#a9a9b2;margin-top:5px;">Send money to a friend</div></button></div>'+
+    '<div style="font-size:13px;font-weight:800;color:#d7d9e0;margin-bottom:8px;">Enter Amount</div><div style="display:flex;align-items:center;gap:9px;padding:13px;border-radius:13px;border:1.5px solid #ffd21c;background:#0d0e12;"><span id="tcAmtIcon" style="font-size:21px;">🪙</span><input id="tcAmt" type="number" min="1" placeholder="Enter amount" style="min-width:0;flex:1;background:transparent;border:0;outline:0;color:#fff;font-size:17px;"><button onclick="setMaxTicketAmount()" style="border:0;border-left:1px solid #555;padding:5px 9px;background:transparent;color:#ffd21c;font-weight:900;">MAX</button></div><div id="tcBalLabel" style="font-size:12px;color:#a5a7b0;margin:7px 0 18px;">Available: <span id="tcBal">0</span></div>'+
+    '<div style="font-size:13px;font-weight:800;color:#d7d9e0;margin-bottom:8px;">Receiver UID</div><div style="display:flex;align-items:center;gap:9px;padding:13px;border-radius:13px;border:1.5px solid #3a3d47;background:#0d0e12;"><span style="font-size:20px;">👤</span><input id="tcUID" type="text" placeholder="Enter receiver UID" oninput="verifyTicketReceiver()" style="min-width:0;flex:1;background:transparent;border:0;outline:0;color:#fff;font-size:15px;"><span id="tcVerifyIcon"></span></div><div id="tcReceiverInfo" style="margin-top:7px;"></div><div style="font-size:11px;color:#9da3ad;margin:8px 0 18px;">🛡️ Only registered app users can receive tickets</div>'+
+    '<button id="tcSendBtn" onclick="confirmSendTicket()" style="width:100%;padding:16px;border:0;border-radius:14px;background:linear-gradient(100deg,#ffe51c,#ffb900);color:#090909;font-size:15px;font-weight:950;box-shadow:0 0 22px rgba(255,204,0,.25);">CONFIRM &amp; SEND　➜</button></div>');
+  window._ticketType='coin';window._ticketReceiver=null;
+  const coinBal=Number(UD?.coins||0);const moneyBal=Number((UD?.realMoney?.deposited||0)+(UD?.realMoney?.winnings||0)+(UD?.realMoney?.bonus||0));
+  const bal=document.getElementById('tcBal');if(bal){bal.textContent=coinBal+' Coins';bal._coinBal=coinBal;bal._moneyBal=moneyBal;}
 }
 
 function setTicketType(type){
@@ -2222,55 +2176,38 @@ async function confirmSendTicket(){
   }catch(e){toast('Error: '+(e.message||'Ticket send failed'),'error');}
 }
 
-async function openClaimTicket(){
-  closeModal();
-  setTimeout(async()=>{
-    openModal(`<div style="text-align:center;padding:20px;"><div style="font-size:24px;">⏳</div><div style="color:var(--dim);margin-top:8px;">Loading tickets...</div></div>`);
-    try{
-      const {data:pending}=await _sb.from('tickets').select('*').eq('receiver_uid',U.uid).eq('status','pending').order('created_at',{ascending:false});
-      const {data:history}=await _sb.from('tickets').select('*').or(`receiver_uid.eq.${U.uid},sender_uid.eq.${U.uid}`).neq('status','pending').order('created_at',{ascending:false}).limit(20);
-      closeModal();
-      setTimeout(()=>{
-        const renderTicket=(t,isPending)=>{
-          const isSender=t.sender_uid===U.uid;
-          const label=t.type==='coin'?t.amount+' 🪙':('₹'+t.amount);
-          const time=new Date(t.created_at).toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
-          return `<div style="background:var(--card);border:1px solid #222;border-radius:12px;padding:12px;margin-bottom:8px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-              <div style="font-size:11px;color:var(--dim);">${isSender?'To:':'From:'} ${isSender?t.receiver_uid.slice(0,8)+'...':t.sender_uid.slice(0,8)+'...'}</div>
-              <div style="font-size:16px;font-weight:900;color:${t.type==='coin'?'var(--yellow)':'#2ecc71'};">${label}</div>
-            </div>
-            <div style="font-size:10px;color:var(--dim);margin-bottom:${isPending?'10px':'0'};">${time}</div>
-            ${isPending&&!isSender?`<div style="display:flex;gap:8px;"><button onclick="claimTicketAction('${t.id}','reject')" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--red);background:rgba(255,0,0,0.08);color:var(--red);font-weight:700;font-size:11px;cursor:pointer;">REJECT</button><button onclick="claimTicketAction('${t.id}','claim')" style="flex:1.5;padding:8px;border-radius:8px;border:none;background:linear-gradient(135deg,#2ecc71,#27ae60);color:#000;font-weight:900;font-size:11px;cursor:pointer;">CLAIM</button></div>`:''}
-            ${isPending&&isSender?`<button onclick="claimTicketAction('${t.id}','cancel')" style="width:100%;padding:8px;border-radius:8px;border:1px solid #555;background:rgba(255,255,255,0.05);color:#888;font-weight:700;font-size:11px;cursor:pointer;">CANCEL TICKET</button>`:''}
-            ${!isPending?`<span style="font-size:10px;padding:2px 8px;border-radius:6px;background:${t.status==='claimed'?'rgba(0,200,120,0.15)':t.status==='cancelled'?'rgba(255,255,255,0.05)':'rgba(255,0,0,0.1)'};color:${t.status==='claimed'?'#00c878':t.status==='cancelled'?'#888':'var(--red)'};font-weight:700;">${t.status.toUpperCase()}</span>`:''}
-          </div>`;
-        };
-        openModal(`
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;cursor:pointer;" onclick="openTicketSystem()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-            <h3 style="margin:0;">Claim Ticket</h3>
-          </div>
-          <div style="display:flex;gap:8px;margin-bottom:12px;">
-            <button id="tclPending" onclick="switchTicketTab('pending')" style="flex:1;padding:8px;border-radius:8px;border:none;background:var(--yellow);color:#000;font-weight:800;font-size:12px;cursor:pointer;">Pending (${(pending||[]).length})</button>
-            <button id="tclHistory" onclick="switchTicketTab('history')" style="flex:1;padding:8px;border-radius:8px;border:1px solid #333;background:transparent;color:#888;font-weight:800;font-size:12px;cursor:pointer;">History</button>
-          </div>
-          <div id="tclPendingList">${(pending||[]).length?(pending.map(t=>renderTicket(t,true)).join('')):'<div style="text-align:center;padding:20px;color:var(--dim);font-size:12px;">No pending tickets</div>'}</div>
-          <div id="tclHistoryList" style="display:none;">${(history||[]).length?(history.map(t=>renderTicket(t,false)).join('')):'<div style="text-align:center;padding:20px;color:var(--dim);font-size:12px;">No history</div>'}</div>
-        `);
-      },200);
-    } catch(e){ closeModal(); toast('Error loading tickets','error'); }
-  },200);
+async function loadTicketRows(statusMode){
+  const {data,error}=await _sb.from('tickets').select('*').or(`receiver_uid.eq.${U.uid},sender_uid.eq.${U.uid}`).order('created_at',{ascending:false}).limit(100);
+  if(error) throw error;
+  let rows=data||[];
+  if(statusMode==='claim') rows=rows.filter(t=>t.receiver_uid===U.uid && t.status==='pending');
+  return rows;
 }
-
-function switchTicketTab(tab){
-  document.getElementById('tclPendingList').style.display=tab==='pending'?'block':'none';
-  document.getElementById('tclHistoryList').style.display=tab==='history'?'block':'none';
-  document.getElementById('tclPending').style.background=tab==='pending'?'var(--yellow)':'transparent';
-  document.getElementById('tclPending').style.color=tab==='pending'?'#000':'#888';
-  document.getElementById('tclHistory').style.background=tab==='history'?'var(--yellow)':'transparent';
-  document.getElementById('tclHistory').style.color=tab==='history'?'#000':'#888';
+async function renderTicketList(mode){
+  openModal('<div style="text-align:center;padding:22px;"><div style="font-size:30px;">⏳</div><div style="color:var(--dim);margin-top:8px;">Loading '+(mode==='claim'?'pending tickets':'ticket history')+'...</div></div>');
+  try{
+    const rows=await loadTicketRows(mode);
+    const otherIds=[...new Set(rows.map(t=>t.sender_uid===U.uid?t.receiver_uid:t.sender_uid).filter(Boolean))];
+    let profiles={};
+    if(otherIds.length){const {data:pdata,error:perr}=await _sb.from('users').select('id,display_name,ign,ffuid').in('id',otherIds);if(!perr)(pdata||[]).forEach(p=>profiles[p.id]=p);}
+    const cards=rows.map(t=>{
+      const incoming=t.receiver_uid===U.uid;const otherId=incoming?t.sender_uid:t.receiver_uid;const person=profiles[otherId]||{};
+      const username=person.username||person.display_name||'User';const ign=person.ign||'Not set';const uid=person.ffuid||otherId||'—';
+      const isPending=t.status==='pending';const amount=t.type==='coin'?(Number(t.amount).toLocaleString('en-IN')+' Coins'):'₹'+Number(t.amount).toLocaleString('en-IN');
+      const time=t.created_at?new Date(t.created_at).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+      const color=t.type==='coin'?'#ffd21c':'#25d98b';
+      return '<div style="background:linear-gradient(145deg,#111319,#08090c);border:1px solid '+(mode==='claim'?'rgba(213,44,255,.38)':'#292c35')+';border-radius:15px;padding:14px;margin-bottom:10px;box-shadow:0 5px 18px rgba(0,0,0,.2);">'+
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;"><div style="width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,210,28,.1);border:1px solid '+color+';font-size:20px;">'+(incoming?'👤':'🎫')+'</div><div style="min-width:0;flex:1;"><div style="font-size:14px;font-weight:900;color:#fff;overflow-wrap:anywhere;">'+esc(username)+'</div><div style="font-size:11px;color:#c3c6cf;margin-top:3px;">IGN: <b>'+esc(ign)+'</b></div><div style="font-size:10px;color:#8f95a2;margin-top:3px;overflow-wrap:anywhere;">UID: '+esc(uid)+'</div></div><div style="text-align:right;color:'+color+';font-size:14px;font-weight:950;white-space:nowrap;">'+esc(amount)+'</div></div>'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px solid #242630;padding-top:10px;"><span style="font-size:10px;color:#858b97;">'+(incoming?'Received from sender':'Sent to receiver')+' · '+esc(time)+'</span><span style="font-size:10px;font-weight:900;color:'+(t.status==='claimed'?'#20d98b':isPending?'#ffd21c':'#a0a4af')+';">'+esc(String(t.status||'unknown').toUpperCase())+'</span></div>'+
+        (mode==='claim'&&incoming&&isPending?'<div style="display:flex;gap:8px;margin-top:12px;"><button data-ticket-id="'+esc(t.id)+'" onclick="claimTicketAction(this.dataset.ticketId,&quot;reject&quot;)" style="flex:1;padding:11px;border-radius:10px;border:1px solid #6a2930;background:#1b0c10;color:#ff6573;font-weight:900;">REJECT</button><button data-ticket-id="'+esc(t.id)+'" onclick="claimTicketAction(this.dataset.ticketId,&quot;claim&quot;)" style="flex:1.4;padding:11px;border-radius:10px;border:0;background:linear-gradient(100deg,#ffe51c,#ffb900);color:#080808;font-weight:950;">CLAIM TICKET ✓</button></div>':'')+
+        (mode==='claim'&&!incoming&&isPending?'<button data-ticket-id="'+esc(t.id)+'" onclick="claimTicketAction(this.dataset.ticketId,&quot;cancel&quot;)" style="width:100%;margin-top:12px;padding:10px;border-radius:10px;border:1px solid #444;background:#111;color:#aaa;font-weight:800;">CANCEL TICKET</button>':'')+'</div>';
+    }).join('');
+    openModal('<div style="text-align:center;margin-bottom:12px;"><div style="font-size:42px;">'+(mode==='claim'?'🎟️':'📜')+'</div><div style="font-size:24px;font-weight:950;color:#fff;">'+(mode==='claim'?'Claim ':'Ticket ')+ '<span style="color:'+(mode==='claim'?'#df42ff':'#37caff')+';">'+(mode==='claim'?'Ticket':'History')+'</span></div><div style="font-size:12px;color:var(--dim);margin-top:4px;">'+(mode==='claim'?'Review sender details and claim your ticket':'All sent, received, claimed, rejected and cancelled tickets')+'</div></div>'+ticketTabs(mode)+'<div style="max-height:55vh;overflow:auto;padding-right:2px;">'+(cards||'<div style="text-align:center;padding:28px 10px;color:#8f95a2;">'+(mode==='claim'?'No pending tickets for you yet.':'No ticket history yet.')+'</div>')+'</div>');
+  }catch(e){console.error('Ticket list load failed',e);openModal('<div style="text-align:center;padding:20px;"><div style="font-size:28px;">⚠️</div><h3>Could not load tickets</h3><p style="font-size:12px;color:var(--dim);">'+esc(e?.message||'Check your connection and try again.')+'</p>'+ticketTabs(mode)+'<button onclick="'+(mode==='claim'?'openClaimTicket()':'openTicketHistory()')+'" style="width:100%;padding:12px;border:0;border-radius:10px;background:var(--yellow);font-weight:900;">RETRY</button></div>');}
 }
+async function openClaimTicket(){if(!U){toast('Please login first','error');return;}await renderTicketList('claim');}
+async function openTicketHistory(){if(!U){toast('Please login first','error');return;}await renderTicketList('history');}
+function switchTicketTab(tab){if(tab==='pending'||tab==='claim')openClaimTicket();else if(tab==='history')openTicketHistory();else openCreateTicket();}
 
 async function claimTicketAction(ticketId, action){
   try{
@@ -2525,68 +2462,76 @@ async function renderJoinScreen(){
   const requiredFee = (t.entryFee||0) * _joinFlow.teamSize;
   const balance = joinFlowBalance();
   const requiredExtra = _joinFlow.teamSize - 1;
+  const modeLabel = mode_display(_joinFlow.mode);
+  const mapName = t.map || 'Map not specified';
+  const category = t.matchCategory || 'Battle Royale';
+  const status = getMatchStatus(t);
+  const balanceAfter = balance-requiredFee;
 
-  // Saved persistent team (Duo/Squad partner system from Change 1/5) — offered as a quick-fill option only
+  // Saved persistent team is only a quick-fill option; the join flow itself remains match-specific.
   let savedTeamHtml = '';
   if(requiredExtra > 0 && _joinFlow.members.length === 0){
     try{
       const {data} = await _sb.from('team_members').select('teammate_uid').eq('uid',U.uid).eq('mode',_joinFlow.mode.toLowerCase());
       if(data && data.length){
-        savedTeamHtml = `<div class="form-group">
-          <label style="font-size:11px;color:var(--dim);">MY SAVED TEAM</label>
-          <button class="btn btn-outline btn-full" style="margin-top:6px;" onclick="useSavedTeam()">✓ Use My Saved ${_joinFlow.mode} Team</button>
-        </div>`;
+        savedTeamHtml = `<button class="btn btn-outline btn-full" style="margin-top:10px;border-color:rgba(255,215,0,.55);color:var(--yellow);" onclick="useSavedTeam()">⚡ Use My Saved ${esc(modeLabel)} Team</button>`;
       }
-    }catch(e){}
+    }catch(e){ console.warn('Saved team quick-fill unavailable',e); }
   }
 
-  const teamRows = [
-    `<div class="uc-row" style="background:rgba(255,215,0,0.05);border-radius:10px;padding:8px 10px;"><span>👑</span><div><div style="font-weight:700;color:var(--yellow);">You</div><div style="font-size:10px;color:var(--dim);">TEAM CAPTAIN · ${esc(UD.ign)}</div></div></div>`,
-    ..._joinFlow.members.map((m,i)=>`<div class="uc-row" style="background:rgba(255,255,255,0.03);border-radius:10px;padding:8px 10px;justify-content:space-between;">
-      <div style="display:flex;gap:8px;align-items:center;"><span>👤</span><div><div style="font-weight:700;color:#fff;">${esc(m.ign)}</div><div style="font-size:10px;color:#3ddc84;">✓ Verified · TEAM MEMBER</div></div></div>
-      <button onclick="removeJoinMember(${i})" style="background:none;border:none;color:var(--red);font-size:11px;">✕ Remove</button>
-    </div>`)
-  ];
+  const teamRows = [`<div class="join-player-card join-captain-card"><div class="join-player-avatar">👑</div><div class="join-player-info"><div class="join-player-name">${esc(UD.ign||'You')}</div><div class="join-player-uid">🎮 ${esc(UD.ffuid||'UID unavailable')}</div><span class="join-verified">✓ Verified</span></div><span class="join-you-tag">YOU</span></div>`];
+  _joinFlow.members.forEach((m,i)=>teamRows.push(`<div class="join-player-card"><div class="join-player-avatar">👤</div><div class="join-player-info"><div class="join-player-name">${esc(m.ign||'Player')}</div><div class="join-player-uid">🎮 ${esc(m.ffuid||'UID unavailable')}</div><span class="join-verified">✓ Verified</span></div><button class="join-remove" onclick="removeJoinMember(${i})" aria-label="Remove player">⋮</button></div>`));
   for(let i=_joinFlow.members.length;i<requiredExtra;i++){
-    teamRows.push(`<button class="btn btn-outline btn-full" style="margin-top:6px;" onclick="openAddMatchTeammate()">＋ Add Player</button>`);
+    const playerNo = _joinFlow.members.length + 2;
+    teamRows.push(`<div class="join-player-card join-empty-player"><div class="join-player-avatar join-plus">＋</div><div class="join-player-info"><div class="join-empty-title">Player ${playerNo}</div><button class="join-add-player" onclick="openAddMatchTeammate()">＋ Add Player</button></div></div>`);
   }
 
   const teamComplete = _joinFlow.members.length === requiredExtra;
   const canConfirm = teamComplete && balance >= requiredFee;
-
+  const prizeLabel = t.entryType==='paid' ? 'Money prize' : 'Coin prize';
+  const bannerBg = `background:linear-gradient(105deg,rgba(255,190,0,.16),rgba(8,12,23,.94) 45%,rgba(100,0,255,.13)),linear-gradient(90deg,#15110a,#080a10);`;
   openModal(`<div class="modal-bar"></div>
-    <h3 style="margin-bottom:2px;">${esc(t.name||'Tournament')}</h3>
-    <div style="font-size:11px;color:var(--dim);margin-bottom:14px;">${esc(mode_display(_joinFlow.mode))} · ${esc(t.map||'')}</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
-      <div style="background:var(--card);border-radius:10px;padding:10px;"><div style="font-size:10px;color:var(--dim);">Entry Fee (per player)</div><div style="font-weight:800;color:var(--yellow);">${cur}${t.entryFee||0}</div></div>
-      <div style="background:var(--card);border-radius:10px;padding:10px;"><div style="font-size:10px;color:var(--dim);">Required Slots</div><div style="font-weight:800;color:var(--yellow);">${_joinFlow.teamSize}</div></div>
-      <div style="background:var(--card);border-radius:10px;padding:10px;"><div style="font-size:10px;color:var(--dim);">Your Balance</div><div style="font-weight:800;color:#fff;">${cur}${balance}</div></div>
-      <div style="background:var(--card);border-radius:10px;padding:10px;"><div style="font-size:10px;color:var(--dim);">Your IGN / UID</div><div style="font-weight:800;color:#fff;font-size:11px;">${esc(UD.ign)} · ${esc(UD.ffuid)}</div></div>
+    <div class="join-screen">
+      <div class="join-title-row"><span class="join-back" onclick="closeModal()" role="button" aria-label="Back">‹</span><h2>Join Match</h2><span class="join-status-pill ${status==='upcoming'?'join-status-open':'join-status-other'}">${status==='upcoming'?'● Registration Open':esc(status.toUpperCase())}</span></div>
+      <div class="join-match-banner" style="${bannerBg}">
+        <div class="join-banner-copy"><div class="join-match-name">${esc(t.name||'Tournament')}</div><div class="join-match-meta">🎮 ${esc(category)} &nbsp;|&nbsp; ${esc(modeLabel)}</div><div class="join-match-meta">🗺️ ${esc(mapName)}</div><span class="join-open-label">● ${status==='upcoming'?'Registration Open':esc(status.toUpperCase())}</span></div>
+        <div class="join-banner-art" aria-hidden="true">🏆</div>
+      </div>
+
+      <div class="join-metrics-grid">
+        <div class="join-metric join-metric-gold"><span class="join-metric-icon">🪙</span><div><small>Entry Fee (per player)</small><strong>${cur}${t.entryFee||0}</strong></div></div>
+        <div class="join-metric join-metric-purple"><span class="join-metric-icon">👥</span><div><small>Team Size</small><strong>${_joinFlow.teamSize} Player${_joinFlow.teamSize>1?'s':''}</strong></div></div>
+        <div class="join-metric join-metric-blue"><span class="join-metric-icon">💳</span><div><small>Your Balance</small><strong>${cur}${balance}</strong></div></div>
+        <div class="join-metric join-metric-green"><span class="join-metric-icon">🎟️</span><div><small>Total Team Fee</small><strong>${cur}${requiredFee}</strong></div></div>
+      </div>
+      <div class="join-balance-after"><span>💰 &nbsp;Balance After Joining</span><strong style="color:${balanceAfter>=0?'#35e58a':'#ff5c70'}">${cur}${balanceAfter}</strong></div>
+
+      ${_joinFlow.teamSize>1?`<div class="join-policy-strip"><div><span>👑</span><section><strong>TEAM CAPTAIN PAYS</strong><small>Full team entry fee is deducted from your wallet.</small></section></div><i></i><div><span>🏆</span><section><strong>PRIZE GOES TO CAPTAIN</strong><small>${prizeLabel} is credited to the captain's wallet.</small></section></div></div>`:''}
+
+      <div class="join-section-heading"><strong>${esc(modeLabel.toUpperCase())} TEAM (${1+_joinFlow.members.length}/${_joinFlow.teamSize})</strong>${requiredExtra>0?'<span>Invite friends</span>':''}</div>
+      <div class="join-team-grid">${teamRows.join('')}</div>
+      ${savedTeamHtml}
+
+      <div class="join-summary-card"><div class="join-summary-heading">MATCH JOIN SUMMARY <span>›</span></div>
+        <div class="join-summary-grid">
+          <div><small>👥 Players</small><strong>${1+_joinFlow.members.length} / ${_joinFlow.teamSize}</strong></div>
+          <div><small>💳 Your Balance</small><strong>${cur}${balance}</strong></div>
+          <div><small>🪙 Entry Fee (per player)</small><strong>${cur}${t.entryFee||0}</strong></div>
+          <div><small>💰 Balance After Joining</small><strong style="color:${balanceAfter>=0?'#35e58a':'#ff5c70'}">${cur}${balanceAfter}</strong></div>
+          <div><small>🎟️ Total Team Fee</small><strong>${cur}${requiredFee}</strong></div>
+          <div><small>🛡️ Team Status</small><strong style="color:${teamComplete?'#35e58a':'#ff6680'}">${teamComplete?'Complete':'Incomplete'}</strong></div>
+        </div>
+      </div>
+      <div class="join-info-links"><button onclick="toast('Match rules are shown in tournament details','info')">📄 Match Rules ›</button><button onclick="toast('Refund policy depends on tournament rules','info')">🔄 Refund Policy ›</button><button onclick="toast('Your registered IGN and UID will be checked','info')">🛡️ UID Verification ›</button><button onclick="toast('Each user can register only once per match','info')">🚫 No Duplicate Registration ›</button></div>
+      ${!teamComplete?`<p class="join-helper-text">🔒 Add ${requiredExtra-_joinFlow.members.length} more player(s) to join this match.</p>`:balance<requiredFee?`<div class="join-insufficient">⚠️ Insufficient balance. Required: ${cur}${requiredFee}; available: ${cur}${balance}.</div>`:''}
+      <div class="join-footer-actions"><button class="join-back-button" onclick="closeModal()">← BACK</button><button class="join-confirm-button" id="confirmJoinBtn" ${canConfirm?'':'disabled'} onclick="confirmMatchJoin()">JOIN MATCH &nbsp; →</button></div>
+      ${!teamComplete?'<div class="join-footer-note">🔒 Add all '+_joinFlow.teamSize+' players to join this match</div>':''}
     </div>
-    ${_joinFlow.teamSize>1?`
-    <div style="background:rgba(255,215,0,0.06);border:1px solid var(--byellow);border-radius:10px;padding:10px;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
-      <span style="font-size:18px;">👑</span><div><div style="font-weight:800;color:var(--yellow);font-size:12px;">TEAM CAPTAIN PAYS</div><div style="font-size:10px;color:var(--dim);">Full team entry fee is deducted from your wallet.</div></div>
-    </div>
-    <div style="background:rgba(255,215,0,0.06);border:1px solid var(--byellow);border-radius:10px;padding:10px;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
-      <span style="font-size:18px;">🏆</span><div><div style="font-weight:800;color:var(--yellow);font-size:12px;">PRIZE GOES TO CAPTAIN</div><div style="font-size:10px;color:var(--dim);">Match winnings are credited to your wallet only.</div></div>
-    </div>
-    ${savedTeamHtml}
-    <div style="font-size:11px;color:var(--dim);margin:12px 0 6px;">${mode_display(_joinFlow.mode).toUpperCase()} TEAM</div>
-    <div style="display:flex;flex-direction:column;gap:6px;">${teamRows.join('')}</div>
-    `:''}
-    <div style="background:var(--card);border-radius:12px;padding:12px;margin-top:16px;">
-      <div style="font-size:11px;font-weight:700;color:var(--dim);margin-bottom:8px;">MATCH JOIN SUMMARY</div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="color:var(--dim);">Team Type</span><span style="font-weight:700;">${esc(mode_display(_joinFlow.mode))}</span></div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="color:var(--dim);">Players</span><span style="font-weight:700;">${1+_joinFlow.members.length} / ${_joinFlow.teamSize}</span></div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="color:var(--dim);">Entry Fee (Total)</span><span style="font-weight:700;color:var(--yellow);">${cur}${requiredFee}</span></div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span style="color:var(--dim);">Captain</span><span style="font-weight:700;">You (${esc(UD.ign)})</span></div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--dim);">Payment / Prize</span><span style="font-weight:700;">Captain Pays / Receives</span></div>
-    </div>
-    ${!teamComplete?'<p style="font-size:11px;color:var(--dim);text-align:center;margin-top:10px;">Add '+(requiredExtra-_joinFlow.members.length)+' more player(s) to continue</p>'
-      : balance<requiredFee?`<div style="background:rgba(255,50,50,0.1);border:1px solid rgba(255,50,50,0.3);border-radius:10px;padding:10px;margin-top:10px;text-align:center;"><div style="color:var(--red);font-weight:700;font-size:12px;">⚠️ Insufficient Captain Balance</div><div style="font-size:11px;color:var(--dim);margin-top:2px;">Required: ${cur}${requiredFee} · Available: ${cur}${balance}</div></div>`
-      :''}
-    <button class="btn btn-yellow btn-full" style="padding:13px;margin-top:12px;${canConfirm?'':'opacity:0.4;pointer-events:none;'}" id="confirmJoinBtn" onclick="confirmMatchJoin()">✓ CONFIRM JOIN — ${_joinFlow.teamSize} SLOT${_joinFlow.teamSize>1?'S':''}</button>
-    <button class="btn btn-outline btn-full" style="margin-top:8px;" onclick="closeModal()">Cancel</button>
+    <style>
+      .modal:has(.join-screen){max-width:560px;width:100%;max-height:92vh;padding:12px 14px 24px;background:#05070b;border:1px solid rgba(255,207,32,.25);box-shadow:0 -10px 50px rgba(255,190,0,.08)}
+      .join-screen{color:#f5f6fa;font-family:inherit;padding-bottom:8px}.join-title-row{display:flex;align-items:center;gap:10px;margin:0 0 14px}.join-title-row h2{font-size:23px;font-weight:900;font-style:italic;color:#ffcf19;margin:0;flex:1}.join-back{display:grid;place-items:center;width:40px;height:40px;border:1px solid #343948;border-radius:50%;font-size:30px;line-height:1;cursor:pointer}.join-status-pill{font-size:9px;white-space:nowrap;padding:6px 8px;border-radius:20px}.join-status-open{color:#30e58b;border:1px solid #16b76b;background:rgba(0,180,90,.1)}.join-status-other{color:#ff7180;border:1px solid #7d3040}.join-match-banner{min-height:112px;border:1px solid #d9a91a;border-radius:16px;padding:15px;position:relative;overflow:hidden;display:flex;align-items:center;margin-bottom:12px}.join-banner-copy{position:relative;z-index:1;max-width:82%}.join-match-name{font-size:21px;line-height:1.2;font-weight:900;font-style:italic;color:#fff;margin-bottom:8px;text-shadow:0 2px 12px #000}.join-match-meta{font-size:12px;color:#e4e7f1;margin:4px 0}.join-open-label{display:inline-block;margin-top:5px;font-size:10px;color:#31e68c;background:rgba(0,180,90,.15);border:1px solid #15995c;border-radius:18px;padding:5px 9px}.join-banner-art{position:absolute;right:12px;top:20px;font-size:64px;opacity:.68;filter:drop-shadow(0 0 14px #ffb900)}.join-metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.join-metric{display:flex;align-items:center;gap:10px;min-width:0;padding:11px 10px;background:linear-gradient(135deg,#11151e,#080a0f);border:1px solid #283040;border-radius:13px}.join-metric-icon{font-size:26px}.join-metric small{display:block;color:#aeb5c7;font-size:10px;margin-bottom:4px}.join-metric strong{font-size:18px;line-height:1.1}.join-metric-gold{border-color:#715b20}.join-metric-gold strong{color:#ffcf19}.join-metric-purple{border-color:#57308a}.join-metric-blue{border-color:#285d8a}.join-metric-green{border-color:#246c4b}.join-balance-after{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:9px 0;padding:11px 12px;background:linear-gradient(90deg,rgba(255,190,0,.14),rgba(15,17,22,.8));border:1px solid #9d7610;border-radius:12px;font-size:12px}.join-balance-after strong{font-size:20px}.join-policy-strip{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;margin:10px 0 16px;border:1px solid #6b2c8a;border-radius:14px;background:linear-gradient(100deg,rgba(255,190,0,.09),rgba(90,0,150,.1))}.join-policy-strip>div{display:flex;gap:8px;align-items:flex-start}.join-policy-strip>div>span{font-size:25px}.join-policy-strip section strong{display:block;color:#ffcf19;font-size:10px;line-height:1.35}.join-policy-strip section small{display:block;color:#aeb5c7;font-size:9px;line-height:1.4;margin-top:4px}.join-policy-strip>i{display:none}.join-section-heading{display:flex;align-items:center;justify-content:space-between;margin:17px 0 9px}.join-section-heading strong{font-size:15px;font-style:italic}.join-section-heading span{font-size:10px;color:#ffcf19}.join-team-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.join-player-card{position:relative;display:flex;align-items:center;gap:8px;min-width:0;min-height:86px;padding:10px;background:linear-gradient(135deg,#101622,#080a10);border:1px solid #29364a;border-radius:13px}.join-captain-card{border-color:#b89a21;background:linear-gradient(130deg,rgba(255,204,20,.13),#0b0d13 65%,rgba(150,0,255,.1))}.join-player-avatar{width:43px;height:43px;flex:0 0 43px;border-radius:50%;display:grid;place-items:center;background:#141a26;border:1px solid #d2ad22;font-size:23px}.join-player-info{min-width:0;flex:1}.join-player-name{font-size:13px;font-weight:800;overflow-wrap:anywhere}.join-player-uid{font-size:9px;color:#aeb5c7;margin:4px 0;overflow-wrap:anywhere}.join-verified{display:inline-block;color:#32e28b;border:1px solid #167a50;border-radius:10px;padding:2px 6px;font-size:9px}.join-you-tag{align-self:flex-end;color:#ffcf19;border:1px solid #8a6a10;border-radius:10px;padding:3px 6px;font-size:9px}.join-empty-player{border-style:solid}.join-plus{border:1px dashed #738094;color:#fff;font-size:29px;background:transparent}.join-empty-title{color:#aeb5c7;font-size:11px;margin-bottom:6px}.join-add-player{background:transparent;border:1px solid #087bd0;color:#f1f6ff;border-radius:18px;padding:6px 8px;font-size:10px;white-space:nowrap}.join-remove{align-self:flex-start;background:transparent;border:0;color:#ff6c7e;font-size:20px}.join-summary-card{margin-top:14px;padding:13px;border:1px solid #293140;border-radius:14px;background:linear-gradient(145deg,#10131a,#080a0f)}.join-summary-heading{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:900;margin-bottom:12px}.join-summary-heading span{color:#ffcf19;font-size:24px}.join-summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 8px}.join-summary-grid>div{display:flex;align-items:center;justify-content:space-between;gap:5px}.join-summary-grid small{font-size:10px;color:#aeb5c7}.join-summary-grid strong{font-size:11px;text-align:right}.join-info-links{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:12px}.join-info-links button{background:#0c111a;border:1px solid #26364a;color:#dce4f2;border-radius:10px;padding:10px 7px;font-size:10px}.join-helper-text,.join-insufficient{font-size:11px;text-align:center;margin:12px 0;color:#b6bdca}.join-insufficient{padding:10px;color:#ff7280;background:rgba(255,50,80,.08);border:1px solid rgba(255,50,80,.3);border-radius:10px}.join-footer-actions{display:grid;grid-template-columns:.8fr 1.4fr;gap:9px;margin-top:15px}.join-back-button,.join-confirm-button{min-height:48px;border-radius:12px;font-size:13px;font-weight:900}.join-back-button{background:#0b0d12;border:1px solid #414856;color:#f3f4f7}.join-confirm-button{border:1px solid #ffda21;background:linear-gradient(110deg,#ffca05,#ffdf26,#e9a900);color:#161100;box-shadow:0 0 16px rgba(255,199,0,.18)}.join-confirm-button:disabled{opacity:.42;filter:saturate(.45);box-shadow:none}.join-footer-note{text-align:center;color:#7f8797;font-size:10px;margin-top:8px}
+      @media(max-width:380px){.modal:has(.join-screen){padding:10px 10px 20px}.join-title-row h2{font-size:20px}.join-status-pill{font-size:8px}.join-metric{padding:9px 7px;gap:6px}.join-metric-icon{font-size:21px}.join-metric strong{font-size:16px}.join-policy-strip{padding:9px}.join-player-card{padding:7px;gap:6px}.join-player-avatar{width:35px;height:35px;flex-basis:35px;font-size:19px}.join-summary-grid{grid-template-columns:1fr}.join-summary-grid>div{gap:10px}.join-banner-art{font-size:48px;right:5px}.join-match-name{font-size:18px}}
+    </style>
   `);
 }
 function mode_display(m){ return m==='Duo'?'Duo':m==='Squad'?'Squad':'Solo'; }
@@ -2791,7 +2736,7 @@ function updateProfile(){
   if(ignOnlyEl) ignOnlyEl.textContent=UD.ign||'Not set';
   if(uidOnlyEl) uidOnlyEl.textContent=UD.ffuid||'Not set';
   document.getElementById('pendingProfileRow').style.display=UD.profileUpdatePending?'':'none';
-  document.getElementById('googleBadge').style.display=(isGoogleUser||UD.isGoogleUser)?'':'none';
+  // Google provider badge intentionally removed from the profile UI.
   const s=UD.stats||{};
   document.getElementById('pMatches').textContent=s.matches||0;
   document.getElementById('pEarnings').textContent='₹'+(s.earnings||0);
@@ -2864,23 +2809,6 @@ function updateAchievements(s){
       b.classList.remove('locked');
     else b.classList.add('locked');
   });
-}
-async function loadWinHistory(){
-  if(!U)return;
-  try{
-    const snap=await db.ref('joinRequests').orderByChild('uid').equalTo(U.uid).once('value');
-    const reqs=snap.val()||{};
-    const wins=[];
-    Object.values(reqs).forEach(r=>{
-      if(r.isWinner){const t=allTournaments[r.tournamentId];wins.push({name:t?t.name:r.tournamentName||'Tournament',prize:r.prize||0,createdAt:r.createdAt||0});}
-    });
-    wins.sort((a,b)=>b.createdAt-a.createdAt);
-    document.getElementById('winHistory').innerHTML=wins.length?wins.map(w=>`
-      <div class="win-item">
-        <div><div class="wt-name">${esc(w.name)}</div><div class="wt-date">${fmtDate(w.createdAt)}</div></div>
-        <div class="wt-amt">+₹${w.prize}</div>
-      </div>`).join(''):'<div class="empty-state"><div class="msg" style="font-size:12px;">No wins yet — join a tournament!</div></div>';
-  }catch(e){}
 }
 
 // ====== FIRST TIME PROFILE ======
@@ -3425,7 +3353,13 @@ function openPrivacy(){
 
 // ====== MODAL ======
 function openModal(html){
-  document.getElementById('modalContent').innerHTML=html;
+  const host=document.getElementById('modalContent');
+  // The global top-right X replaces redundant bottom buttons labelled only Close.
+  host.innerHTML=html;
+  host.querySelectorAll('button').forEach(b=>{if((b.textContent||'').trim().toLowerCase()==='close')b.remove();});
+  if(!host.querySelector('.modal-global-x')){
+    const x=document.createElement('button');x.type='button';x.className='modal-global-x';x.setAttribute('aria-label','Close popup');x.title='Close';x.innerHTML='&times;';x.addEventListener('click',closeModal);host.prepend(x);
+  }
   document.getElementById('modalOverlay').classList.add('show');
 }
 function closeModal(){document.getElementById('modalOverlay').classList.remove('show');if(_userChatPollInterval){clearInterval(_userChatPollInterval);_userChatPollInterval=null;_myOpenTicketId=null;}}
