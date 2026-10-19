@@ -2020,7 +2020,8 @@ async function checkPendingZapUPIOrder(){
   let orderId;
   try{ orderId = localStorage.getItem('zapupi_pending_order'); }catch(e){ return; }
   if(!orderId) return;
-  try{ localStorage.removeItem('zapupi_pending_order'); }catch(e){}
+  // Do not clear the pending order before contacting the server: auth/network failures
+  // or a pending payment must remain retryable when the user returns to the app.
   try{
     const {data:{session}}=await _sb.auth.getSession();
     if(!session) return;
@@ -2029,8 +2030,10 @@ async function checkPendingZapUPIOrder(){
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
       body:JSON.stringify({order_id:orderId})
     });
-    const data=await res.json();
+    let data;
+    try{ data=await res.json(); }catch(parseError){ throw new Error('Payment verification returned an unreadable response'); }
     if(res.ok && data.success){
+      try{ localStorage.removeItem('zapupi_pending_order'); }catch(storageError){}
       toast('₹'+data.amount+' added to your wallet!','success');
       if(U){
         const uSnap = await db.ref('users/'+U.uid).once('value');
@@ -2038,9 +2041,17 @@ async function checkPendingZapUPIOrder(){
         updateHeader(); updateWallet(); updateProfile(); updateApprovalBanner();
       }
     } else if(res.ok && !data.success){
+      const status=String(data.status||'pending').toLowerCase();
       toast('Payment '+(data.status||'pending')+'. Check Wallet history in a moment.','info');
+      // Keep pending/unconfirmed orders for another verification attempt. Clear only
+      // explicit terminal failures; network, auth and HTTP errors retain the order.
+      if(['failed','cancelled','canceled','expired','rejected'].includes(status)){
+        try{ localStorage.removeItem('zapupi_pending_order'); }catch(storageError){}
+      }
+    } else {
+      console.warn('zapupi verification HTTP error',res.status,data);
     }
-  }catch(e){ console.error('zapupi verify error', e); }
+  }catch(e){ console.error('zapupi verify error; pending order retained for retry', e); }
 }
 
 // ====== WITHDRAW ======
@@ -2157,7 +2168,7 @@ function verifyTicketReceiver(){
   if(!uid||uid.length<5) return;
   clearTimeout(_verifyTimer);
   _verifyTimer=setTimeout(async()=>{
-    if(uid===UD.ffuid){infoEl.innerHTML='<div style="color:var(--red);font-size:11px;">❌ Self UID allowed nahi hai</div>';return;}
+    if(uid.replace(/\D/g,'')===String(UD?.ffuid||'').replace(/\D/g,'')){infoEl.innerHTML='<div style="color:var(--red);font-size:11px;">❌ Self UID allowed nahi hai</div>';return;}
     infoEl.innerHTML='<div style="color:var(--dim);font-size:11px;">🔍 Searching...</div>';
     try{
       const {data:rows,error}=await _sb.rpc('lookup_player_by_ffuid',{p_ffuid:uid});
@@ -2172,7 +2183,7 @@ function verifyTicketReceiver(){
         if(iconEl) iconEl.textContent='❌';
       }
     } catch(e){
-      infoEl.innerHTML='<div style="color:var(--red);font-size:11px;">❌ User not found</div>';
+      infoEl.innerHTML=`<div style="color:var(--red);font-size:11px;">❌ ${esc(e?.message||'Lookup failed. Check connection and try again.')}</div>`;
     }
   },700);
 }
@@ -3017,10 +3028,12 @@ async function renderTeams(){
     myMembers.forEach(m=>{
       const name=m._u?.ign||m._u?.display_name||'Player';
       const init=name.charAt(0).toUpperCase();
-      html+=`<div style="display:flex;flex-direction:column;align-items:center;">
-        <div style="width:60px;height:60px;border-radius:50%;border:2.5px solid ${mc.b};box-shadow:0 0 10px ${mc.glow};background:#111;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:${mc.c};">${init}</div>
-        <div style="font-size:11px;color:#fff;margin-top:6px;font-weight:600;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(name)}</div>
-        <div onclick="removeTeammate('${mode}','${m.teammate_uid}')" style="font-size:10px;color:#ff4444;margin-top:2px;cursor:pointer;">✕</div>
+      const memberKey=`${mode}-${String(m.teammate_uid).replace(/[^a-zA-Z0-9_-]/g,'')}`;
+      html+=`<div class="team-member-card" data-team-member="${esc(memberKey)}" data-team-mode="${mode}" data-teammate-uid="${esc(m.teammate_uid)}" style="display:flex;flex-direction:column;align-items:center;position:relative;touch-action:manipulation;user-select:none;-webkit-user-select:none;">
+        <div class="team-member-avatar" style="width:60px;height:60px;border-radius:50%;border:2.5px solid ${mc.b};box-shadow:0 0 10px ${mc.glow};background:#111;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:${mc.c};cursor:pointer;">${init}</div>
+        <div class="team-member-name" style="font-size:11px;color:#fff;margin-top:6px;font-weight:600;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;">${esc(name)}</div>
+        <div class="team-member-hint" style="font-size:9px;color:var(--dim);margin-top:3px;">Long press to manage</div>
+        <button class="team-member-remove" type="button" style="display:none;margin-top:5px;background:rgba(255,68,68,.12);border:1px solid #ff4444;color:#ff6666;border-radius:7px;padding:4px 8px;font-size:10px;font-weight:700;" onclick="event.stopPropagation();confirmRemoveTeammate('${mode}','${String(m.teammate_uid).replace(/[^a-zA-Z0-9_-]/g,'')}')">Remove</button>
       </div>`;
     });
     myOutgoing.forEach(r=>{
@@ -3058,6 +3071,44 @@ async function renderTeams(){
     }
   });
 }
+let _teamLongPressTimer=null;
+let _teamLongPressTarget=null;
+function initTeamLongPressRemoval(){
+  if(window.__teamLongPressRemovalBound)return;
+  window.__teamLongPressRemovalBound=true;
+  const start=(ev)=>{
+    const card=ev.target?.closest?.('.team-member-card');
+    if(!card)return;
+    _teamLongPressTarget=card;
+    clearTimeout(_teamLongPressTimer);
+    _teamLongPressTimer=setTimeout(()=>{
+      if(!_teamLongPressTarget||!document.body.contains(_teamLongPressTarget))return;
+      const btn=_teamLongPressTarget.querySelector('.team-member-remove');
+      const hint=_teamLongPressTarget.querySelector('.team-member-hint');
+      if(btn)btn.style.display='inline-flex';
+      if(hint)hint.textContent='Tap Remove to confirm';
+      if(navigator.vibrate)navigator.vibrate(25);
+    },550);
+  };
+  const cancel=()=>{clearTimeout(_teamLongPressTimer);_teamLongPressTimer=null;};
+  document.addEventListener('touchstart',start,{passive:true});
+  document.addEventListener('pointerdown',start,{passive:true});
+  ['touchend','touchcancel','pointerup','pointercancel','pointerleave','scroll'].forEach(evt=>document.addEventListener(evt,cancel,{passive:true}));
+  document.addEventListener('click',ev=>{
+    const card=ev.target?.closest?.('.team-member-card');
+    if(!card)return;
+    if(ev.target.closest('.team-member-remove'))return;
+    const btn=card.querySelector('.team-member-remove');
+    if(btn&&btn.style.display!=='none'){btn.style.display='none';const hint=card.querySelector('.team-member-hint');if(hint)hint.textContent='Long press to manage';}
+  });
+}
+function confirmRemoveTeammate(mode,teammateUid){
+  if(!teammateUid)return;
+  if(!confirm('Is teammate ko team se remove karna hai?'))return;
+  removeTeammate(mode,teammateUid);
+}
+initTeamLongPressRemoval();
+
 async function removeTeammate(mode,teammateUid){
   try{
     const {error}=await _sb.rpc('remove_teammate',{p_teammate_uid:teammateUid,p_mode:mode});
@@ -3124,7 +3175,7 @@ async function submitTeammate(mode){
   if(_sendingTeamReq)return;
   const ffuid=(document.getElementById('tmFFUID')?.value||'').trim();
   if(!ffuid||!/^\d{8,12}$/.test(ffuid)){toast('FF UID must be 8-12 digits','error');return;}
-  if(UD?.ffuid && ffuid===UD.ffuid){toast('You cannot add yourself','error');return;}
+  if(UD?.ffuid && ffuid.replace(/\D/g,'')===String(UD.ffuid).replace(/\D/g,'')){toast('You cannot add yourself','error');return;}
   _sendingTeamReq=true;
   const btn=document.getElementById('tmSendBtn');
   const origHTML=btn?btn.innerHTML:'';
