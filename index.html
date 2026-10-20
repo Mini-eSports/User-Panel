@@ -2662,7 +2662,7 @@ async function renderLeaderboard(sortBy){
     // RTDB here: that database can contain only one user's profile and makes
     // every player see an incorrect one-person leaderboard.
     const {data:users,error:usersError}=await Promise.race([
-      _sb.from('users').select('id,display_name,ign,photo_url,stats,referral_count'),
+      _sb.from('users').select('id,display_name,ign,photo_url,stats'),
       new Promise((_,rej)=>setTimeout(()=>rej(new Error('Leaderboard request timed out')),10000))
     ]);
     if(usersError) throw usersError;
@@ -2673,7 +2673,7 @@ async function renderLeaderboard(sortBy){
       const kills=Number(s.kills||u.kills||0)||0;
       const earnings=Number(s.earnings||u.earnings||0)||0;
       const score=wins*100+kills*10+earnings;
-      arr.push({uid:u.id,name:u.ign||u.display_name||'Player',photo:u.photo_url||'',score,wins,kills,earnings,refs:Number(u.referral_count||s.referrals||0)||0});
+      arr.push({uid:u.id,name:u.ign||u.display_name||'Player',photo:u.photo_url||'',score,wins,kills,earnings,refs:Number(s.referrals||s.refs||0)||0});
     });
     arr.sort((a,b)=>b.score-a.score);
 
@@ -2744,8 +2744,17 @@ async function renderLeaderboard(sortBy){
   }catch(e){
     console.error('Leaderboard load failed:',e);
     const rankList=document.getElementById('rankList');
-    if(rankList){rankList.dataset.loaded='0';rankList.innerHTML='<div style="text-align:center;color:var(--dim);padding:24px 16px"><div style="margin-bottom:10px">Leaderboard could not load.</div><button class="btn-secondary" onclick="renderLeaderboard()" style="padding:10px 18px;border-radius:12px">↻ Retry</button><div style="font-size:11px;margin-top:8px">Check your connection and try again.</div></div>'; }
-    toast('Leaderboard could not load. Please retry.','error');
+    const errorText=String(e?.message||e?.details||e?.hint||'Unknown error');
+    // Keep the UI friendly while exposing a useful diagnosis in the browser console.
+    const friendlyMessage=/permission|row-level security|not allowed|jwt|auth/i.test(errorText)
+      ? 'Leaderboard access is blocked. Please check your login and permissions.'
+      : /column .* does not exist|schema cache/i.test(errorText)
+        ? 'Leaderboard data fields do not match the database schema.'
+        : /timeout|network|fetch|offline/i.test(errorText)
+          ? 'Connection timed out. Check your internet and retry.'
+          : 'Leaderboard could not load. Please retry.';
+    if(rankList){rankList.dataset.loaded='0';rankList.innerHTML='<div style="text-align:center;color:var(--dim);padding:24px 16px"><div style="margin-bottom:10px">'+esc(friendlyMessage)+'</div><button class="btn-secondary" onclick="renderLeaderboard()" style="padding:10px 18px;border-radius:12px">↻ Retry</button><div style="font-size:11px;margin-top:8px">If this continues, the database error is logged in the browser console.</div></div>'; }
+    toast(friendlyMessage,'error');
   }
 }
 function switchLbTab(tab,el){ renderLeaderboard('score'); }
