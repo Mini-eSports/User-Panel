@@ -239,9 +239,6 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .rank-name{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rank-tier{font-size:10px;color:var(--dim)}
 .rank-score{font-size:14px;font-weight:700;color:var(--yellow)}
-.lb-tabs{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px}
-.lb-tab{padding:7px 14px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid #333;color:var(--dim);white-space:nowrap;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:all .1s}
-.lb-tab.active{background:var(--yellow);color:#000;border-color:var(--yellow)}
 /* PREMIUM RANK SCREEN */
 .rank-hero{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 13px;margin:4px 0 14px;border:1px solid rgba(255,215,0,.52);border-radius:18px;background:linear-gradient(110deg,#1b1300 0%,#0c0902 55%,#080808 100%);box-shadow:0 0 18px rgba(255,215,0,.10);min-width:0}
 .rank-hero-left{display:flex;align-items:center;gap:12px;min-width:0;flex:1}
@@ -546,12 +543,6 @@ textarea.form-input{resize:none;min-height:80px}
         <div class="rank-earning-card withdrawal"><div class="rank-earning-icon">💸</div><div>Withdrawal<br>Earnings</div></div>
       </div>
       <!-- Category Tabs -->
-      <div class="lb-tabs" id="lbTabs" style="margin-bottom:12px;">
-        <div class="lb-tab active" onclick="switchLbTab('score',this)">🏆 Overall</div>
-        <div class="lb-tab" onclick="switchLbTab('kills',this)">⚔ Kills</div>
-        <div class="lb-tab" onclick="switchLbTab('wins',this)">🥇 Wins</div>
-        <div class="lb-tab" onclick="switchLbTab('referrals',this)">👥 Refs</div>
-      </div>
       <!-- Podium -->
       <div id="podiumArea"></div>
       <!-- Rank List -->
@@ -2653,7 +2644,18 @@ async function confirmMatchJoin(){
 
 // ====== LEADERBOARD ======
 async function renderLeaderboard(sortBy){
-  currentLbTab=sortBy||'score';
+  // Leaderboard now has one overall ranking; category tabs were removed.
+  currentLbTab='score';
+  const listEl=document.getElementById('rankList');
+  if(listEl && !listEl.dataset.loaded) listEl.innerHTML='<div class="empty-state"><div class="msg">Loading leaderboard...</div></div>';
+  // Populate the signed-in user header immediately, even while the leaderboard query runs.
+  if(U){
+    const ownName=(UD&&UD.displayName)||U.displayName||'Player';
+    const ownAvatar=document.getElementById('myRankAvatar');
+    if(ownAvatar){ if((UD&&UD.photoURL)||U.photoURL) ownAvatar.innerHTML='<img src="'+esc((UD&&UD.photoURL)||U.photoURL)+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%" onerror="this.style.display=\'none\'">'; else ownAvatar.textContent=ownName.charAt(0).toUpperCase(); }
+    const rankNum=document.getElementById('pRankNum'); if(rankNum)rankNum.textContent='#-';
+    const earnings=document.getElementById('myTotalEarningsDisplay'); if(earnings)earnings.textContent='₹0';
+  }
   // Show immediately with cached data if available
   try{
     // The app's source of truth is Supabase. Do not read the legacy Firebase
@@ -2673,10 +2675,7 @@ async function renderLeaderboard(sortBy){
       const score=wins*100+kills*10+earnings;
       arr.push({uid:u.id,name:u.ign||u.display_name||'Player',photo:u.photo_url||'',score,wins,kills,earnings,refs:Number(u.referral_count||s.referrals||0)||0});
     });
-    if(currentLbTab==='kills')arr.sort((a,b)=>b.kills-a.kills);
-    else if(currentLbTab==='wins')arr.sort((a,b)=>b.wins-a.wins);
-    else if(currentLbTab==='referrals')arr.sort((a,b)=>b.refs-a.refs);
-    else arr.sort((a,b)=>b.score-a.score);
+    arr.sort((a,b)=>b.score-a.score);
 
     const getTier=score=>{
       if(score>=5000)return'◆ Diamond';if(score>=3000)return'◇ Platinum';
@@ -2694,7 +2693,7 @@ async function renderLeaderboard(sortBy){
         const totalEarn=document.getElementById('myTotalEarningsDisplay');
         if(totalEarn)totalEarn.textContent='₹'+Number(myEntry.earnings||0).toLocaleString('en-IN');
         const sd=document.getElementById('myScoreDisplay');
-        if(sd)sd.textContent=(currentLbTab==='kills'?myEntry.kills+' kills':currentLbTab==='wins'?myEntry.wins+' wins':myEntry.score+' pts');
+        if(sd)sd.textContent=myEntry.score+' pts';
         // My avatar
         const av=document.getElementById('myRankAvatar');
         if(av){
@@ -2720,7 +2719,7 @@ async function renderLeaderboard(sortBy){
       podHtml+=`<div class="podium-item ${pc[i]}">${i===1?'<div style="font-size:18px;margin-bottom:3px;">♛</div>':''}
         <div class="p-av" style="width:${avSize}px;height:${avSize}px;position:relative;">${avHtml}</div>
         <div class="p-name">${esc(p.name)}</div>
-        <div class="p-score">${currentLbTab==='kills'?p.kills+' kills':currentLbTab==='wins'?p.wins+' wins':p.score+' pts'}</div>
+        <div class="p-score">${p.score} pts</div>
         <div class="podium-bar"></div>
       </div>`;
     });
@@ -2729,7 +2728,7 @@ async function renderLeaderboard(sortBy){
     let listHtml='';
     arr.slice(3).forEach((p,i)=>{
       const initials=p.name.charAt(0).toUpperCase();
-      const val=currentLbTab==='kills'?p.kills+' kills':currentLbTab==='wins'?p.wins+' wins':p.score+' pts';
+      const val=p.score+' pts';
       const rvHtml=p.photo
         ?`<img src="${esc(p.photo)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;border-radius:50%;" onerror="this.style.display='none'">`
         :`<span style="color:var(--yellow);font-weight:700;">${initials}</span>`;
@@ -2740,14 +2739,16 @@ async function renderLeaderboard(sortBy){
         <div class="rank-score">${val}</div>
       </div>`;
     });
-    document.getElementById('rankList').innerHTML=listHtml||'<div style="text-align:center;color:var(--dim);padding:20px">No more players</div>';
-  }catch(e){console.error('Leaderboard load failed:',e);toast(e.message||'Error loading leaderboard','error');}
+    const rankList=document.getElementById('rankList');
+    if(rankList){rankList.dataset.loaded='1';rankList.innerHTML=listHtml||'<div style="text-align:center;color:var(--dim);padding:20px">No more players</div>'; }
+  }catch(e){
+    console.error('Leaderboard load failed:',e);
+    const rankList=document.getElementById('rankList');
+    if(rankList){rankList.dataset.loaded='0';rankList.innerHTML='<div style="text-align:center;color:var(--dim);padding:24px 16px"><div style="margin-bottom:10px">Leaderboard could not load.</div><button class="btn-secondary" onclick="renderLeaderboard()" style="padding:10px 18px;border-radius:12px">↻ Retry</button><div style="font-size:11px;margin-top:8px">Check your connection and try again.</div></div>'; }
+    toast('Leaderboard could not load. Please retry.','error');
+  }
 }
-function switchLbTab(tab,el){
-  document.querySelectorAll('.lb-tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
-  renderLeaderboard(tab);
-}
+function switchLbTab(tab,el){ renderLeaderboard('score'); }
 
 // ====== PROFILE ======
 function updateProfile(){
