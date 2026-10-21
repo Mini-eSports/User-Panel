@@ -253,7 +253,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .rank-hero-total{display:flex;justify-content:flex-end;align-items:center;gap:7px;margin-top:7px;font-size:22px;font-weight:900;color:var(--yellow);white-space:nowrap}
 .rank-hero-total span:first-child{font-size:24px}
 .rank-earning-types{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:0 0 18px}
-.rank-earning-card{min-width:0;min-height:108px;border:2px solid;border-radius:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8px 2px;font-size:10px;font-weight:700;line-height:1.35;color:#fff;background:#080808;box-shadow:inset 0 0 12px rgba(255,255,255,.025)}
+.rank-earning-card{cursor:pointer;transition:transform .16s ease,filter .16s ease;min-width:0;min-height:108px;border:2px solid;border-radius:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8px 2px;font-size:10px;font-weight:700;line-height:1.35;color:#fff;background:#080808;box-shadow:inset 0 0 12px rgba(255,255,255,.025)}
 .rank-earning-icon{font-size:25px;line-height:1;margin-bottom:8px}
 .rank-earning-card.match{border-color:#00f58a;box-shadow:0 0 10px rgba(0,245,138,.20),inset 0 0 12px rgba(0,245,138,.08)}
 .rank-earning-card.match .rank-earning-icon{color:#00f58a}
@@ -261,7 +261,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .rank-earning-card.bonus{border-color:#e000ff;box-shadow:0 0 10px rgba(224,0,255,.20),inset 0 0 12px rgba(224,0,255,.08)}
 .rank-earning-card.convert{border-color:#ffe000;box-shadow:0 0 10px rgba(255,224,0,.20),inset 0 0 12px rgba(255,224,0,.08)}
 .rank-earning-card.withdrawal{border-color:#ff1739;box-shadow:0 0 10px rgba(255,23,57,.20),inset 0 0 12px rgba(255,23,57,.08)}
-@media(max-width:360px){.rank-hero{padding:12px 9px;gap:8px}.rank-hero-avatar{width:54px;height:54px}.rank-hero-number{font-size:27px}.rank-hero-total{font-size:18px}.rank-hero-label{font-size:8px;letter-spacing:1.3px}.rank-earning-types{gap:4px}.rank-earning-card{font-size:9px;min-height:100px}.rank-earning-icon{font-size:22px}}
+.rank-earning-card.active{transform:translateY(-3px);filter:brightness(1.35);outline:2px solid rgba(255,255,255,.65);outline-offset:2px}.rank-earning-card:focus-visible{outline:2px solid #fff;outline-offset:2px}@media(max-width:360px){.rank-hero{padding:12px 9px;gap:8px}.rank-hero-avatar{width:54px;height:54px}.rank-hero-number{font-size:27px}.rank-hero-total{font-size:18px}.rank-hero-label{font-size:8px;letter-spacing:1.3px}.rank-earning-types{gap:4px}.rank-earning-card{font-size:9px;min-height:100px}.rank-earning-icon{font-size:22px}}
 /* PROFILE */
 .stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:12px 0}
 .stat-box{background:var(--card);border-radius:12px;padding:12px;text-align:center}
@@ -536,11 +536,11 @@ textarea.form-input{resize:none;min-height:80px}
         <div class="rank-hero-earnings"><div class="rank-hero-label">TOTAL EARNINGS</div><div class="rank-hero-total"><span>💰</span><span id="myTotalEarningsDisplay">₹0</span></div></div>
       </div>
       <div class="rank-earning-types" aria-label="Earning categories">
-        <div class="rank-earning-card match"><div class="rank-earning-icon">🎮</div><div>Match<br>Earnings</div></div>
-        <div class="rank-earning-card referral"><div class="rank-earning-icon">👥</div><div>Referral<br>Earnings</div></div>
-        <div class="rank-earning-card bonus"><div class="rank-earning-icon">🎁</div><div>Bonus<br>Earnings</div></div>
-        <div class="rank-earning-card convert"><div class="rank-earning-icon">🪙</div><div>Coin to Money<br>Earnings</div></div>
-        <div class="rank-earning-card withdrawal"><div class="rank-earning-icon">💸</div><div>Withdrawal<br>Earnings</div></div>
+        <div class="rank-earning-card match" data-lb-category="match" role="button" tabindex="0" onclick="selectLeaderboardCategory('match')"><div class="rank-earning-icon">🎮</div><div>Match<br>Earnings</div></div>
+        <div class="rank-earning-card referral" data-lb-category="referral" role="button" tabindex="0" onclick="selectLeaderboardCategory('referral')"><div class="rank-earning-icon">👥</div><div>Referral<br>Earnings</div></div>
+        <div class="rank-earning-card bonus" data-lb-category="bonus" role="button" tabindex="0" onclick="selectLeaderboardCategory('bonus')"><div class="rank-earning-icon">🎁</div><div>Bonus<br>Earnings</div></div>
+        <div class="rank-earning-card convert" data-lb-category="convert" role="button" tabindex="0" onclick="selectLeaderboardCategory('convert')"><div class="rank-earning-icon">🪙</div><div>Coin to Money<br>Earnings</div></div>
+        <div class="rank-earning-card withdrawal" data-lb-category="withdrawal" role="button" tabindex="0" onclick="selectLeaderboardCategory('withdrawal')"><div class="rank-earning-icon">💸</div><div>Withdrawal<br>Earnings</div></div>
       </div>
       <!-- Category Tabs -->
       <!-- Podium -->
@@ -950,7 +950,7 @@ let db_orig=db;
 
 let U=null, UD=null, allTournaments={}, currentSpecialTab='weekly';
 let countdownInterval=null, dailyInterval=null, listeners=[], paymentSettings={};
-let currentLbTab='score', currentHomeTab='paid', currentHomeMode='All', currentHomeCategory='Battle Royale';
+let currentLbTab='total', currentHomeTab='paid', currentHomeMode='All', currentHomeCategory='Battle Royale';
 let addMoneyAmount=0;
 let isGoogleUser=false;
 let maintenanceBlocked=false;
@@ -2648,126 +2648,102 @@ async function confirmMatchJoin(){
 }
 
 // ====== LEADERBOARD ======
+const LB_CATEGORY_META={
+  total:{label:'TOTAL EARNINGS',short:'Total earnings',color:'var(--yellow)'},
+  match:{label:'MATCH EARNINGS',short:'Match earnings',color:'#00f58a'},
+  referral:{label:'REFERRAL EARNINGS',short:'Referral earnings',color:'#168cff'},
+  bonus:{label:'BONUS EARNINGS',short:'Bonus earnings',color:'#e000ff'},
+  convert:{label:'COIN TO MONEY',short:'Coin to Money earnings',color:'#ffe000'},
+  withdrawal:{label:'WITHDRAWAL EARNINGS',short:'Withdrawal earnings',color:'#ff1739'}
+};
+function selectLeaderboardCategory(category){
+  if(!LB_CATEGORY_META[category])return;
+  currentLbTab=category;
+  document.querySelectorAll('[data-lb-category]').forEach(el=>{
+    const active=el.dataset.lbCategory===category;
+    el.classList.toggle('active',active);el.setAttribute('aria-pressed',active?'true':'false');
+  });
+  renderLeaderboard(category);
+}
+function lbMoney(v){return '₹'+Math.max(0,Number(v)||0).toLocaleString('en-IN',{maximumFractionDigits:2});}
+function lbCategoryValue(u,category){
+  const s=u.stats&&typeof u.stats==='object'?u.stats:{};
+  const rm=u.real_money&&typeof u.real_money==='object'?u.real_money:{};
+  const first=(...vals)=>{for(const v of vals){if(v!==undefined&&v!==null&&v!==''&&Number.isFinite(Number(v)))return Math.max(0,Number(v));}return 0;};
+  const match=first(s.matchEarnings,s.match_earnings)||first(s.earnings,u.earnings,rm.winnings);
+  const referral=first(s.referralEarnings,s.referral_earnings,s.referralsEarnings,s.referral_earnings_total);
+  const bonus=first(s.bonusEarnings,s.bonus_earnings)||first(rm.bonus);
+  const convert=first(s.coinToMoneyEarnings,s.coin_to_money_earnings,s.convertedMoneyEarnings,s.converted_money_earnings);
+  const withdrawal=first(s.withdrawalEarnings,s.withdrawal_earnings,s.withdrawnEarnings,s.withdrawn_earnings);
+  const all=match+referral+bonus+convert+withdrawal;
+  return ({total:all,match,referral,bonus,convert,withdrawal})[category]||0;
+}
 async function renderLeaderboard(sortBy){
-  // Leaderboard now has one overall ranking; category tabs were removed.
-  currentLbTab='score';
+  const category=LB_CATEGORY_META[sortBy]?sortBy:(LB_CATEGORY_META[currentLbTab]?currentLbTab:'total');
+  currentLbTab=category;
+  document.querySelectorAll('[data-lb-category]').forEach(el=>{
+    const active=el.dataset.lbCategory===category;el.classList.toggle('active',active);el.setAttribute('aria-pressed',active?'true':'false');
+  });
   const listEl=document.getElementById('rankList');
-  if(listEl && !listEl.dataset.loaded) listEl.innerHTML='<div class="empty-state"><div class="msg">Loading leaderboard...</div></div>';
-  // Populate the signed-in user header immediately, even while the leaderboard query runs.
+  if(listEl&&!listEl.dataset.loaded)listEl.innerHTML='<div class="empty-state"><div class="msg">Loading leaderboard...</div></div>';
+  const heroLabel=document.querySelector('.rank-hero-earnings .rank-hero-label');
+  if(heroLabel)heroLabel.textContent=LB_CATEGORY_META[category].label;
   if(U){
     const ownName=(UD&&(UD.ign||UD.displayName||UD.display_name))||(U&&(U.ign||U.displayName||U.email))||'Player';
     const ownAvatar=document.getElementById('myRankAvatar');
     const ownPhoto=(UD&&(UD.photoURL||UD.photo_url||UD.avatar_url||UD.picture))||(U&&(U.photoURL||U.photo_url||U.user_metadata?.avatar_url||U.user_metadata?.picture))||'';
-    if(ownAvatar){ ownAvatar.innerHTML=''; if(ownPhoto){ const img=document.createElement('img'); img.src=ownPhoto; img.alt='Your profile photo'; img.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:50%'; img.onerror=function(){this.remove();ownAvatar.textContent=ownName.charAt(0).toUpperCase()}; ownAvatar.appendChild(img); } else ownAvatar.textContent=ownName.charAt(0).toUpperCase(); }
-    const rankNum=document.getElementById('pRankNum'); if(rankNum)rankNum.textContent='#-';
-    const earnings=document.getElementById('myTotalEarningsDisplay'); if(earnings)earnings.textContent='₹0';
+    if(ownAvatar){ownAvatar.innerHTML='';if(ownPhoto){const img=document.createElement('img');img.src=ownPhoto;img.alt='Your profile photo';img.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:50%';img.onerror=function(){this.remove();ownAvatar.textContent=ownName.charAt(0).toUpperCase()};ownAvatar.appendChild(img)}else ownAvatar.textContent=ownName.charAt(0).toUpperCase()}
+    const rankNum=document.getElementById('pRankNum');if(rankNum)rankNum.textContent='#-';
+    const earnings=document.getElementById('myTotalEarningsDisplay');if(earnings)earnings.textContent='₹0';
   }
-  // Show immediately with cached data if available
   try{
-    // IMPORTANT: users SELECT is intentionally restricted by RLS to the signed-in
-    // user's own row. Querying users directly makes every device render a one-player
-    // leaderboard. Use the authenticated SECURITY DEFINER RPC that exposes only
-    // the public leaderboard fields for non-banned players.
     const {data:users,error:usersError}=await Promise.race([
-      _sb.rpc('get_public_leaderboard'),
+      _sb.rpc('get_public_leaderboard_category_earnings'),
       new Promise((_,rej)=>setTimeout(()=>rej(new Error('Leaderboard request timed out')),10000))
     ]);
-    if(usersError) throw usersError;
+    if(usersError)throw usersError;
     const arr=[];
     (users||[]).forEach(u=>{
       const s=u.stats&&typeof u.stats==='object'?u.stats:{};
-      const wins=Number(s.wins||u.wins||0)||0;
-      const kills=Number(s.kills||u.kills||0)||0;
-      const earnings=Number(s.earnings||u.earnings||0)||0;
-      const score=wins*100+kills*10+earnings;
-      arr.push({uid:u.id,name:u.ign||u.display_name||'Player',photo:u.photo_url||'',score,wins,kills,earnings,refs:Number(s.referrals||s.refs||0)||0});
+      const wins=Number(s.wins||0)||0,kills=Number(s.kills||0)||0;
+      const categoryEarnings={};['total','match','referral','bonus','convert','withdrawal'].forEach(c=>categoryEarnings[c]=lbCategoryValue(u,c));
+      const score=categoryEarnings[category];
+      arr.push({uid:u.id,name:u.ign||u.display_name||'Player',photo:u.photo_url||'',score,earnings:categoryEarnings.total,categoryEarnings,wins,kills});
     });
-    arr.sort((a,b)=>b.score-a.score);
-
-    const getTier=score=>{
-      if(score>=5000)return'◆ Diamond';if(score>=3000)return'◇ Platinum';
-      if(score>=1500)return'★ Gold';if(score>=500)return'◈ Silver';return'◉ Bronze';
-    };
-    const totalEarnEl=document.getElementById('myTotalEarningsDisplay');
-    if(totalEarnEl)totalEarnEl.textContent='₹0';
+    arr.sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name));
+    const getTier=score=>score>=5000?'◆ Diamond':score>=3000?'◇ Platinum':score>=1500?'★ Gold':score>=500?'◈ Silver':'◉ Bronze';
+    const totalEarnEl=document.getElementById('myTotalEarningsDisplay');if(totalEarnEl)totalEarnEl.textContent='₹0';
     if(U){
       const myIds=[U?.uid,U?.id,UD?.id,UD?.uid].filter(Boolean).map(String);
       const myIdx=arr.findIndex(a=>myIds.includes(String(a.uid)));
       if(myIdx>=0){
-        document.getElementById('pRankNum').textContent='#'+(myIdx+1);
-        const rd=document.getElementById('myRankDisplay');
-        if(rd)rd.textContent='#'+(myIdx+1);
-        const myEntry=arr[myIdx];
-        const totalEarn=document.getElementById('myTotalEarningsDisplay');
-        if(totalEarn)totalEarn.textContent='₹'+Number(myEntry.earnings||0).toLocaleString('en-IN');
-        const sd=document.getElementById('myScoreDisplay');
-        if(sd)sd.textContent=myEntry.score+' pts';
-        // My avatar
+        const myEntry=arr[myIdx],rankNum=document.getElementById('pRankNum'),rd=document.getElementById('myRankDisplay');
+        if(rankNum)rankNum.textContent='#'+(myIdx+1);if(rd)rd.textContent='#'+(myIdx+1);
+        const totalEarn=document.getElementById('myTotalEarningsDisplay');if(totalEarn)totalEarn.textContent=lbMoney(myEntry.categoryEarnings[category]);
+        const sd=document.getElementById('myScoreDisplay');if(sd)sd.textContent=lbMoney(myEntry.score);
         const av=document.getElementById('myRankAvatar');
-        if(av){
-          const myPhoto=myEntry.photo||(UD&&(UD.photoURL||UD.photo_url||UD.avatar_url||UD.picture))||(U&&(U.photoURL||U.photo_url||U.user_metadata?.avatar_url||U.user_metadata?.picture))||'';
-          const myName=myEntry.name||(UD&&(UD.displayName||UD.display_name))||'Player';
-          av.innerHTML='';
-          if(myPhoto){const img=document.createElement('img');img.src=myPhoto;img.alt='Your profile photo';img.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:50%';img.onerror=function(){this.remove();av.textContent=myName.charAt(0).toUpperCase()};av.appendChild(img);}else av.textContent=myName.charAt(0).toUpperCase();
-        }
-        // My tier
-        const tierEl=null; // Change #5: Bronze badge removed
-        if(tierEl)tierEl.textContent=getTier(myEntry.score);
+        if(av){const myPhoto=myEntry.photo||(UD&&(UD.photoURL||UD.photo_url||UD.avatar_url||UD.picture))||(U&&(U.photoURL||U.photo_url||U.user_metadata?.avatar_url||U.user_metadata?.picture))||'',myName=myEntry.name||'Player';av.innerHTML='';if(myPhoto){const img=document.createElement('img');img.src=myPhoto;img.alt='Your profile photo';img.style.cssText='width:100%;height:100%;object-fit:cover;border-radius:50%';img.onerror=function(){this.remove();av.textContent=myName.charAt(0).toUpperCase()};av.appendChild(img)}else av.textContent=myName.charAt(0).toUpperCase()}
       }
     }
-    const top3=arr.slice(0,3);
-    const po=[top3[1],top3[0],top3[2]];
-    const pc=['second','first','third'];
+    const top3=arr.slice(0,3),po=[top3[1],top3[0],top3[2]],pc=['second','first','third'];
     let podHtml='<div class="podium">';
-    po.forEach((p,i)=>{
-      if(!p)return;
-      const initials=p.name.charAt(0).toUpperCase();
-      const avSize=i===1?60:48;
-      const avHtml=p.photo
-        ?`<img src="${esc(p.photo)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;border-radius:50%;" onerror="this.style.display='none'">`
-        :`<span style="color:var(--yellow);font-weight:700;font-size:${i===1?22:18}px;position:relative;z-index:1;">${initials}</span>`;
-      podHtml+=`<div class="podium-item ${pc[i]}">${i===1?'<div style="font-size:18px;margin-bottom:3px;">♛</div>':''}
-        <div class="p-av" style="width:${avSize}px;height:${avSize}px;position:relative;">${avHtml}</div>
-        <div class="p-name">${esc(p.name)}</div>
-        <div class="p-score">${p.score} pts</div>
-        <div class="podium-bar"></div>
-      </div>`;
+    po.forEach((p,i)=>{if(!p)return;const initials=p.name.charAt(0).toUpperCase(),avSize=i===1?60:48;
+      const avHtml=p.photo?`<img src="${esc(p.photo)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;border-radius:50%;" onerror="this.style.display='none'">`:`<span style="color:var(--yellow);font-weight:700;font-size:${i===1?22:18}px;position:relative;z-index:1;">${esc(initials)}</span>`;
+      podHtml+=`<div class="podium-item ${pc[i]}">${i===1?'<div style="font-size:18px;margin-bottom:3px;">♛</div>':''}<div class="p-av" style="width:${avSize}px;height:${avSize}px;position:relative;">${avHtml}</div><div class="p-name">${esc(p.name)}</div><div class="p-score">${lbMoney(p.score)}</div><div class="podium-bar"></div></div>`;
     });
-    podHtml+='</div>';
-    document.getElementById('podiumArea').innerHTML=podHtml;
-    let listHtml='';
-    arr.slice(3).forEach((p,i)=>{
-      const initials=p.name.charAt(0).toUpperCase();
-      const val=p.score+' pts';
-      const rvHtml=p.photo
-        ?`<img src="${esc(p.photo)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;border-radius:50%;" onerror="this.style.display='none'">`
-        :`<span style="color:var(--yellow);font-weight:700;">${initials}</span>`;
-      listHtml+=`<div class="rank-item">
-        <div class="rank-num">${i+4}</div>
-        <div class="rank-av">${rvHtml}</div>
-        <div class="rank-info"><div class="rank-name">${esc(p.name)}</div><div class="rank-tier">${getTier(p.score)}</div></div>
-        <div class="rank-score">${val}</div>
-      </div>`;
+    podHtml+='</div>';const podium=document.getElementById('podiumArea');if(podium)podium.innerHTML=podHtml;
+    let listHtml='';arr.slice(3).forEach((p,i)=>{const initials=p.name.charAt(0).toUpperCase();const rvHtml=p.photo?`<img src="${esc(p.photo)}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;border-radius:50%;" onerror="this.style.display='none'">`:`<span style="color:var(--yellow);font-weight:700;">${esc(initials)}</span>`;
+      listHtml+=`<div class="rank-item"><div class="rank-num">${i+4}</div><div class="rank-av">${rvHtml}</div><div class="rank-info"><div class="rank-name">${esc(p.name)}</div><div class="rank-tier">${getTier(p.score)}</div></div><div class="rank-score">${lbMoney(p.score)}</div></div>`;
     });
-    const rankList=document.getElementById('rankList');
-    if(rankList){rankList.dataset.loaded='1';rankList.innerHTML=listHtml||'<div style="text-align:center;color:var(--dim);padding:20px">No more players</div>'; }
+    const rankList=document.getElementById('rankList');if(rankList){rankList.dataset.loaded='1';rankList.innerHTML=listHtml||'<div style="text-align:center;color:var(--dim);padding:20px">No more players</div>';}
   }catch(e){
-    console.error('Leaderboard load failed:',e);
-    const rankList=document.getElementById('rankList');
-    const errorText=String(e?.message||e?.details||e?.hint||'Unknown error');
-    // Keep the UI friendly while exposing a useful diagnosis in the browser console.
-    const friendlyMessage=/permission|row-level security|not allowed|jwt|auth/i.test(errorText)
-      ? 'Leaderboard access is blocked. Please check your login and permissions.'
-      : /column .* does not exist|schema cache/i.test(errorText)
-        ? 'Leaderboard data fields do not match the database schema.'
-        : /timeout|network|fetch|offline/i.test(errorText)
-          ? 'Connection timed out. Check your internet and retry.'
-          : 'Leaderboard could not load. Please retry.';
-    if(rankList){rankList.dataset.loaded='0';rankList.innerHTML='<div style="text-align:center;color:var(--dim);padding:24px 16px"><div style="margin-bottom:10px">'+esc(friendlyMessage)+'</div><button class="btn-secondary" onclick="renderLeaderboard()" style="padding:10px 18px;border-radius:12px">↻ Retry</button><div style="font-size:11px;margin-top:8px">If this continues, the database error is logged in the browser console.</div></div>'; }
+    console.error('Leaderboard load failed:',e);const rankList=document.getElementById('rankList');const errorText=String(e?.message||e?.details||e?.hint||'Unknown error');
+    const friendlyMessage=/permission|row-level security|not allowed|jwt|auth/i.test(errorText)?'Leaderboard access is blocked. Please check your login and permissions.':/column .* does not exist|schema cache/i.test(errorText)?'Leaderboard data fields do not match the database schema.':/timeout|network|fetch|offline/i.test(errorText)?'Connection timed out. Check your internet and retry.':'Leaderboard could not load. Please retry.';
+    if(rankList){rankList.dataset.loaded='0';rankList.innerHTML='<div style="text-align:center;color:var(--dim);padding:24px 16px"><div style="margin-bottom:10px">'+esc(friendlyMessage)+'</div><button class="btn-secondary" onclick="renderLeaderboard(currentLbTab)" style="padding:10px 18px;border-radius:12px">↻ Retry</button><div style="font-size:11px;margin-top:8px">If this continues, the database error is logged in the browser console.</div></div>';}
     toast(friendlyMessage,'error');
   }
 }
-function switchLbTab(tab,el){ renderLeaderboard('score'); }
+function switchLbTab(tab,el){renderLeaderboard(currentLbTab||'total');}
 
 // ====== PROFILE ======
 function updateProfile(){
