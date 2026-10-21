@@ -614,6 +614,11 @@ textarea.form-input{resize:none;min-height:80px}
         <div id="squadIncomingReqs" style="display:none;"></div>
       </div>
 
+      <div role="note" aria-label="Team management instructions" style="display:flex;align-items:center;gap:11px;background:linear-gradient(135deg,rgba(255,215,0,.10),rgba(18,18,18,.96));border:1px solid rgba(255,215,0,.28);border-radius:12px;padding:11px 13px;margin:0 0 14px;box-shadow:0 4px 14px rgba(0,0,0,.18);">
+        <div style="width:34px;height:34px;flex:0 0 34px;border-radius:10px;background:rgba(255,215,0,.12);display:flex;align-items:center;justify-content:center;font-size:18px;">🛡️</div>
+        <div style="min-width:0;"><div style="font-size:11px;font-weight:800;letter-spacing:.35px;color:var(--yellow);margin-bottom:3px;">TEAM MANAGEMENT</div><div style="font-size:11px;line-height:1.45;color:#c7c7c7;">To remove a teammate, press and hold their profile for <strong style="color:#fff;">3 seconds</strong>.</div></div>
+      </div>
+
       <!-- Changes #1 + #2: 6 Action Boxes -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
         <div onclick="openReferEarn()" style="background:#1a0a00;border:1px solid rgba(255,140,0,0.35);border-radius:13px;padding:14px;cursor:pointer;display:flex;align-items:center;gap:10px;touch-action:manipulation;">
@@ -2659,11 +2664,12 @@ async function renderLeaderboard(sortBy){
   }
   // Show immediately with cached data if available
   try{
-    // The app's source of truth is Supabase. Do not read the legacy Firebase
-    // RTDB here: that database can contain only one user's profile and makes
-    // every player see an incorrect one-person leaderboard.
+    // IMPORTANT: users SELECT is intentionally restricted by RLS to the signed-in
+    // user's own row. Querying users directly makes every device render a one-player
+    // leaderboard. Use the authenticated SECURITY DEFINER RPC that exposes only
+    // the public leaderboard fields for non-banned players.
     const {data:users,error:usersError}=await Promise.race([
-      _sb.from('users').select('id,display_name,ign,photo_url,stats'),
+      _sb.rpc('get_public_leaderboard'),
       new Promise((_,rej)=>setTimeout(()=>rej(new Error('Leaderboard request timed out')),10000))
     ]);
     if(usersError) throw usersError;
@@ -3008,8 +3014,7 @@ async function renderTeams(){
       html+=`<div class="team-member-card" data-team-member="${esc(memberKey)}" data-team-mode="${mode}" data-teammate-uid="${esc(m.teammate_uid)}" style="display:flex;flex-direction:column;align-items:center;position:relative;touch-action:manipulation;user-select:none;-webkit-user-select:none;">
         <div class="team-member-avatar" style="width:60px;height:60px;border-radius:50%;border:2.5px solid ${mc.b};box-shadow:0 0 10px ${mc.glow};background:#111;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:22px;font-weight:700;color:${mc.c};cursor:pointer;">${memberAvatarMarkup}</div>
         <div class="team-member-name" style="font-size:11px;color:#fff;margin-top:6px;font-weight:600;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;">${esc(name)}</div>
-        <div class="team-member-hint" style="font-size:9px;color:var(--dim);margin-top:3px;">Long press to manage</div>
-        <button class="team-member-remove" type="button" style="display:none;margin-top:5px;background:rgba(255,68,68,.12);border:1px solid #ff4444;color:#ff6666;border-radius:7px;padding:4px 8px;font-size:10px;font-weight:700;" onclick="event.stopPropagation();confirmRemoveTeammate('${mode}','${String(m.teammate_uid).replace(/[^a-zA-Z0-9_-]/g,'')}')">Remove</button>
+        <button class="team-member-remove" type="button" style="display:none;margin-top:5px;background:rgba(255,68,68,.12);border:1px solid #ff4444;color:#ff6666;border-radius:7px;padding:4px 8px;font-size:10px;font-weight:700;" onclick="event.stopPropagation();confirmRemoveTeammate('${mode}','${String(m.teammate_uid).replace(/[^a-zA-Z0-9_-]/g,'')}')">✕ Remove Teammate</button>
       </div>`;
     });
     myOutgoing.forEach(r=>{
@@ -3049,35 +3054,48 @@ async function renderTeams(){
 }
 let _teamLongPressTimer=null;
 let _teamLongPressTarget=null;
+let _teamLongPressStartedAt=0;
 function initTeamLongPressRemoval(){
   if(window.__teamLongPressRemovalBound)return;
   window.__teamLongPressRemovalBound=true;
   const start=(ev)=>{
     const card=ev.target?.closest?.('.team-member-card');
-    if(!card)return;
-    _teamLongPressTarget=card;
+    if(!card || ev.target?.closest?.('.team-member-remove'))return;
+    // Ignore synthetic mouse events after a touch; pointer events cover modern mobile browsers.
+    if(ev.type==='pointerdown' && ev.pointerType==='mouse' && ev.button!==0)return;
     clearTimeout(_teamLongPressTimer);
+    _teamLongPressTarget=card;
+    _teamLongPressStartedAt=Date.now();
+    card.dataset.holdReady='false';
     _teamLongPressTimer=setTimeout(()=>{
-      if(!_teamLongPressTarget||!document.body.contains(_teamLongPressTarget))return;
-      const btn=_teamLongPressTarget.querySelector('.team-member-remove');
-      const hint=_teamLongPressTarget.querySelector('.team-member-hint');
+      const target=_teamLongPressTarget;
+      if(!target||!document.body.contains(target))return;
+      target.dataset.holdReady='true';
+      const btn=target.querySelector('.team-member-remove');
       if(btn)btn.style.display='inline-flex';
-      if(hint)hint.textContent='Tap Remove to confirm';
-      if(navigator.vibrate)navigator.vibrate(25);
-    },550);
+      if(navigator.vibrate)navigator.vibrate([25,35,25]);
+    },3000);
   };
-  const cancel=()=>{clearTimeout(_teamLongPressTimer);_teamLongPressTimer=null;};
-  document.addEventListener('touchstart',start,{passive:true});
+  const cancel=(ev)=>{
+    // Keep the timer only when the pointer is still held on the same card.
+    if(ev?.type==='pointerup'||ev?.type==='pointercancel'||ev?.type==='pointerleave'||ev?.type==='touchend'||ev?.type==='touchcancel'||ev?.type==='scroll'){
+      clearTimeout(_teamLongPressTimer);
+      _teamLongPressTimer=null;
+      _teamLongPressTarget=null;
+      _teamLongPressStartedAt=0;
+    }
+  };
   document.addEventListener('pointerdown',start,{passive:true});
-  ['touchend','touchcancel','pointerup','pointercancel','pointerleave','scroll'].forEach(evt=>document.addEventListener(evt,cancel,{passive:true}));
-  document.addEventListener('click',ev=>{
-    const card=ev.target?.closest?.('.team-member-card');
-    if(!card)return;
-    if(ev.target.closest('.team-member-remove'))return;
-    const btn=card.querySelector('.team-member-remove');
-    if(btn&&btn.style.display!=='none'){btn.style.display='none';const hint=card.querySelector('.team-member-hint');if(hint)hint.textContent='Long press to manage';}
-  });
+  document.addEventListener('pointerup',cancel,{passive:true});
+  document.addEventListener('pointercancel',cancel,{passive:true});
+  document.addEventListener('pointerleave',cancel,{passive:true});
+  document.addEventListener('touchstart',start,{passive:true});
+  document.addEventListener('touchend',cancel,{passive:true});
+  document.addEventListener('touchcancel',cancel,{passive:true});
+  document.addEventListener('scroll',cancel,{passive:true});
 }
+initTeamLongPressRemoval();
+
 function confirmRemoveTeammate(mode,teammateUid){
   if(!teammateUid)return;
   if(!confirm('Is teammate ko team se remove karna hai?'))return;
