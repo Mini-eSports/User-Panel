@@ -3465,5 +3465,78 @@ function copyText(text){
 }
 function fileToBase64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file);});}
 </script>
+
+<!-- Mini eSports Silent Update Manager: bump this build ID whenever publishing a new panel file. -->
+<meta name="mini-esports-build" content="mini-esports-user-build-20261021-1">
+<script id="mini-esports-live-update-manager">
+(function () {
+  'use strict';
+  var meta = document.querySelector('meta[name="mini-esports-build"]');
+  if (!meta || window.__miniEsportsLiveUpdateStarted) return;
+  window.__miniEsportsLiveUpdateStarted = true;
+  var currentBuild = meta.content;
+  var checkEveryMs = 60000;
+  var checkInFlight = false;
+  var updatePending = false;
+  var lastActivity = Date.now();
+  var key = 'miniEsportsLiveUpdateState:' + location.pathname;
+  ['pointerdown','keydown','touchstart','input','change'].forEach(function (eventName) {
+    document.addEventListener(eventName, function () { lastActivity = Date.now(); }, true);
+  });
+  function isBusy() {
+    var el = document.activeElement;
+    var editing = !!(el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
+    var modal = document.querySelector('[role="dialog"], .modal.show, .modal.active, .sheet.show, .bottom-sheet.show');
+    var submitting = !!document.querySelector('button[disabled][data-loading="true"], form[aria-busy="true"]');
+    return editing || !!modal || submitting || (Date.now() - lastActivity < 12000);
+  }
+  function activateUpdate() {
+    if (!updatePending || isBusy()) return;
+    updatePending = false;
+    try {
+      sessionStorage.setItem(key, JSON.stringify({
+        scrollX: window.scrollX || 0,
+        scrollY: window.scrollY || 0,
+        hash: location.hash || '',
+        time: Date.now()
+      }));
+    } catch (_) {}
+    var next = new URL(location.href);
+    next.searchParams.set('_live_update', String(Date.now()));
+    location.replace(next.href);
+  }
+  async function checkVersion() {
+    if (checkInFlight || document.visibilityState === 'hidden') return;
+    checkInFlight = true;
+    try {
+      var url = new URL(location.pathname, location.origin);
+      url.searchParams.set('_version_check', String(Date.now()));
+      var response = await fetch(url.href, { cache: 'no-store', credentials: 'same-origin' });
+      if (!response.ok) return;
+      var html = await response.text();
+      var parsed = new DOMParser().parseFromString(html, 'text/html');
+      var remoteMeta = parsed.querySelector('meta[name="mini-esports-build"]');
+      if (remoteMeta && remoteMeta.content && remoteMeta.content !== currentBuild) updatePending = true;
+    } catch (_) { /* Network/deployment may be temporarily unavailable; retry next interval. */ }
+    finally { checkInFlight = false; }
+    activateUpdate();
+  }
+  function restorePosition() {
+    try {
+      var saved = sessionStorage.getItem(key);
+      if (!saved) return;
+      sessionStorage.removeItem(key);
+      var state = JSON.parse(saved);
+      if (!state || Date.now() - state.time > 120000) return;
+      requestAnimationFrame(function () { window.scrollTo(state.scrollX || 0, state.scrollY || 0); });
+    } catch (_) {}
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', restorePosition, { once: true });
+  else restorePosition();
+  window.setInterval(function () { if (updatePending) activateUpdate(); else checkVersion(); }, checkEveryMs);
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { if (updatePending) activateUpdate(); else checkVersion(); } });
+})();
+</script>
+
 </body>
 </html>
