@@ -503,6 +503,7 @@ textarea.form-input{resize:none;min-height:80px}
             <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>Deposited: ₹<span id="wDep">0</span></div>
             <div class="legend-item"><div class="legend-dot" style="background:#fff"></div>Winnings: ₹<span id="wWin">0</span></div>
             <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Bonus: ₹<span id="wBon">0</span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#20d6a2"></div>Coin to Money: ₹<span id="wCoinMoney">0</span></div>
           </div>
         </div>
         <div class="wallet-btns">
@@ -1137,7 +1138,7 @@ async function boot(){
         coins: 0, approved: false,
         createdAt: Date.now(), isGoogleUser: isGoogleUser,
         stats:{wins:0,kills:0,earnings:0,matches:0},
-        realMoney:{deposited:0,winnings:0,bonus:0},
+        realMoney:{deposited:0,winnings:0,bonus:0,coinToMoney:0},
         lastSeen: Date.now()
       };
       // Non-blocking write
@@ -1330,7 +1331,7 @@ function updateHeader(){
   if(!UD)return;
   document.getElementById('hCoins').textContent=(UD.coins||0).toLocaleString();
   const rm=UD.realMoney||{};
-  document.getElementById('hMoney').textContent=(rm.deposited||0)+(rm.winnings||0)+(rm.bonus||0);
+  document.getElementById('hMoney').textContent=(Number(rm.deposited)||0)+(Number(rm.winnings)||0)+(Number(rm.bonus)||0)+(Number(rm.coinToMoney)||0);
 
   // Avatar shown only in profile page now
 }
@@ -1808,11 +1809,12 @@ function myMatchCard(m, roster, room){
 function updateWallet(){
   if(!UD)return;
   const rm=UD.realMoney||{};
-  const dep=rm.deposited||0,win=rm.winnings||0,bon=rm.bonus||0;
-  document.getElementById('wTotal').textContent=dep+win+bon;
+  const dep=Number(rm.deposited)||0,win=Number(rm.winnings)||0,bon=Number(rm.bonus)||0,coinMoney=Number(rm.coinToMoney)||0;
+  document.getElementById('wTotal').textContent=(dep+win+bon+coinMoney).toFixed(2).replace(/\.00$/,'');
   document.getElementById('wDep').textContent=dep;
   document.getElementById('wWin').textContent=win;
   document.getElementById('wBon').textContent=bon;
+  const coinMoneyEl=document.getElementById('wCoinMoney');if(coinMoneyEl)coinMoneyEl.textContent=coinMoney.toFixed(2).replace(/\.00$/,'');
   document.getElementById('wCoins').textContent=UD.coins||0;
   drawDonut();
   updateDailyBtn();
@@ -1823,19 +1825,19 @@ function drawDonut(){
   if(!c)return;
   const ctx=c.getContext('2d');
   const rm=UD?(UD.realMoney||{}):{}; 
-  const dep=rm.deposited||0,win=rm.winnings||0,bon=rm.bonus||0;
-  const total=dep+win+bon||1;
+  const dep=Number(rm.deposited)||0,win=Number(rm.winnings)||0,bon=Number(rm.bonus)||0,coinMoney=Number(rm.coinToMoney)||0;
+  const total=dep+win+bon+coinMoney||1;
   ctx.clearRect(0,0,90,90);
   let start=-Math.PI/2;
-  [{val:dep,color:'#FFD700'},{val:win,color:'#FFFFFF'},{val:bon,color:'#FF0000'}].forEach(d=>{
+  [{val:dep,color:'#FFD700'},{val:win,color:'#FFFFFF'},{val:bon,color:'#FF0000'},{val:coinMoney,color:'#20d6a2'}].forEach(d=>{
     const angle=(d.val/total)*Math.PI*2;
     if(angle===0)return;
     ctx.beginPath();ctx.arc(45,45,34,start,start+angle);ctx.lineWidth=11;ctx.strokeStyle=d.color;ctx.stroke();
     start+=angle;
   });
-  if(!dep&&!win&&!bon){ctx.beginPath();ctx.arc(45,45,34,0,Math.PI*2);ctx.lineWidth=11;ctx.strokeStyle='#333';ctx.stroke();}
+  if(!dep&&!win&&!bon&&!coinMoney){ctx.beginPath();ctx.arc(45,45,34,0,Math.PI*2);ctx.lineWidth=11;ctx.strokeStyle='#333';ctx.stroke();}
   ctx.fillStyle='#fff';ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText('₹'+(dep+win+bon),45,45);
+  ctx.fillText('₹'+(dep+win+bon+coinMoney),45,45);
 }
 let dailyClaimReward = 10;
 let dailyClaimRewardLoad = null;
@@ -2107,7 +2109,7 @@ function openCreateTicket(){
     '<div style="font-size:13px;font-weight:800;color:#d7d9e0;margin-bottom:8px;">Receiver UID</div><div style="display:flex;align-items:center;gap:9px;padding:13px;border-radius:13px;border:1.5px solid #3a3d47;background:#0d0e12;"><span style="font-size:20px;">👤</span><input id="tcUID" type="text" placeholder="Enter receiver UID" oninput="verifyTicketReceiver()" style="min-width:0;flex:1;background:transparent;border:0;outline:0;color:#fff;font-size:15px;"><span id="tcVerifyIcon"></span></div><div id="tcReceiverInfo" style="margin-top:7px;"></div><div style="font-size:11px;color:#9da3ad;margin:8px 0 18px;">🛡️ Only registered app users can receive tickets</div>'+
     '<button id="tcSendBtn" onclick="confirmSendTicket()" style="width:100%;padding:16px;border:0;border-radius:14px;background:linear-gradient(100deg,#ffe51c,#ffb900);color:#090909;font-size:15px;font-weight:950;box-shadow:0 0 22px rgba(255,204,0,.25);">CONFIRM &amp; SEND　➜</button></div>');
   window._ticketType='coin';window._ticketReceiver=null;
-  const coinBal=Number(UD?.coins||0);const moneyBal=Number((UD?.realMoney?.deposited||0)+(UD?.realMoney?.winnings||0)+(UD?.realMoney?.bonus||0));
+  const coinBal=Number(UD?.coins||0);const moneyBal=Number((UD?.realMoney?.deposited||0)+(UD?.realMoney?.winnings||0)+(UD?.realMoney?.bonus||0)+(UD?.realMoney?.coinToMoney||0));
   const bal=document.getElementById('tcBal');if(bal){bal.textContent=coinBal+' Coins';bal._coinBal=coinBal;bal._moneyBal=moneyBal;}
 }
 
@@ -2248,46 +2250,61 @@ let _coinConvertRate = 10;
 async function openConvertCoins(){
   if(!UD){toast('Please wait...','info');return;}
   try{
-    const {data} = await _sb.from('app_config').select('value').eq('key','coinToMoneyRate').maybeSingle();
-    if(data?.value) _coinConvertRate = Number(data.value)||10;
+    const {data,error} = await _sb.from('app_config').select('value').eq('key','coinToMoneyRate').maybeSingle();
+    if(!error && data?.value) _coinConvertRate = Number(data.value)||10;
   }catch(e){}
-  const coins = UD.coins||0;
-  openModal(`<div class="modal-bar"></div>
-    <h3 style="margin-bottom:4px;">🔄 Convert Coins to Money</h3>
-    <p style="font-size:12px;color:var(--dim);margin-bottom:14px;">Rate: ${_coinConvertRate} Coins = ₹1</p>
-    <div style="background:var(--card);border-radius:12px;padding:12px;margin-bottom:14px;text-align:center;">
-      <div style="font-size:10px;color:var(--dim);">Available Coins</div>
-      <div style="font-size:22px;font-weight:900;color:var(--yellow);">🪙 ${coins}</div>
+  const coins = Math.max(0,Number(UD.coins)||0);
+  const fmt = n => Number(n||0).toLocaleString('en-IN');
+  const max25 = Math.floor(coins*0.25), max50 = Math.floor(coins*0.5);
+  openModal(`<style>
+    #modalContent:has(.coin-convert-premium){width:min(100%,560px);max-height:94vh;overflow-y:auto;padding:0!important;background:#07090b;border:1px solid #d9b900;box-shadow:0 0 28px #f5cf0030;border-radius:28px;color:#fff;}
+    .coin-convert-premium{padding:22px 16px 18px;background:radial-gradient(ellipse at 50% 0%,#3b300b44,transparent 48%),linear-gradient(160deg,#080a0b,#060708);}
+    .cc-head{display:flex;align-items:center;gap:12px;padding:4px 42px 0 0;position:relative}.cc-logo{width:54px;height:54px;flex:0 0 54px;border-radius:15px;display:grid;place-items:center;font-size:29px;color:#ffdf25;background:linear-gradient(145deg,#302707,#0c0c0b);border:1px solid #e5c400;box-shadow:0 0 18px #f5d00028}.cc-title{font-size:clamp(19px,4.6vw,25px);font-weight:950;line-height:1.15}.cc-sub{font-size:12px;color:#b7bbc4;margin-top:6px;line-height:1.4}.cc-hero{height:132px;display:flex;align-items:center;justify-content:space-around;gap:6px;padding:4px 0}.cc-hero-coin{font-size:67px;filter:drop-shadow(0 0 15px #ffcf00aa)}.cc-hero-arrow{font-size:38px;letter-spacing:-9px;color:#ffe22d;text-shadow:0 0 14px #ffdc25}.cc-hero-wallet{font-size:68px;filter:drop-shadow(0 0 14px #00e58a99)}.cc-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:12px}.cc-info{min-width:0;padding:12px 11px;border-radius:15px;border:1px solid #66551c;background:linear-gradient(145deg,#15140e,#0b0d0e)}.cc-info-label{font-size:11px;color:#c7c9d0;margin-bottom:6px}.cc-info-value{font-size:clamp(15px,3.8vw,20px);font-weight:950;color:#ffdc25;line-height:1.25}.cc-info-note{font-size:10px;color:#a8abb4;margin-top:5px;line-height:1.35}.cc-balance{display:flex;align-items:center;justify-content:center;gap:14px;padding:13px 10px;border:1px solid #8b751b;border-radius:15px;background:linear-gradient(100deg,#171609,#10120e);margin-bottom:17px}.cc-balance-icon{font-size:38px;filter:drop-shadow(0 0 8px #ffd21c99)}.cc-label{font-size:12px;color:#c7c9d0}.cc-balance-number{font-size:clamp(27px,6vw,36px);font-weight:950;color:#ffdb20;line-height:1.1;margin-top:3px}.cc-input-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 3px 8px;font-size:14px;font-weight:850}.cc-clear{border:0;background:none;color:#ffdc25;font-weight:800;font-size:12px;padding:5px}.cc-input-wrap{display:flex;align-items:center;gap:10px;border:1px solid #e4c400;border-radius:15px;background:#090c0f;padding:0 13px;box-shadow:inset 0 0 14px #f6d0000b}.cc-input-icon{font-size:26px}.cc-input{width:100%;min-width:0;height:58px;background:transparent;border:0;outline:none;color:#fff;font-size:20px;font-weight:800}.cc-input::placeholder{color:#777d87;font-size:15px;font-weight:500}.cc-quick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}.cc-quick button{min-width:0;padding:10px 4px;border:1px solid #bfa400;border-radius:13px;background:linear-gradient(145deg,#19170b,#090a0b);color:#ffdc25;font-size:16px;font-weight:950}.cc-quick small{display:block;color:#c1c3ca;font-size:10px;font-weight:600;margin-top:4px}.cc-result{display:flex;align-items:center;gap:10px;margin:15px 0;padding:14px 12px;border-radius:17px;border:1px solid #10a968;background:linear-gradient(110deg,#062519,#07140f);box-shadow:0 0 15px #00d78314}.cc-result-wallet{font-size:36px}.cc-result-main{flex:1;min-width:0}.cc-result-amount{font-size:clamp(26px,6vw,35px);font-weight:950;color:#16e998;line-height:1.2}.cc-result-side{border-left:1px solid #32634d;padding-left:10px;font-size:11px;color:#e5e9e8;white-space:nowrap;line-height:1.7}.cc-primary{width:100%;min-height:54px;border:0;border-radius:15px;background:linear-gradient(100deg,#ffe51c,#ffb800);color:#090909;font-size:16px;font-weight:950;box-shadow:0 5px 18px #f3cb0030}.cc-secondary{width:100%;min-height:48px;margin-top:9px;border:1px solid #d8b900;border-radius:14px;background:#080a0b;color:#ffdc25;font-size:14px;font-weight:900}.cc-footnote{text-align:center;font-size:11px;color:#a9adb7;line-height:1.5;margin:13px 3px 0}.cc-min-error{font-size:11px;color:#ff647d;margin:7px 4px 0;min-height:15px}
+    @media(max-width:380px){.coin-convert-premium{padding:19px 12px 15px}.cc-hero{height:105px}.cc-hero-coin,.cc-hero-wallet{font-size:55px}.cc-hero-arrow{font-size:29px}.cc-info{padding:10px 8px}.cc-result{gap:7px;padding:12px 8px}.cc-result-side{padding-left:7px;font-size:10px}}
+  </style>
+  <div class="coin-convert-premium">
+    <div class="cc-head"><div class="cc-logo">🔄</div><div><div class="cc-title">Convert <span style="color:#ffdc25;">Coins to Money</span></div><div class="cc-sub">Convert your coins to wallet money instantly</div></div></div>
+    <div class="cc-hero" aria-hidden="true"><div class="cc-hero-coin">🪙</div><div class="cc-hero-arrow">❯❯❯</div><div class="cc-hero-wallet">👛</div></div>
+    <div class="cc-info-grid">
+      <div class="cc-info"><div class="cc-info-label">📈 Conversion Rate</div><div class="cc-info-value">${_coinConvertRate} Coins = ₹1</div><div class="cc-info-note">Your converted amount goes to Coin to Money balance.</div></div>
+      <div class="cc-info"><div class="cc-info-label">🛡️ Minimum Conversion</div><div class="cc-info-value">1,000 Coins (₹${(1000/_coinConvertRate).toFixed(2).replace(/\.00$/,'')})</div><div class="cc-info-note">Convert at least 1,000 coins at a time.</div></div>
     </div>
-    <div class="form-group">
-      <label>Coins to Convert</label>
-      <input class="form-input" type="number" id="convertCoinsInput" min="1" max="${coins}" placeholder="Enter coin amount" style="margin-top:5px;" oninput="updateConvertPreview()">
-      <div style="display:flex;gap:6px;margin-top:8px;">
-        <button class="btn btn-outline btn-xs" style="flex:1;" onclick="setConvertAmt(Math.floor(${coins}*0.25))">25%</button>
-        <button class="btn btn-outline btn-xs" style="flex:1;" onclick="setConvertAmt(Math.floor(${coins}*0.5))">50%</button>
-        <button class="btn btn-outline btn-xs" style="flex:1;" onclick="setConvertAmt(${coins})">MAX</button>
-      </div>
+    <div class="cc-balance"><div class="cc-balance-icon">🪙</div><div><div class="cc-label">Available Coins</div><div class="cc-balance-number">${fmt(coins)}</div></div></div>
+    <div class="cc-input-head"><label for="convertCoinsInput">Coins to Convert</label><button type="button" class="cc-clear" onclick="setConvertAmt(0)">⟳ Clear</button></div>
+    <div class="cc-input-wrap"><span class="cc-input-icon">🪙</span><input class="cc-input" type="number" inputmode="numeric" id="convertCoinsInput" min="1000" max="${coins}" step="1" placeholder="Enter coin amount" oninput="updateConvertPreview()"></div>
+    <div class="cc-min-error" id="convertMinError"></div>
+    <div class="cc-quick">
+      <button type="button" onclick="setConvertAmt(${Math.min(coins,max25)})">25%<small>( ${fmt(max25)} Coins )</small></button>
+      <button type="button" onclick="setConvertAmt(${Math.min(coins,max50)})">50%<small>( ${fmt(max50)} Coins )</small></button>
+      <button type="button" onclick="setConvertAmt(${coins})">MAX<small>( ${fmt(coins)} Coins )</small></button>
     </div>
-    <div id="convertPreview" style="text-align:center;font-size:13px;color:var(--dim);margin:12px 0;">You'll receive ₹0</div>
-    <button class="btn btn-yellow btn-full" style="padding:13px;" id="convertCoinsBtn" onclick="submitConvertCoins()">Convert Now</button>
-    <button class="btn btn-outline btn-full" style="margin-top:8px;" onclick="closeModal()">Cancel</button>
-  `);
+    <div class="cc-result"><div class="cc-result-wallet">👛</div><div class="cc-result-main"><div class="cc-label">You'll receive</div><div class="cc-result-amount" id="convertPreview">₹0</div></div><div class="cc-result-side"><div>🪙 <span id="convertPreviewCoins">0 Coins</span></div><div style="text-align:center;color:#8fa59b">↓</div><div>💚 <span id="convertPreviewMoney">₹0 Money</span></div></div></div>
+    <button class="cc-primary" id="convertCoinsBtn" onclick="submitConvertCoins()">🔄 &nbsp; CONVERT NOW</button>
+    <button class="cc-secondary" onclick="closeModal()">CANCEL</button>
+    <div class="cc-footnote">ⓘ Converted money is added instantly to your separate <b style="color:#18e99a">Coin to Money</b> wallet category.</div>
+  </div>`);
+  updateConvertPreview();
 }
 function setConvertAmt(v){
   const inp=document.getElementById('convertCoinsInput');
   if(inp){inp.value=Math.max(0,v);updateConvertPreview();}
 }
 function updateConvertPreview(){
-  const coins = parseInt(document.getElementById('convertCoinsInput')?.value)||0;
+  const coins = Math.max(0,parseInt(document.getElementById('convertCoinsInput')?.value)||0);
   const money = (coins/_coinConvertRate).toFixed(2);
   const el = document.getElementById('convertPreview');
-  if(el) el.textContent = `You'll receive ₹${money}`;
+  if(el) el.textContent = `₹${Number(money).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:2})}`;
+  const coinEl=document.getElementById('convertPreviewCoins');if(coinEl)coinEl.textContent=`${coins.toLocaleString('en-IN')} Coins`;
+  const moneyEl=document.getElementById('convertPreviewMoney');if(moneyEl)moneyEl.textContent=`₹${Number(money).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:2})} Money`;
+  const errorEl=document.getElementById('convertMinError');
+  if(errorEl)errorEl.textContent=coins>0&&coins<1000?'Minimum 1,000 coins required for conversion.':(coins>(Number(UD?.coins)||0)?'You do not have enough coins.':'');
+  const btn=document.getElementById('convertCoinsBtn');if(btn)btn.disabled=coins<1000||coins>(Number(UD?.coins)||0);
 }
 let _convertingCoins = false;
 async function submitConvertCoins(){
   if(_convertingCoins) return;
   const coins = parseInt(document.getElementById('convertCoinsInput')?.value)||0;
-  if(!coins || coins<=0){toast('Enter a valid coin amount','error');return;}
+  if(!coins || coins<1000){toast('Minimum 1,000 coins required for conversion','error');return;}
   if(coins > (UD.coins||0)){toast('You don\'t have enough coins','error');return;}
   _convertingCoins = true;
   const btn = document.getElementById('convertCoinsBtn');
