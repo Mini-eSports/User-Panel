@@ -1793,16 +1793,48 @@ async function renderMyMatches(){
 
     // Batch-fetch team rosters for every match's join request
     const allJoinIds = Object.values(myJoinRequestByTournament);
-    const { data: allMembers } = await _sb.from('match_team_members').select('join_request_id,uid,ign,role').in('join_request_id', allJoinIds);
+    const { data: allMembers, error: allMembersError } = await _sb.from('match_team_members')
+      .select('join_request_id,uid,ign,ffuid,role,created_at').in('join_request_id', allJoinIds);
+    if(allMembersError) console.error('Match roster query failed:',allMembersError);
     const rosterByJoinId = {};
     (allMembers||[]).forEach(m=>{ (rosterByJoinId[m.join_request_id] = rosterByJoinId[m.join_request_id]||[]).push(m); });
-    // Enrich the visible roster with public profile fields in one batch; cards still render if profile lookup is restricted.
+
+    // Use the public-profile RPC (not direct users-table reads, which can be blocked by RLS).
+    // It returns avatar + FF UID safely for every teammate and works on both devices.
     const rosterUids=[...new Set((allMembers||[]).map(m=>m.uid).filter(Boolean))];
     if(rosterUids.length){
-      try{ const {data: profiles}=await _sb.from('users').select('id,ign,ffuid,photo_url').in('id',rosterUids);
-        const profileById={}; (profiles||[]).forEach(p=>profileById[p.id]=p);
-        Object.keys(rosterByJoinId).forEach(jid=>{ rosterByJoinId[jid]=rosterByJoinId[jid].map(m=>({...m,...(profileById[m.uid]||{})})); });
-      }catch(profileErr){ console.warn('Roster profile enrichment skipped:',profileErr?.message||profileErr); }
+      try{
+        const {data: profiles,error:profileError}=await _sb.rpc('get_public_player_profiles',{p_user_ids:rosterUids});
+        if(profileError) throw profileError;
+        const profileById={}; (profiles||[]).forEach(p=>profileById[String(p.id)]=p);
+        Object.keys(rosterByJoinId).forEach(jid=>{
+          rosterByJoinId[jid]=rosterByJoinId[jid].map(m=>{
+            const p=profileById[String(m.uid)]||{};
+            return {...m,...p,uid:m.uid,role:String(m.role||'').toLowerCase()==='captain'?'captain':m.role,
+              ign:p.ign||m.ign||'',ffuid:p.ffuid||m.ffuid||'',photo_url:p.photo_url||''};
+          });
+        });
+      }catch(profileErr){ console.warn('Roster profile enrichment failed; using saved roster fields:',profileErr?.message||profileErr); }
+    }
+    // Older join requests may not have a captain row in match_team_members.
+    // Restore the owner from join_requests so the captain is still visible to every joined teammate.
+    for(const m of matches){
+      const jid=myJoinRequestByTournament[m.id];
+      if(!jid) continue;
+      const roster=rosterByJoinId[jid]||(rosterByJoinId[jid]=[]);
+      if(!roster.some(p=>String(p.role||'').trim().toLowerCase()==='captain')){
+        const {data:jr}=await _sb.from('join_requests').select('uid,ign,ffuid').eq('id',jid).maybeSingle();
+        const ownerUid=jr?.uid||'';
+        if(ownerUid && !roster.some(p=>String(p.uid)===String(ownerUid))){
+          let ownerProfile={};
+          try{const {data}=await _sb.rpc('get_public_player_profiles',{p_user_ids:[ownerUid]});ownerProfile=(data||[])[0]||{};}catch(_){}
+          roster.push({uid:ownerUid,ign:ownerProfile.ign||jr?.ign||ownerProfile.display_name||'Player',
+            ffuid:ownerProfile.ffuid||jr?.ffuid||'',photo_url:ownerProfile.photo_url||'',role:'captain'});
+        }else if(ownerUid){
+          const owner=roster.find(p=>String(p.uid)===String(ownerUid));
+          if(owner){owner.role='captain';}
+        }
+      }
     }
 
     // Batch-fetch room credentials — RLS only returns rows this user is authorized to see
@@ -1833,7 +1865,7 @@ function myMatchCard(m, roster, room){
   const joinedBadge=m.reqStatus==='pending'
     ? '<span class="mm-state pending">⏳ PENDING</span>'
     : '<span class="mm-state joined">✓ JOINED</span>';
-  const captain=roster.find(p=>String(p.role||'').toLowerCase()==='captain')||roster[0]||null;
+  const captain=roster.find(p=>String(p.role||'').trim().toLowerCase()==='captain')||roster[0]||null;
   const isCaptain=m.myRole==='Captain';
   const sortedRoster=[...roster].sort((a,b)=>{
     const ac=String(a.role||'').trim().toLowerCase()==='captain';
@@ -1850,7 +1882,7 @@ function myMatchCard(m, roster, room){
   const playerRows=sortedRoster.map((p,i)=>{
     const name=p.ign||p.display_name||(p.uid===U.uid?'You':'Player');
     const uid=p.ffuid||p.ff_uid||'';
-    const captainFlag=String(p.role||'').toLowerCase()==='captain';
+    const captainFlag=String(p.role||'').trim().toLowerCase()==='captain';
     const fallback=`<span class="mm-avatar-fallback" ${avatarOf(p)?'style="display:none"':''}>${esc(String(name).trim().charAt(0).toUpperCase()||'?')}</span>`;
     return `<div class="mm-player-row ${captainFlag?'captain':''}" style="--player-accent:${['#ffd700','#d84cff','#18a8ff','#ff5b45'][i%4]}">
       <div class="mm-player-avatar">${safeAvatar(p)}${fallback}${captainFlag?'<span class="mm-crown">👑</span>':''}</div>
@@ -1859,7 +1891,7 @@ function myMatchCard(m, roster, room){
         ${uid?`<div class="mm-player-detail">FF UID: <b class="mm-uid">${esc(uid)}</b></div>`:''}
       </div><span class="mm-player-joined">● JOINED</span></div>`;
   }).join('');
-  const myAlreadyListed=sortedRoster.some(p=>p.uid===U.uid);
+  const myAlreadyListed=sortedRoster.some(p=>String(p.uid)===String(U.uid));
   const fallbackRows=(!sortedRoster.length||(!myAlreadyListed&&m.myRole==='Team Member'))?`<div class="mm-player-row"><div class="mm-player-avatar"><span class="mm-avatar-fallback">${esc((U.ign||'Y').charAt(0).toUpperCase())}</span></div><div class="mm-player-info"><div class="mm-player-name">${esc(U.ign||'You')}${isCaptain?' <span class="mm-captain-tag">CAPTAIN</span>':''}</div><div class="mm-player-detail">IGN: <b>${esc(U.ign||'-')}</b></div><div class="mm-player-detail">FF UID: <b class="mm-uid">${esc(U.ffuid||'-')}</b></div></div><span class="mm-player-joined">● JOINED</span></div>`:'';
   // Room details are returned only when permitted by the database's room policy.
   let roomHtml='';
