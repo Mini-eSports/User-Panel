@@ -1796,13 +1796,19 @@ async function renderMyMatches(){
     const { data: allMembers } = await _sb.from('match_team_members').select('join_request_id,uid,ign,role').in('join_request_id', allJoinIds);
     const rosterByJoinId = {};
     (allMembers||[]).forEach(m=>{ (rosterByJoinId[m.join_request_id] = rosterByJoinId[m.join_request_id]||[]).push(m); });
-    // Enrich the visible roster with public profile fields in one batch; cards still render if profile lookup is restricted.
-    const rosterUids=[...new Set((allMembers||[]).map(m=>m.uid).filter(Boolean))];
+    // Enrich the visible roster through the authenticated public-profile RPC.
+    // Direct SELECT on users is restricted by RLS for other players, which caused
+    // teammate avatars and FF UIDs to disappear on another device.
+    const rosterUids=[...new Set((allMembers||[]).map(m=>m.uid).filter(Boolean).map(String))];
     if(rosterUids.length){
-      try{ const {data: profiles}=await _sb.from('users').select('id,ign,ffuid,photo_url').in('id',rosterUids);
-        const profileById={}; (profiles||[]).forEach(p=>profileById[p.id]=p);
-        Object.keys(rosterByJoinId).forEach(jid=>{ rosterByJoinId[jid]=rosterByJoinId[jid].map(m=>({...m,...(profileById[m.uid]||{})})); });
-      }catch(profileErr){ console.warn('Roster profile enrichment skipped:',profileErr?.message||profileErr); }
+      try{
+        const {data: profiles, error: profileError}=await _sb.rpc('get_public_player_profiles',{p_user_ids:rosterUids});
+        if(profileError) throw profileError;
+        const profileById={}; (profiles||[]).forEach(p=>{ profileById[String(p.id)]=p; });
+        Object.keys(rosterByJoinId).forEach(jid=>{
+          rosterByJoinId[jid]=rosterByJoinId[jid].map(m=>({...m,...(profileById[String(m.uid)]||{})}));
+        });
+      }catch(profileErr){ console.warn('Roster public-profile lookup failed:',profileErr?.message||profileErr); }
     }
 
     // Batch-fetch room credentials — RLS only returns rows this user is authorized to see
