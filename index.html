@@ -1835,27 +1835,32 @@ function myMatchCard(m, roster, room){
     : '<span class="mm-state joined">✓ JOINED</span>';
   const captain=roster.find(p=>String(p.role||'').toLowerCase()==='captain')||roster[0]||null;
   const isCaptain=m.myRole==='Captain';
-  const sortedRoster=[...roster].sort((a,b)=>String(b.role||'').toLowerCase()==='captain'?-1:String(a.role||'').toLowerCase()==='captain'?1:0);
+  const sortedRoster=[...roster].sort((a,b)=>{
+    const ac=String(a.role||'').trim().toLowerCase()==='captain';
+    const bc=String(b.role||'').trim().toLowerCase()==='captain';
+    return ac===bc?0:(ac?-1:1);
+  });
   const modeText=String(m.gameMode||m.mode||'').toLowerCase();
   const isSquad=/squad/.test(modeText)||Number(m.teamSize||0)>=4;
   const isDuo=/duo/.test(modeText)||Number(m.teamSize||0)===2;
   const teamLabel=isSquad?'Squad':isDuo?'Duo':(m.gameMode||'Team');
   const expected=isSquad?4:isDuo?2:Math.max(1,Number(m.teamSize)||roster.length||1);
-  const safeAvatar=p=>p?.photo_url?`<img src="${esc(p.photo_url)}" alt="${esc(p.ign||'Player')}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`:'';
+  const avatarOf=p=>p?.photo_url||p?.photoURL||p?.avatar_url||p?.picture||'';
+  const safeAvatar=p=>avatarOf(p)?`<img src="${esc(avatarOf(p))}" alt="${esc(p.ign||'Player')}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`:'';
   const playerRows=sortedRoster.map((p,i)=>{
     const name=p.ign||p.display_name||(p.uid===U.uid?'You':'Player');
     const uid=p.ffuid||p.ff_uid||'';
     const captainFlag=String(p.role||'').toLowerCase()==='captain';
-    const fallback=`<span class="mm-avatar-fallback" ${p?.photo_url?'style="display:none"':''}>${esc(String(name).trim().charAt(0).toUpperCase()||'?')}</span>`;
+    const fallback=`<span class="mm-avatar-fallback" ${avatarOf(p)?'style="display:none"':''}>${esc(String(name).trim().charAt(0).toUpperCase()||'?')}</span>`;
     return `<div class="mm-player-row ${captainFlag?'captain':''}" style="--player-accent:${['#ffd700','#d84cff','#18a8ff','#ff5b45'][i%4]}">
       <div class="mm-player-avatar">${safeAvatar(p)}${fallback}${captainFlag?'<span class="mm-crown">👑</span>':''}</div>
       <div class="mm-player-info"><div class="mm-player-name">${esc(name)} ${captainFlag?'<span class="mm-captain-tag">CAPTAIN</span>':''}</div>
-        <div class="mm-player-detail"><span>🎮</span> IGN: <b>${esc(name)}</b></div>
-        ${uid?`<div class="mm-player-detail"><span class="mm-id-icon">ID</span> FF UID: <b class="mm-uid">${esc(uid)}</b><button class="mm-copy" type="button" aria-label="Copy FF UID" onclick="copyText('${esc(uid)}')">▢</button></div>`:''}
+        <div class="mm-player-detail">IGN: <b>${esc(name)}</b></div>
+        ${uid?`<div class="mm-player-detail">FF UID: <b class="mm-uid">${esc(uid)}</b></div>`:''}
       </div><span class="mm-player-joined">● JOINED</span></div>`;
   }).join('');
   const myAlreadyListed=sortedRoster.some(p=>p.uid===U.uid);
-  const fallbackRows=(!sortedRoster.length||(!myAlreadyListed&&m.myRole==='Team Member'))?`<div class="mm-player-row"><div class="mm-player-avatar"><span class="mm-avatar-fallback">${esc((U.ign||'Y').charAt(0).toUpperCase())}</span></div><div class="mm-player-info"><div class="mm-player-name">${esc(U.ign||'You')}${isCaptain?' <span class="mm-captain-tag">CAPTAIN</span>':''}</div><div class="mm-player-detail">🎮 IGN: <b>${esc(U.ign||'-')}</b></div><div class="mm-player-detail"><span class="mm-id-icon">ID</span> FF UID: <b class="mm-uid">${esc(U.ffuid||'-')}</b></div></div><span class="mm-player-joined">● JOINED</span></div>`:'';
+  const fallbackRows=(!sortedRoster.length||(!myAlreadyListed&&m.myRole==='Team Member'))?`<div class="mm-player-row"><div class="mm-player-avatar"><span class="mm-avatar-fallback">${esc((U.ign||'Y').charAt(0).toUpperCase())}</span></div><div class="mm-player-info"><div class="mm-player-name">${esc(U.ign||'You')}${isCaptain?' <span class="mm-captain-tag">CAPTAIN</span>':''}</div><div class="mm-player-detail">IGN: <b>${esc(U.ign||'-')}</b></div><div class="mm-player-detail">FF UID: <b class="mm-uid">${esc(U.ffuid||'-')}</b></div></div><span class="mm-player-joined">● JOINED</span></div>`:'';
   // Room details are returned only when permitted by the database's room policy.
   let roomHtml='';
   if(status!=='cancelled'){
