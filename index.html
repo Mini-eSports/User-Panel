@@ -77,7 +77,11 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 @keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
 /* SEARCH */
 .search-wrap{overflow:hidden;max-height:0;transition:max-height .15s ease;background:var(--bg2);padding:0 14px}
-.search-wrap.open{max-height:56px;padding:8px 14px}
+.search-wrap.open{max-height:62vh;overflow-y:auto;padding:8px 14px 12px}
+.player-search-results{display:grid;gap:8px;margin-top:9px}
+.player-search-hit{display:flex;align-items:center;gap:11px;padding:12px;background:linear-gradient(135deg,rgba(0,200,120,.10),rgba(8,18,14,.95));border:1px solid rgba(0,200,120,.42);border-radius:14px;cursor:pointer;text-align:left;width:100%;color:#fff}
+.player-search-hit:active{transform:scale(.99)}.player-search-avatar{width:48px;height:48px;flex:0 0 48px;border-radius:50%;border:2px solid var(--yellow);object-fit:cover;display:flex;align-items:center;justify-content:center;background:#080808;color:var(--yellow);font-size:21px;font-weight:900}
+.player-search-sub{color:#999;font-size:12px;margin-top:3px;overflow-wrap:anywhere}.player-search-state{padding:12px;color:#aaa;text-align:center;font-size:13px}
 .search-wrap input{width:100%;padding:10px 14px;background:var(--card);border:1px solid var(--byellow);border-radius:10px;color:#fff;font-size:13px;outline:none}
 /* MAIN */
 #mainApp{display:none;height:100%;flex-direction:column}
@@ -438,7 +442,8 @@ textarea.form-input{resize:none;min-height:80px}
     </div>
     <div class="ticker-wrap"><div class="ticker-content" id="tickerText">🏆 Welcome to Mini eSports — Join tournaments, win real prizes! ⚡ New matches added daily — don\'t miss out! 🎯</div></div>
     <div class="search-wrap" id="searchWrap">
-      <input type="text" placeholder="Search tournaments..." id="searchInput" oninput="filterTournaments()">
+      <input type="search" placeholder="Search by FF UID, IGN, App User ID or email..." id="searchInput" autocomplete="off" autocapitalize="off" spellcheck="false" oninput="searchPlayersDebounced()" onkeydown="if(event.key==='Enter'){event.preventDefault();searchPlayersNow();}">
+      <div id="playerSearchResults" class="player-search-results" aria-live="polite"></div>
     </div>
   </div>
 
@@ -1188,7 +1193,7 @@ function listenUserData(){
     updateApprovalBanner();
   });
   listeners.push(()=>ref.off('value',cb));
-  refreshMyJoinedTournaments().then(()=>renderHome());
+  refreshMyJoinedTournaments().then(()=>{renderHome();startMyMatchesAutoRefresh();});
 }
 // Mobile browsers throttle/freeze timers when a tab is backgrounded for a long time.
 // When the user returns after a long gap, force an immediate fresh data fetch + full
@@ -1248,18 +1253,36 @@ async function forceRefreshAllData(){
   }catch(e){ console.error('visibility refresh error', e); }
 }
 let myJoinedTournamentIds = new Set();
+let _myMatchesRefreshTimer = null;
+function startMyMatchesAutoRefresh(){
+  if(_myMatchesRefreshTimer) return;
+  // Keep an already-open teammate panel in sync without requiring a page reload.
+  _myMatchesRefreshTimer = setInterval(async()=>{
+    if(!U || document.visibilityState !== 'visible') return;
+    await refreshMyJoinedTournaments();
+    const screen = document.getElementById('screen-mymatches');
+    if(screen && screen.classList.contains('active')) await renderMyMatches();
+  }, 12000);
+}
 async function refreshMyJoinedTournaments(){
   if(!U) return;
   try{
-    const snap = await db.ref('joinRequests').orderByChild('uid').equalTo(U.uid).once('value');
-    const v = snap.val()||{};
-    const ids = new Set(Object.values(v).filter(r=>r.status==='pending'||r.status==='approved').map(r=>r.tournamentId));
-    // Also include matches where the user was added as a team member (not the captain)
-    const {data: memberRows} = await _sb.from('match_team_members').select('join_request_id').eq('uid', U.uid).eq('role','member');
+    // Supabase is the source of truth for match joins. The legacy Firebase path misses
+    // RPC-created join requests, so captain and teammate views must read the same tables.
+    const ids = new Set();
+    const {data: ownRows, error: ownError} = await _sb.from('join_requests')
+      .select('tournament_id,status').eq('uid', U.uid).in('status',['pending','approved']);
+    if(ownError) throw ownError;
+    (ownRows||[]).forEach(r=>{ if(r.tournament_id) ids.add(r.tournament_id); });
+    const {data: memberRows, error: memberError} = await _sb.from('match_team_members')
+      .select('join_request_id').eq('uid', U.uid).eq('role','member');
+    if(memberError) throw memberError;
     if(memberRows && memberRows.length){
-      const jrIds = memberRows.map(r=>r.join_request_id);
-      const {data: jrs} = await _sb.from('join_requests').select('tournament_id,status').in('id', jrIds);
-      (jrs||[]).forEach(r=>{ if(r.status==='pending'||r.status==='approved') ids.add(r.tournament_id); });
+      const jrIds = [...new Set(memberRows.map(r=>r.join_request_id).filter(Boolean))];
+      const {data: jrs, error: jrError} = await _sb.from('join_requests')
+        .select('tournament_id,status').in('id', jrIds).in('status',['pending','approved']);
+      if(jrError) throw jrError;
+      (jrs||[]).forEach(r=>{ if(r.tournament_id) ids.add(r.tournament_id); });
     }
     myJoinedTournamentIds = ids;
   }catch(e){ console.error('joined-tournaments fetch error', e); }
@@ -1316,14 +1339,49 @@ function goInternal(screen){
 function toggleSearch(){
   const w=document.getElementById('searchWrap');
   w.classList.toggle('open');
-  if(w.classList.contains('open'))document.getElementById('searchInput').focus();
-  else{document.getElementById('searchInput').value='';filterTournaments();}
+  if(w.classList.contains('open')){document.getElementById('searchInput').focus();}
+  else{clearTimeout(window._playerSearchTimer);document.getElementById('searchInput').value='';document.getElementById('playerSearchResults').innerHTML='';}
 }
-function filterTournaments(){
-  const q=document.getElementById('searchInput').value.toLowerCase();
-  document.querySelectorAll('.t-card').forEach(c=>{
-    c.style.display=(c.getAttribute('data-name')||'').toLowerCase().includes(q)?'':'none';
-  });
+let _playerSearchSeq=0;
+function searchPlayersDebounced(){
+  clearTimeout(window._playerSearchTimer);
+  const q=document.getElementById('searchInput')?.value.trim()||'';
+  const box=document.getElementById('playerSearchResults');
+  if(!q){box.innerHTML='';return;}
+  if(q.length<3){box.innerHTML='<div class="player-search-state">Enter at least 3 characters to search players.</div>';return;}
+  box.innerHTML='<div class="player-search-state">🔎 Searching players…</div>';
+  window._playerSearchTimer=setTimeout(searchPlayersNow,350);
+}
+async function searchPlayersNow(){
+  clearTimeout(window._playerSearchTimer);
+  const input=document.getElementById('searchInput'),box=document.getElementById('playerSearchResults');
+  const q=(input?.value||'').trim();if(!q||q.length<3){if(box)box.innerHTML=q?'<div class="player-search-state">Enter at least 3 characters to search players.</div>':'';return;}
+  if(!_sb||!U){box.innerHTML='<div class="player-search-state">Please sign in to search players.</div>';return;}
+  const seq=++_playerSearchSeq;box.innerHTML='<div class="player-search-state">🔎 Searching players…</div>';
+  try{
+    const {data,error}=await _sb.rpc('search_public_player',{p_query:q});
+    if(error)throw error;if(seq!==_playerSearchSeq)return;
+    const rows=Array.isArray(data)?data:[];
+    if(!rows.length){box.innerHTML='<div class="player-search-state">🔍 No Player Found<br><small>Check the FF UID, exact IGN, App User ID or email.</small></div>';return;}
+    box.innerHTML=rows.map((r,i)=>{const avatar=r.photo_url?`<img class="player-search-avatar" src="${esc(r.photo_url)}" alt="" onerror="this.outerHTML='<div class=&quot;player-search-avatar&quot;>${esc((r.ign||'P').slice(0,1).toUpperCase())}</div>'">`:`<div class="player-search-avatar">${esc((r.ign||'P').slice(0,1).toUpperCase())}</div>`;return `<button type="button" class="player-search-hit" onclick="openPublicPlayer(${i})">${avatar}<span style="min-width:0;flex:1"><strong style="font-size:15px">${esc(r.ign||'Player')}</strong><span class="player-search-sub">FF UID: ${esc(r.ffuid||'Not set')}</span></span><span style="color:#00c878;font-size:12px;font-weight:800;white-space:nowrap">✓ Verified</span></button>`;}).join('');
+    window._playerSearchRows=rows;
+  }catch(e){if(seq!==_playerSearchSeq)return;box.innerHTML=`<div class="player-search-state" style="color:#ff7777">Search failed: ${esc(e?.message||'Please try again.')}</div>`;}
+}
+function openPublicPlayer(index){
+  const p=(window._playerSearchRows||[])[index];if(!p)return;
+  const stats=p.stats&&typeof p.stats==='object'?p.stats:{};const money=p.real_money&&typeof p.real_money==='object'?p.real_money:{};
+  const num=v=>Number(v)||0;const cash=v=>'₹'+num(v).toLocaleString('en-IN');
+  const levelInfo=typeof getLevelInfo==='function'?getLevelInfo(num(p.xp)):null;
+  const level=levelInfo?.level||1;const wins=num(stats.wins),kills=num(stats.kills),matches=num(stats.matches),winRate=matches?Math.round(wins/matches*100):0;
+  const earnings=num(stats.earnings);const deposited=num(money.deposited),bonus=num(money.bonus),converted=num(money.coinToMoney),withdrawn=num(money.withdrawal||money.withdrawals);
+  const avatar=p.photo_url?`<img src="${esc(p.photo_url)}" style="width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid #ffd21c;box-shadow:0 0 18px #ffd21c55" onerror="this.style.display='none'">`:`<div style="width:88px;height:88px;border-radius:50%;border:3px solid #ffd21c;display:flex;align-items:center;justify-content:center;font-size:36px;color:#ffd21c;font-weight:900">${esc((p.ign||'P').slice(0,1).toUpperCase())}</div>`;
+  openModal(`<div style="max-height:78vh;overflow:auto;background:linear-gradient(160deg,#080a0a,#111008);color:#fff;border:1px solid #ffd21c;border-radius:18px;padding:15px;box-shadow:0 0 24px #ffd21c22"><div style="text-align:center;border-bottom:1px solid #5c4b12;padding:5px 0 14px;margin-bottom:13px"><div style="font-size:19px;font-weight:900;color:#ffd21c">🎮 PLAYER PROFILE</div><div style="font-size:11px;color:#aaa;letter-spacing:2px;margin-top:4px">MINI ESPORTS · PUBLIC PROFILE</div></div><div style="display:flex;align-items:center;gap:13px;padding:12px;background:#080d0b;border:1px solid #5d4a13;border-radius:14px">${avatar}<div style="min-width:0;flex:1"><div style="font-size:21px;font-weight:900;overflow-wrap:anywhere">${esc(p.ign||'Player')} <span style="color:#00d68f;font-size:12px">✓ VERIFIED</span></div><div style="color:#ccc;font-size:12px;margin-top:8px;overflow-wrap:anywhere">FF UID: <b>${esc(p.ffuid||'Not set')}</b></div><div style="color:#aaa;font-size:11px;margin-top:5px;overflow-wrap:anywhere">App User ID: ${esc(String(p.id||'').slice(0,8))}••••••</div><div style="color:#888;font-size:11px;margin-top:5px">🔒 Email hidden for privacy</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0"><div style="border:1px solid #6a5315;border-radius:12px;padding:12px"><div style="color:#aaa;font-size:12px">Level</div><b style="font-size:23px;color:#ffd21c">${level}</b></div><div style="border:1px solid #6a5315;border-radius:12px;padding:12px"><div style="color:#aaa;font-size:12px">XP</div><b style="font-size:23px">${num(p.xp).toLocaleString('en-IN')}</b></div></div><div style="border:1px solid #5d4a13;border-radius:13px;padding:12px;margin-bottom:10px"><div style="color:#ffd21c;font-weight:900;margin-bottom:9px">👤 PLAYER OVERVIEW</div><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;text-align:center"><div style="background:#111;border-radius:9px;padding:9px 3px"><div style="font-size:18px">🏆</div><b>${wins}</b><div style="font-size:10px;color:#aaa">Total Wins</div></div><div style="background:#111;border-radius:9px;padding:9px 3px"><div style="font-size:18px">💀</div><b>${kills}</b><div style="font-size:10px;color:#aaa">Total Kills</div></div><div style="background:#111;border-radius:9px;padding:9px 3px"><div style="font-size:18px">📊</div><b>${winRate}%</b><div style="font-size:10px;color:#aaa">Win Rate</div></div></div><div style="font-size:12px;color:#bbb;margin-top:10px">Account Status: <b style="color:#00d68f">Approved</b></div><div style="font-size:12px;color:#bbb;margin-top:4px">Joined: ${p.created_at?new Date(Number(p.created_at)).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—'}</div></div><div style="border:1px solid #5d4a13;border-radius:13px;padding:12px;margin-bottom:12px"><div style="color:#ffd21c;font-weight:900;margin-bottom:9px">💰 EARNINGS SUMMARY</div><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px"><div style="background:#062017;border:1px solid #087e53;border-radius:9px;padding:10px"><div style="font-size:11px;color:#8deac1">Match Earnings</div><b style="color:#00d68f">${cash(earnings||money.winnings)}</b></div><div style="background:#071a28;border:1px solid #1768a0;border-radius:9px;padding:10px"><div style="font-size:11px;color:#8dcfff">Referral Earnings</div><b>${cash(money.referral||money.referralEarnings)}</b></div><div style="background:#200c2b;border:1px solid #8130a0;border-radius:9px;padding:10px"><div style="font-size:11px;color:#e2a2ff">Bonus Earnings</div><b>${cash(bonus)}</b></div><div style="background:#211b06;border:1px solid #9b7b12;border-radius:9px;padding:10px"><div style="font-size:11px;color:#ffe36a">Coin to Money</div><b>${cash(converted)}</b></div><div style="background:#210b16;border:1px solid #9c315b;border-radius:9px;padding:10px;grid-column:1/-1"><div style="font-size:11px;color:#ff9cbd">Withdrawal Earnings</div><b>${cash(withdrawn)}</b></div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button onclick="closeModal();sendTeamRequestFromPublicProfile('${String(p.ffuid||'').replace(/[^0-9]/g,'')}')" style="padding:12px 6px;border:1px solid #ffd21c;border-radius:10px;background:#ffd21c;color:#080808;font-weight:900;font-size:11px">👥 SEND TEAM REQUEST</button><button onclick="toast('Public stats are shown above.','info')" style="padding:12px 6px;border:1px solid #6b5515;border-radius:10px;background:#0b0b0b;color:#ffd21c;font-weight:900;font-size:11px">📊 VIEW PUBLIC STATS</button></div></div>`);
+}
+function sendTeamRequestFromPublicProfile(ffuid){
+  if(!ffuid){toast('Player FF UID unavailable','error');return;}
+  const input=document.getElementById('teamRequestUid')||document.getElementById('teammateUID');
+  if(input){input.value=ffuid;input.dispatchEvent(new Event('input',{bubbles:true}));toast('UID filled. Continue from your team section.','info');return;}
+  toast('Open Profile → Team to send a request using this FF UID.','info');
 }
 
 // ====== HEADER ======
@@ -1687,26 +1745,30 @@ function startSpecialCountdown(targetTime){
 async function renderMyMatches(){
   if(!U)return;
   try{
-    const snap = await db.ref('joinRequests').orderByChild('uid').equalTo(U.uid).once('value');
-    const reqs=snap.val()||{};
+    const {data: ownRows, error: ownError} = await _sb.from('join_requests')
+      .select('id,tournament_id,status,team_size').eq('uid', U.uid).neq('status','rejected');
+    if(ownError) throw ownError;
     const matches=[];
     const seenTournamentIds=new Set();
     const myJoinRequestByTournament={};
-    Object.entries(reqs).forEach(([id,r])=>{
-      if(r.status==='rejected')return;
-      const t=allTournaments[r.tournamentId];
+    (ownRows||[]).forEach(r=>{
+      const t=allTournaments[r.tournament_id];
       if(!t)return;
-      matches.push({...t,id:r.tournamentId,joinId:id,myRole:'Captain',reqStatus:r.status,teamSize:r.teamSize||1});
-      seenTournamentIds.add(r.tournamentId);
-      myJoinRequestByTournament[r.tournamentId]=id;
+      matches.push({...t,id:r.tournament_id,joinId:r.id,myRole:'Captain',reqStatus:r.status,teamSize:r.team_size||1});
+      seenTournamentIds.add(r.tournament_id);
+      myJoinRequestByTournament[r.tournament_id]=r.id;
     });
-    // Also include matches where the user was added as a team member (not the captain)
-    const {data: memberRows} = await _sb.from('match_team_members').select('join_request_id').eq('uid', U.uid).eq('role','member');
+    // Teammates are included from the same Supabase join request, not a separate join.
+    const {data: memberRows, error: memberError} = await _sb.from('match_team_members')
+      .select('join_request_id').eq('uid', U.uid).eq('role','member');
+    if(memberError) throw memberError;
     if(memberRows && memberRows.length){
-      const jrIds = memberRows.map(r=>r.join_request_id);
-      const {data: jrs} = await _sb.from('join_requests').select('id,tournament_id,status,team_size').in('id', jrIds);
+      const jrIds = [...new Set(memberRows.map(r=>r.join_request_id).filter(Boolean))];
+      const {data: jrs, error: jrError} = await _sb.from('join_requests')
+        .select('id,tournament_id,status,team_size').in('id', jrIds).neq('status','rejected');
+      if(jrError) throw jrError;
       (jrs||[]).forEach(r=>{
-        if(r.status!=='rejected' && !seenTournamentIds.has(r.tournament_id)){
+        if(!seenTournamentIds.has(r.tournament_id)){
           const t=allTournaments[r.tournament_id];
           if(t){ matches.push({...t,id:r.tournament_id,joinId:r.id,myRole:'Team Member',reqStatus:r.status,teamSize:r.team_size||1}); seenTournamentIds.add(r.tournament_id); myJoinRequestByTournament[r.tournament_id]=r.id; }
         }
@@ -2657,7 +2719,9 @@ async function confirmMatchJoin(){
     if(error) throw error;
     closeModal();
     myJoinedTournamentIds.add(_joinFlow.tournamentId);
+    await refreshMyJoinedTournaments();
     renderHome();
+    renderMyMatches();
     toast('Join request submitted! Awaiting approval.','success');
     _joinFlow = null;
   }catch(e){
