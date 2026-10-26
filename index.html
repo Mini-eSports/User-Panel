@@ -502,6 +502,53 @@ textarea.form-input{resize:none;min-height:80px}
  .home-card-title{font-size:17px}
  .home-card-sub{font-size:11px}
 }
+
+/* Screenshot-matched branded header refinement */
+#header .header-row{min-height:112px;padding:12px 26px;gap:22px;background:linear-gradient(115deg,rgba(255,190,0,.08),transparent 44%,rgba(255,190,0,.04))}
+#header .header-left{gap:14px;flex:0 1 auto}
+#header .brand-crest{width:94px!important;height:104px!important;filter:drop-shadow(0 0 8px #ffd00055)}
+#header .brand-lockup{display:flex;flex-direction:column;min-width:0;line-height:1}
+#header .header-left .brand{font-size:clamp(28px,4.5vw,54px);font-style:normal;font-weight:950;letter-spacing:-1.8px;white-space:nowrap;text-shadow:0 0 12px #ffd00030}
+#header .brand-mini{color:#f7f7f7}
+#header .brand-esports{color:#ffd21a}
+#header .brand-tagline{font-size:clamp(10px,1.7vw,19px);font-weight:700;letter-spacing:2.3px;color:#f0e7c6;text-align:center;margin-top:8px;white-space:nowrap}
+#header .brand-tagline b{color:#ffd21a;padding:0 5px}
+#header .header-divider{height:72px;width:2px;flex:0 0 2px;background:linear-gradient(transparent,#ffd21a,transparent);margin-left:auto}
+#header .header-right{gap:16px}
+#header .h-icon{width:78px;height:78px;border:2px solid #b88c00;border-radius:24px;background:#080808}
+#header .h-icon svg{width:44px;height:44px}
+#header .chip{min-height:78px;padding:10px 24px;font-size:clamp(20px,2.5vw,34px);gap:14px;border-radius:42px;border-width:2px}
+#header .coin-3d{font-size:clamp(27px,3vw,40px)}
+#header .money-chip svg{width:30px;height:30px}
+#header .ticker-wrap{height:72px;margin:0 16px 12px;padding:0 28px;border:1.5px solid #b89112;border-radius:28px;background:linear-gradient(100deg,#171100,#050505 58%,#171100);box-shadow:0 4px 15px #ffd00012}
+#header .ticker-content{font-size:clamp(18px,2.1vw,30px);font-weight:750;padding-left:100%;text-shadow:none}
+@media(max-width:700px){
+ #header .header-row{min-height:78px;padding:9px 12px;gap:8px}
+ #header .header-left{gap:7px}
+ #header .brand-crest{width:44px!important;height:54px!important}
+ #header .header-left .brand{font-size:clamp(20px,5.8vw,30px);letter-spacing:-.9px}
+ #header .brand-tagline{font-size:8px;letter-spacing:1.1px;margin-top:5px}
+ #header .brand-tagline b{padding:0 2px}
+ #header .header-divider{height:40px;margin-left:2px}
+ #header .header-right{gap:5px}
+ #header .h-icon{width:42px;height:42px;border-radius:13px;border:1.5px solid #b88c00;background:#080808}
+ #header .h-icon svg{width:25px;height:25px}
+ #header .chip{min-height:43px;padding:5px 9px;font-size:clamp(11px,3vw,16px);gap:4px;border-radius:28px;border-width:1px}
+ #header .coin-3d{font-size:16px}
+ #header .money-chip svg{width:15px;height:15px}
+ #header .ticker-wrap{height:48px;margin:0 8px 8px;padding:0 14px;border-radius:0 0 22px 22px}
+ #header .ticker-content{font-size:clamp(14px,3.7vw,20px)}
+}
+@media(max-width:380px){
+ #header .header-row{padding-left:7px;padding-right:7px;gap:4px}
+ #header .brand-crest{width:35px!important;height:44px!important}
+ #header .header-left .brand{font-size:18px}
+ #header .brand-tagline{font-size:7px;letter-spacing:.6px}
+ #header .header-divider{height:32px}
+ #header .h-icon{width:34px;height:36px}
+ #header .chip{padding:4px 6px;font-size:10px}
+ #header .coin-3d{display:inline;font-size:12px}
+}
 </style>
 
 </head>
@@ -556,9 +603,17 @@ textarea.form-input{resize:none;min-height:80px}
   <div id="header">
     <div class="header-row">
       <div class="header-left">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="var(--yellow)" style="flex-shrink:0"><path d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5S14.67 12 15.5 12s1.5.67 1.5 1.5S16.33 15 15.5 15zm3-3c-.83 0-1.5-.67-1.5-1.5S17.67 10 18.5 10s1.5.67 1.5 1.5S19.33 12 18.5 12z"/></svg>
-        <span class="brand">Mini eSports</span>
+        <svg class="brand-crest" width="54" height="62" viewBox="0 0 64 74" aria-hidden="true" style="flex-shrink:0">
+          <defs><linearGradient id="crestGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff4a3"/><stop offset=".42" stop-color="#ffd21a"/><stop offset="1" stop-color="#a86b00"/></linearGradient></defs>
+          <path d="M32 2 39 13 51 8 49 21 61 25 53 36 56 53 32 70 8 53 11 36 3 25 15 21 13 8 25 13Z" fill="#090700" stroke="url(#crestGold)" stroke-width="2.8"/>
+          <path d="M32 11 38 21 49 18 46 29 54 35 48 45 50 51 32 64 14 51 16 45 10 35 18 29 15 18 26 21Z" fill="#191100" stroke="#ffd21a" stroke-width="1.7"/>
+          <path d="M19 30 25 26 32 30 39 26 45 30 43 45 32 53 21 45Z" fill="url(#crestGold)" stroke="#fff0a0" stroke-width="1.2"/>
+          <text x="32" y="43" text-anchor="middle" font-size="19" font-weight="900" fill="#111">M</text>
+          <path d="M23 12 25 5 32 10 39 5 41 12" fill="none" stroke="url(#crestGold)" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+        <div class="brand-lockup"><span class="brand"><span class="brand-mini">Mini</span> <span class="brand-esports">eSports</span></span><span class="brand-tagline">PLAY <b>•</b> COMPETE <b>•</b> WIN</span></div>
       </div>
+      <div class="header-divider" aria-hidden="true"></div>
       <div class="header-right">
         <div class="h-icon" onclick="toggleSearch()" style="color:var(--yellow)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
         <div class="chip coin-chip" onclick="go('wallet')"><span class="coin-3d">🪙</span> <span id="hCoins">0</span></div>
@@ -566,7 +621,7 @@ textarea.form-input{resize:none;min-height:80px}
 
       </div>
     </div>
-    <div class="ticker-wrap"><div class="ticker-content" id="tickerText">🏆 Welcome to Mini eSports — Join tournaments, win real prizes! ⚡ New matches added daily — don\'t miss out! 🎯</div></div>
+    <div class="ticker-wrap"><div class="ticker-content" id="tickerText">Mini eSports Tournament!</div></div>
     <div class="search-wrap" id="searchWrap">
       <input type="search" placeholder="Search by FF UID, IGN, App User ID or email..." id="searchInput" autocomplete="off" autocapitalize="off" spellcheck="false" oninput="searchPlayersDebounced()" onkeydown="if(event.key==='Enter'){event.preventDefault();searchPlayersNow();}">
       <div id="playerSearchResults" class="player-search-results" aria-live="polite"></div>
