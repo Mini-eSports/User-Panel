@@ -416,7 +416,7 @@ textarea.form-input{resize:none;min-height:80px}
 #screen-home #boxPaid,#screen-home #boxFree{position:relative;overflow:hidden;min-height:140px;display:flex;flex-direction:column;justify-content:center;align-items:center;border-radius:23px!important;padding:20px 12px!important;box-shadow:inset 0 0 22px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.35);}
 #screen-home #boxPaid{background:linear-gradient(110deg,rgba(255,193,7,.24),rgba(14,10,0,.94)),radial-gradient(ellipse at 15% 20%,rgba(255,215,0,.2),transparent 65%)!important;border:2px solid #ffd700!important;}
 #screen-home #boxFree{background:linear-gradient(110deg,rgba(0,100,180,.22),rgba(2,9,18,.96)),radial-gradient(ellipse at 15% 20%,rgba(0,153,255,.18),transparent 65%)!important;border:2px solid #2476b8!important;}
-#screen-home #boxPaid:after,#screen-home #boxFree:after{content:'›';position:absolute;right:15px;top:50%;transform:translateY(-50%);width:38px;height:42px;display:grid;place-items:center;border:1.5px solid currentColor;border-radius:11px;font-size:30px;font-weight:400;opacity:.9}
+#screen-home #boxPaid:after,#screen-home #boxFree:after{content:none!important;display:none!important}
 #screen-home #boxPaid>div:first-child,#screen-home #boxFree>div:first-child{font-size:34px!important;margin-bottom:8px!important;filter:drop-shadow(0 0 8px currentColor)}
 #screen-home #boxPaid>div:nth-child(2),#screen-home #boxFree>div:nth-child(2){font-size:clamp(15px,2vw,22px)!important;font-weight:900!important;}
 #screen-home #boxPaid>div:nth-child(3),#screen-home #boxFree>div:nth-child(3){font-size:13px!important;margin-top:4px!important}
@@ -429,7 +429,7 @@ textarea.form-input{resize:none;min-height:80px}
 .ticker-wrap{height:42px;background:linear-gradient(90deg,#110d00,#090909 45%,#171000);border:1px solid rgba(255,215,0,.55);border-radius:0 0 15px 15px;margin:0 10px 12px;box-shadow:0 0 15px rgba(255,215,0,.12)}
 .ticker-content{font-size:14px;letter-spacing:.3px}
 @media(min-width:700px){.app-wrap{max-width:100%;}.header-row{padding:16px 3vw}.content-area{padding:18px 3vw 28px}#screen-home #boxPaid,#screen-home #boxFree{min-height:180px}#screen-home #homeCategoryFilter .mode-filter-box{min-height:105px;font-size:20px}#screen-home #homeModeFilter>div{min-height:88px;font-size:20px!important}}
-@media(max-width:420px){#screen-home #boxPaid,#screen-home #boxFree{min-height:118px;padding:14px 8px!important;border-radius:18px!important}#screen-home #boxPaid:after,#screen-home #boxFree:after{right:7px;width:27px;height:32px;font-size:23px}#screen-home #boxPaid>div:nth-child(2),#screen-home #boxFree>div:nth-child(2){max-width:78%;font-size:14px!important}#screen-home #homeCategoryFilter .mode-filter-box{min-height:66px;font-size:11px;padding:8px 4px}#screen-home #homeModeFilter>div{min-height:56px;font-size:12px!important}}
+@media(max-width:420px){#screen-home #boxPaid,#screen-home #boxFree{min-height:118px;padding:14px 8px!important;border-radius:18px!important}#screen-home #boxPaid:after,#screen-home #boxFree:after{content:none!important;display:none!important}#screen-home #boxPaid>div:nth-child(2),#screen-home #boxFree>div:nth-child(2){max-width:78%;font-size:14px!important}#screen-home #homeCategoryFilter .mode-filter-box{min-height:66px;font-size:11px;padding:8px 4px}#screen-home #homeModeFilter>div{min-height:56px;font-size:12px!important}}
 
 </style>
 
@@ -448,8 +448,8 @@ textarea.form-input{resize:none;min-height:80px}
 #header .coin-chip{box-shadow:inset 0 0 15px #ffd00020,0 0 10px #ffd00015;border-color:#8c6a00}
 #header .money-chip{border-color:#555;background:linear-gradient(135deg,#151515,#050505)}
 #header .ticker-wrap{height:66px;margin:0 20px 14px;border:1px solid #b89112;border-radius:0 0 24px 24px;border-top-color:#65500c;background:linear-gradient(100deg,#171100,#090909 58%,#171100);box-shadow:0 6px 20px #ffd00012;position:relative;padding:0 58px 0 70px}
-#header .ticker-wrap:before{content:"📢";position:absolute;left:20px;top:50%;transform:translateY(-50%);font-size:29px;z-index:2}
-#header .ticker-wrap:after{content:"❯";position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:28px;font-weight:900;color:#ffd21a;z-index:2}
+#header .ticker-wrap:before{content:none;display:none}
+#header .ticker-wrap:after{content:none;display:none}
 #header .ticker-content{font-size:clamp(15px,2.6vw,25px);font-weight:900;padding-left:100%;text-shadow:0 0 9px #ffd00035}
 .home-match-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0 18px;padding:0 2px}
 .home-match-card{min-height:clamp(150px,27vw,280px);border-radius:26px;padding:20px 12px;justify-content:center}
@@ -479,8 +479,6 @@ textarea.form-input{resize:none;min-height:80px}
  #header .chip{min-height:35px;padding:5px 8px;font-size:clamp(11px,2.9vw,15px);gap:4px}
  #header .coin-3d{font-size:15px}
  #header .ticker-wrap{height:62px;margin:0 10px 12px;padding-left:54px;padding-right:38px;border-radius:0 0 22px 22px}
- #header .ticker-wrap:before{left:13px;font-size:23px}
- #header .ticker-wrap:after{right:12px;font-size:21px}
  #header .ticker-content{font-size:16px}
  .home-match-cards{gap:10px;margin:12px 0 16px;padding:0 1px}
  .home-match-card{min-height:clamp(160px,52vw,225px);border-radius:22px;padding:16px 7px}
@@ -583,7 +581,7 @@ textarea.form-input{resize:none;min-height:80px}
       <!-- Premium Home Match Selector -->
       <div class="home-match-cards">
         <div id="boxPaid" class="home-match-card paid" onclick="selectHomeFilter('paid')">
-          <div class="home-card-art">🪙</div><div class="home-card-title">Paid Matches</div>
+          <div class="home-card-art">💰</div><div class="home-card-title">Paid Matches</div>
           <div class="home-card-sub">Win Real Money</div>
         </div>
         <div id="boxFree" class="home-match-card free" onclick="selectHomeFilter('coin')">
