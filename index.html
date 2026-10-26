@@ -385,6 +385,31 @@ textarea.form-input{resize:none;min-height:80px}
 .mm-state{display:inline-flex;align-items:center;border-radius:9px;padding:6px 9px;font-size:10px;font-weight:800;white-space:nowrap}.mm-state.joined{background:rgba(0,225,145,.10);border:1px solid #00ce8a;color:#00e8a0}.mm-state.pending{background:rgba(255,215,0,.10);border:1px solid #a98500;color:#ffd700}
 .mm-roster-heading{display:flex;align-items:center;gap:8px;margin:13px 2px 9px;font-size:13px;font-weight:800;color:#e6e6e6}.mm-roster-heading>span{font-size:20px;color:#168fff}.mm-roster-heading b{color:#ffd700}.mm-roster{display:grid;gap:8px}.mm-player-row{display:flex;align-items:center;gap:10px;min-width:0;position:relative;padding:9px;border:1px solid color-mix(in srgb,var(--player-accent,#ffd700) 65%,#111);border-radius:15px;background:linear-gradient(100deg,color-mix(in srgb,var(--player-accent,#ffd700) 10%,#080808),#090909 70%);box-shadow:inset 0 0 14px color-mix(in srgb,var(--player-accent,#ffd700) 7%,transparent)}.mm-player-row.captain{border-width:1.5px}.mm-player-avatar{position:relative;flex:0 0 64px;width:64px;height:64px;border:2px solid var(--player-accent,#ffd700);border-radius:12px;overflow:visible;background:#111;box-shadow:0 0 10px color-mix(in srgb,var(--player-accent,#ffd700) 25%,transparent)}.mm-player-avatar img{width:100%;height:100%;object-fit:cover;border-radius:10px;display:block}.mm-avatar-fallback{width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:10px;color:var(--player-accent,#ffd700);font-size:27px;font-weight:900;background:linear-gradient(135deg,#222,#080808)}.mm-crown{position:absolute;right:-5px;top:-8px;border:1px solid #ffd700;border-radius:50%;background:#141006;padding:2px 4px;font-size:15px}.mm-player-info{min-width:0;flex:1}.mm-player-name{font-size:16px;font-weight:800;line-height:1.3;overflow-wrap:anywhere}.mm-captain-tag{display:inline-block;margin-left:4px;padding:2px 5px;border-radius:5px;background:#ffd700;color:#090909;font-size:8px;vertical-align:middle}.mm-player-detail{display:flex;align-items:center;gap:5px;margin-top:5px;color:#aeb3be;font-size:11px;min-width:0;overflow-wrap:anywhere}.mm-player-detail b{color:#ffd700;font-weight:600;overflow-wrap:anywhere}.mm-player-detail .mm-uid{color:#00e5a0;font-family:monospace;font-size:11px}.mm-id-icon{background:#a72aff;color:#fff;border-radius:4px;padding:1px 4px;font-size:9px;font-weight:900}.mm-copy{border:0;background:transparent;color:#159fff;font-size:21px;line-height:1;padding:0 2px;min-width:28px;min-height:28px}.mm-player-joined{align-self:flex-start;white-space:nowrap;padding:5px 7px;border:1px solid #00c984;border-radius:9px;color:#00e8a0;background:rgba(0,220,140,.08);font-size:9px;font-weight:900}.mm-match-meta{display:flex;align-items:center;justify-content:space-around;gap:7px;flex-wrap:wrap;margin-top:12px;padding:10px 5px;border:1px solid rgba(255,215,0,.55);border-radius:12px;color:#eee;font-size:11px}.mm-match-meta i{height:22px;border-left:1px solid rgba(255,255,255,.22)}.mm-starts{color:#ffd700;font-weight:700}.mm-room{position:relative;margin-top:10px;padding:11px;border:1px solid #a80000;border-radius:12px;background:linear-gradient(100deg,rgba(130,0,0,.25),rgba(20,0,0,.7));overflow:hidden}.mm-room.locked{border-color:#671313}.mm-room-title{font-size:14px;font-weight:900;color:#ff2525}.mm-room-sub{margin-top:4px;color:#b6b6b6;font-size:11px;max-width:85%}.mm-lock-mark{position:absolute;right:15px;bottom:5px;font-size:34px;color:rgba(255,0,0,.2);font-weight:900}.mm-room-line{display:flex;align-items:center;gap:6px;margin-top:7px;font-size:11px;color:#ccc;overflow-wrap:anywhere}.mm-room-line strong{margin-left:auto;color:#fff}.mm-room-line button{border:0;background:none;color:#ffd700;font-size:18px}.mm-details-btn{width:100%;min-height:48px;margin-top:11px;border:1.5px solid #ffd700;border-radius:12px;background:linear-gradient(100deg,rgba(255,215,0,.10),rgba(0,0,0,.2));color:#ffd700;font-size:14px;font-weight:900;letter-spacing:.7px}.mm-details-btn span{font-size:17px;margin-right:7px}.mm-details-btn:active{transform:scale(.99);background:rgba(255,215,0,.18)}
 @media(max-width:380px){.mm-premium-card{padding:9px;border-radius:16px}.mm-player-row{gap:7px;padding:7px}.mm-player-avatar{flex-basis:52px;width:52px;height:52px}.mm-player-name{font-size:14px}.mm-player-detail{font-size:10px}.mm-player-detail .mm-uid{font-size:10px}.mm-player-joined{font-size:8px;padding:4px}.mm-match-meta{font-size:10px}}
+
+.my-match-status-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:4px 0 14px;position:sticky;top:0;z-index:4;background:#050505;padding:6px 0}.my-match-status-tab{border:1px solid #504718;background:#101010;color:#aaa;border-radius:12px;padding:11px 4px;font-size:11px;font-weight:800;min-width:0}.my-match-status-tab span{display:inline-grid;place-items:center;min-width:18px;height:18px;border-radius:20px;background:#28230a;color:#ffe000;margin-left:3px}.my-match-status-tab.active{border-color:#ffe000;color:#ffe000;background:linear-gradient(135deg,rgba(255,215,0,.14),#090909);box-shadow:0 0 12px rgba(255,215,0,.12)}.mm-result-btn{width:100%;margin-top:12px;border:1.5px solid #ffd700;border-radius:13px;padding:14px;background:linear-gradient(110deg,#ffd700,#ffb800);color:#080808;font-weight:900;font-size:16px;letter-spacing:1px}.mm-result-player{border:1px solid rgba(255,215,0,.32);border-radius:12px;padding:12px;margin:8px 0;background:#090909}.mm-result-player .mm-result-line{display:flex;justify-content:space-between;gap:10px;padding:4px 0;font-size:12px}.mm-result-team{border:1px solid #8c7216;border-radius:15px;padding:10px;margin:10px 0;background:rgba(255,215,0,.04)}
+
+/* HOME CATEGORY SELECTOR — premium esports redesign matching reference */
+#screen-home{padding-top:8px}
+#screen-home #homeCategoryFilter .mode-filter-box{min-height:74px;display:flex;align-items:center;justify-content:center;text-align:center;white-space:normal;padding:12px 7px;border-radius:17px;font-size:clamp(12px,1.7vw,17px);font-weight:900;letter-spacing:.2px;line-height:1.2;text-transform:none;background:linear-gradient(135deg,#111,#050505);border:2px solid #292929;color:#bfc2c8;box-shadow:inset 0 0 18px rgba(255,255,255,.025);}
+#screen-home #homeCategoryFilter .mode-filter-box.active{background:linear-gradient(115deg,rgba(255,215,0,.25),rgba(60,42,0,.34)),radial-gradient(ellipse at 80% 20%,rgba(255,215,0,.16),transparent 60%);border-color:#ffd700;color:#ffd700;box-shadow:0 0 16px rgba(255,215,0,.28),inset 0 0 18px rgba(255,215,0,.08)}
+#screen-home #boxPaid,#screen-home #boxFree{position:relative;overflow:hidden;min-height:140px;display:flex;flex-direction:column;justify-content:center;align-items:center;border-radius:23px!important;padding:20px 12px!important;box-shadow:inset 0 0 22px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.35);}
+#screen-home #boxPaid{background:linear-gradient(110deg,rgba(255,193,7,.24),rgba(14,10,0,.94)),radial-gradient(ellipse at 15% 20%,rgba(255,215,0,.2),transparent 65%)!important;border:2px solid #ffd700!important;}
+#screen-home #boxFree{background:linear-gradient(110deg,rgba(0,100,180,.22),rgba(2,9,18,.96)),radial-gradient(ellipse at 15% 20%,rgba(0,153,255,.18),transparent 65%)!important;border:2px solid #2476b8!important;}
+#screen-home #boxPaid:after,#screen-home #boxFree:after{content:'›';position:absolute;right:15px;top:50%;transform:translateY(-50%);width:38px;height:42px;display:grid;place-items:center;border:1.5px solid currentColor;border-radius:11px;font-size:30px;font-weight:400;opacity:.9}
+#screen-home #boxPaid>div:first-child,#screen-home #boxFree>div:first-child{font-size:34px!important;margin-bottom:8px!important;filter:drop-shadow(0 0 8px currentColor)}
+#screen-home #boxPaid>div:nth-child(2),#screen-home #boxFree>div:nth-child(2){font-size:clamp(15px,2vw,22px)!important;font-weight:900!important;}
+#screen-home #boxPaid>div:nth-child(3),#screen-home #boxFree>div:nth-child(3){font-size:13px!important;margin-top:4px!important}
+#screen-home #homeModeFilter>div{min-height:66px;display:flex;align-items:center;justify-content:center;border-radius:16px!important;font-size:clamp(13px,1.7vw,18px)!important;font-weight:900;letter-spacing:.7px;border:1.5px solid #5b4b13;box-shadow:inset 0 0 18px rgba(255,215,0,.025);}
+#screen-home #homeModeFilter>div[style*="background:var(--yellow)"]{background:linear-gradient(135deg,#ffe000,#ffbd00)!important;color:#080808!important;border:2px solid #fff0a0!important;box-shadow:0 0 22px rgba(255,215,0,.26)!important}
+#screen-home #homeModeFilter>div:not([style*="background:var(--yellow)"]){background:linear-gradient(135deg,#111,#050505)!important;color:#e5e5e5!important;border-color:#59470e!important}
+#header{background:linear-gradient(110deg,#030303,#100d03 55%,#030303);border-bottom:2px solid rgba(255,215,0,.8);box-shadow:0 5px 22px rgba(255,215,0,.08)}
+.header-row{padding:13px 16px;background:radial-gradient(ellipse at 10% 0%,rgba(255,215,0,.09),transparent 48%)}
+.header-left .brand{font-size:clamp(20px,3vw,31px);font-style:italic;letter-spacing:-.5px;text-shadow:0 0 14px rgba(255,215,0,.35)}
+.ticker-wrap{height:42px;background:linear-gradient(90deg,#110d00,#090909 45%,#171000);border:1px solid rgba(255,215,0,.55);border-radius:0 0 15px 15px;margin:0 10px 12px;box-shadow:0 0 15px rgba(255,215,0,.12)}
+.ticker-content{font-size:14px;letter-spacing:.3px}
+@media(min-width:700px){.app-wrap{max-width:100%;}.header-row{padding:16px 3vw}.content-area{padding:18px 3vw 28px}#screen-home #boxPaid,#screen-home #boxFree{min-height:180px}#screen-home #homeCategoryFilter .mode-filter-box{min-height:105px;font-size:20px}#screen-home #homeModeFilter>div{min-height:88px;font-size:20px!important}}
+@media(max-width:420px){#screen-home #boxPaid,#screen-home #boxFree{min-height:118px;padding:14px 8px!important;border-radius:18px!important}#screen-home #boxPaid:after,#screen-home #boxFree:after{right:7px;width:27px;height:32px;font-size:23px}#screen-home #boxPaid>div:nth-child(2),#screen-home #boxFree>div:nth-child(2){max-width:78%;font-size:14px!important}#screen-home #homeCategoryFilter .mode-filter-box{min-height:66px;font-size:11px;padding:8px 4px}#screen-home #homeModeFilter>div{min-height:56px;font-size:12px!important}}
+
 </style>
 </head>
 <body>
@@ -474,9 +499,9 @@ textarea.form-input{resize:none;min-height:80px}
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;" id="homeCategoryFilter">
-        <div class="mode-filter-box active" data-cat="Battle Royale" onclick="selectHomeCategory('Battle Royale')">🪂 BR</div>
-        <div class="mode-filter-box" data-cat="Clash Squad" onclick="selectHomeCategory('Clash Squad')">⚔️ CS</div>
-        <div class="mode-filter-box" data-cat="Lone Wolf" onclick="selectHomeCategory('Lone Wolf')">🐺 LW</div>
+        <div class="mode-filter-box active" data-cat="Battle Royale" onclick="selectHomeCategory('Battle Royale')">🪂 Battle Royale</div>
+        <div class="mode-filter-box" data-cat="Clash Squad" onclick="selectHomeCategory('Clash Squad')">⚔️ Clash Squad</div>
+        <div class="mode-filter-box" data-cat="Lone Wolf" onclick="selectHomeCategory('Lone Wolf')">🐺 Lone Wolf</div>
       </div>
       <div style="display:grid;margin-bottom:14px;" id="homeModeFilter"></div>
             <div id="homeMatchList"><div class="empty-state"><div class="emoji">★</div><div class="msg">Loading matches...</div></div></div>
@@ -503,6 +528,11 @@ textarea.form-input{resize:none;min-height:80px}
 
     <!-- MY MATCHES -->
     <div class="screen" id="screen-mymatches">
+      <div class="my-match-status-tabs" role="tablist" aria-label="My match status">
+        <button class="my-match-status-tab active" data-match-filter="upcoming" onclick="filterMyMatches('upcoming')">🟡 Upcoming <span id="myUpcomingCount">0</span></button>
+        <button class="my-match-status-tab" data-match-filter="live" onclick="filterMyMatches('live')">🔴 Live <span id="myLiveCount">0</span></button>
+        <button class="my-match-status-tab" data-match-filter="completed" onclick="filterMyMatches('completed')">🏁 Completed <span id="myCompletedCount">0</span></button>
+      </div>
       <div id="myMatchesList"><div class="empty-state"><div class="emoji">▶</div><div class="msg">No matches joined yet</div></div></div>
     </div>
 
@@ -547,7 +577,7 @@ textarea.form-input{resize:none;min-height:80px}
           <div><div class="rank-hero-label">YOUR RANK</div><div class="rank-hero-number" id="myRankDisplay">#-</div></div>
         </div>
         <div class="rank-hero-divider"></div>
-        <div class="rank-hero-earnings"><div class="rank-hero-label">TOTAL EARNINGS</div><div class="rank-hero-total"><span>💰</span><span id="myTotalEarningsDisplay">₹0</span></div></div>
+        <div class="rank-hero-earnings" role="button" tabindex="0" style="cursor:pointer" onclick="selectLeaderboardCategory('total')" onkeydown="if(event.key==='Enter'||event.key===' ')selectLeaderboardCategory('total')"><div class="rank-hero-label">TOTAL EARNINGS</div><div class="rank-hero-total"><span>💰</span><span id="myTotalEarningsDisplay">₹0</span></div></div>
       </div>
       <div class="rank-earning-types" aria-label="Earning categories">
         <div class="rank-earning-card match" data-lb-category="match" role="button" tabindex="0" onclick="selectLeaderboardCategory('match')"><div class="rank-earning-icon">🎮</div><div>Match<br>Earnings</div></div>
@@ -1270,6 +1300,8 @@ function startMyMatchesAutoRefresh(){
     await refreshMyJoinedTournaments();
     const screen = document.getElementById('screen-mymatches');
     if(screen && screen.classList.contains('active')) await renderMyMatches();
+    const rankScreen=document.getElementById('screen-rank');
+    if(rankScreen && rankScreen.classList.contains('active')) await renderLeaderboard(currentLbTab||'total');
   }, 12000);
 }
 async function refreshMyJoinedTournaments(){
@@ -1435,7 +1467,7 @@ function selectHomeFilter(filter){
 }
 const HOME_CATEGORY_MODES = {
   'Battle Royale': ['All','Solo','Duo','Squad'],
-  'Clash Squad': ['All','1v1','2v2','4v4'],
+  'Clash Squad': ['All','2v2','4v4'],
   'Lone Wolf': ['All','1v1','2v2']
 };
 function selectHomeCategory(cat){
@@ -1750,6 +1782,10 @@ function startSpecialCountdown(targetTime){
 }
 
 // ====== MY MATCHES ======
+let _myMatchFilter='upcoming';
+let _myMatchCache=[];
+function filterMyMatches(filter){_myMatchFilter=['upcoming','live','completed'].includes(filter)?filter:'upcoming';document.querySelectorAll('[data-match-filter]').forEach(b=>b.classList.toggle('active',b.dataset.matchFilter===_myMatchFilter));paintMyMatches();}
+function paintMyMatches(){const el=document.getElementById('myMatchesList');if(!el)return;const filtered=_myMatchCache.filter(x=>{const st=getMatchStatus(x.match);return _myMatchFilter==='completed'?(st==='completed'||st==='ended'):st===_myMatchFilter;});el.innerHTML=filtered.length?filtered.map(x=>myMatchCard(x.match,x.roster,x.room)).join(''):emptyState(_myMatchFilter==='upcoming'?'No upcoming matches':_myMatchFilter==='live'?'No live matches':'No completed matches',_myMatchFilter==='live'?'🔴':'🏁');}
 async function renderMyMatches(){
   if(!U)return;
   try{
@@ -1794,6 +1830,8 @@ async function renderMyMatches(){
     // Batch-fetch team rosters for every match's join request
     const allJoinIds = Object.values(myJoinRequestByTournament);
     const { data: allMembers } = await _sb.from('match_team_members').select('join_request_id,uid,ign,role').in('join_request_id', allJoinIds);
+    const {data: captainRows}=await _sb.from('join_requests').select('id,uid').in('id',allJoinIds);
+    const captainByJoinId={};(captainRows||[]).forEach(r=>captainByJoinId[r.id]=String(r.uid));
     const rosterByJoinId = {};
     (allMembers||[]).forEach(m=>{ (rosterByJoinId[m.join_request_id] = rosterByJoinId[m.join_request_id]||[]).push(m); });
     // Enrich the visible roster through the authenticated public-profile RPC.
@@ -1806,8 +1844,16 @@ async function renderMyMatches(){
         if(profileError) throw profileError;
         const profileById={}; (profiles||[]).forEach(p=>{ profileById[String(p.id)]=p; });
         Object.keys(rosterByJoinId).forEach(jid=>{
-          rosterByJoinId[jid]=rosterByJoinId[jid].map(m=>({...m,...(profileById[String(m.uid)]||{})}));
+          rosterByJoinId[jid]=rosterByJoinId[jid].map(m=>({...m,...(profileById[String(m.uid)]||{}),role:(String(m.uid)===captainByJoinId[jid]?'captain':(m.role||'member'))}));
         });
+        // Public profile RPC intentionally exposes limited columns. Enrich optional avatar/UID
+        // from the existing user profile source when available; keep safe fallbacks on RLS/network errors.
+        await Promise.all(Object.keys(rosterByJoinId).map(async jid=>{
+          rosterByJoinId[jid]=await Promise.all(rosterByJoinId[jid].map(async m=>{
+            if(m.photo_url||m.photoURL||m.avatar_url||m.picture){return m;}
+            try{const snap=await db.ref('users/'+m.uid).once('value');const legacy=snap.val()||{};return {...m,photo_url:legacy.photoURL||legacy.photo_url||legacy.avatar_url||legacy.picture||'',ffuid:m.ffuid||legacy.ffuid||legacy.ffUID||legacy.ff_uid||''};}catch(_){return m;}
+          }));
+        }));
       }catch(profileErr){ console.warn('Roster public-profile lookup failed:',profileErr?.message||profileErr); }
     }
 
@@ -1818,11 +1864,9 @@ async function renderMyMatches(){
     const { data: rooms } = await _sb.from('match_rooms').select('tournament_id,room_id,room_password').in('tournament_id', tIds);
     const roomByTid = {}; (rooms||[]).forEach(r=>{ roomByTid[r.tournament_id]=r; });
 
-    document.getElementById('myMatchesList').innerHTML = matches.map(m=>{
-      const roster = rosterByJoinId[myJoinRequestByTournament[m.id]] || [];
-      const room = roomByTid[m.id] || null;
-      return myMatchCard(m, roster, room);
-    }).join('');
+    _myMatchCache = matches.map(m=>({match:m,roster:rosterByJoinId[myJoinRequestByTournament[m.id]]||[],room:roomByTid[m.id]||null}));
+    ['upcoming','live','completed'].forEach(f=>{const c=document.getElementById('my'+f.charAt(0).toUpperCase()+f.slice(1)+'Count');if(c)c.textContent=_myMatchCache.filter(x=>{const st=getMatchStatus(x.match);return f==='completed'?(st==='completed'||st==='ended'):st===f;}).length;});
+    paintMyMatches();
   }catch(e){console.error(e);}
 }
 
@@ -1872,9 +1916,9 @@ function myMatchCard(m, roster, room){
   if(status!=='cancelled'){
     if(room&&(room.room_id||room.room_password)){
       roomHtml=`<div class="mm-room"><div class="mm-room-title">🔓 ROOM DETAILS</div><div class="mm-room-line">ROOM ID: <strong>${esc(room.room_id||'-')}</strong><button type="button" onclick="copyText('${esc(room.room_id||'')}')">▢</button></div><div class="mm-room-line">PASSWORD: <strong>${esc(room.room_password||'-')}</strong><button type="button" onclick="copyText('${esc(room.room_password||'')}')">▢</button></div></div>`;
-    }else if(status==='upcoming'&&m.matchTime){
+    }else if((status==='upcoming'||status==='live')&&m.matchTime){
       const diff=m.matchTime-Date.now(); const mins=Math.round(diff/60000);
-      roomHtml=mins<=15?'<div class="mm-room locked"><div class="mm-room-title">🔒 ROOM DETAILS UNLOCKING...</div></div>':`<div class="mm-room locked"><div class="mm-room-title">🔒 ROOM LOCKED</div><div class="mm-room-sub">Unlocks 15 minutes before start · Available in ${formatCountdown(diff-15*60*1000)}</div><span class="mm-lock-mark">!</span></div>`;
+      roomHtml=status==='live'?'<div class="mm-room locked"><div class="mm-room-title">🔐 ROOM DETAILS NOT AVAILABLE</div><div class="mm-room-sub">Admin has not published room ID and password yet.</div></div>':`<div class="mm-room locked"><div class="mm-room-title">🔒 ROOM LOCKED</div><div class="mm-room-sub">Unlocks 15 minutes before start · Available in ${formatCountdown(diff-15*60*1000)}</div><span class="mm-lock-mark">!</span></div>`;
     }
   }
   let countdown='';
@@ -1886,8 +1930,15 @@ function myMatchCard(m, roster, room){
     <div class="mm-roster">${playerRows||''}${fallbackRows}</div>
     <div class="mm-match-meta"><span>🎮 ${esc(teamLabel)}</span><i></i><span>💎 ${m.entryType==='paid'?'₹':''}${esc(m.entryFee||0)}</span><i></i><span>🗺 ${esc(m.map||'-')}</span>${countdown?`<i></i>${countdown}`:''}</div>
     ${roomHtml}
-    <button class="mm-details-btn" type="button" onclick="viewTournament('${m.id}')"><span>ⓘ</span> DETAILS</button>
+    ${status==='completed'||status==='ended'?`<button class="mm-result-btn" type="button" onclick="openMatchResult('${m.id}','${esc(m.name||'Match')}','${esc(teamLabel)}')">🏆 RESULT</button>`:`<button class="mm-details-btn" type="button" onclick="viewTournament('${m.id}')"><span>ⓘ</span> DETAILS</button>`}
   </article>`;
+}
+
+async function openMatchResult(tournamentId, tournamentName, modeLabel){
+  let modal=document.getElementById('public-match-result-modal');if(!modal){modal=document.createElement('div');modal.id='public-match-result-modal';modal.className='modal-overlay';modal.innerHTML=`<div class="modal" style="max-height:85vh;overflow:auto;background:#080808;border:1px solid #d4b900;border-radius:18px;width:min(94vw,620px);padding:16px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h3 id="public-result-title" style="color:#ffe000;margin:0">🏆 Match Result</h3><button type="button" class="btn-secondary" onclick="document.getElementById('public-match-result-modal').classList.remove('active')">✕</button></div><div id="public-result-body" style="margin-top:12px"></div></div>`;document.body.appendChild(modal)}
+  modal.classList.add('active');document.getElementById('public-result-title').textContent='🏆 '+tournamentName;const body=document.getElementById('public-result-body');body.innerHTML='<div style="padding:22px;text-align:center;color:#aaa">Loading published results…</div>';
+  try{const {data,error}=await _sb.from('match_results').select('uid,kills,rank,reward').eq('tournament_id',tournamentId).order('rank',{ascending:true,nullsFirst:false});if(error)throw error;if(!data||!data.length){body.innerHTML='<div style="padding:22px;text-align:center;color:#aaa">Result not published yet.</div>';return;}const ids=[...new Set(data.map(r=>r.uid).filter(Boolean))];let profiles=[];if(ids.length){const q=await _sb.rpc('get_public_player_profiles',{p_user_ids:ids});if(!q.error)profiles=q.data||[];}const pm={};profiles.forEach(p=>pm[p.id]=p);const teamMode=/duo|squad/i.test(modeLabel);let teamByUid={};if(teamMode&&ids.length){try{const tq=await _sb.from('match_team_members').select('uid,join_request_id,role').in('uid',ids);(tq.data||[]).forEach(m=>teamByUid[m.uid]=m.join_request_id||('solo-'+m.uid));}catch(_){}}let html='';if(teamMode){const byTeam={};data.forEach(r=>{const p=pm[r.uid]||{};const key=teamByUid[r.uid]||('team-'+r.uid);(byTeam[key]=byTeam[key]||[]).push({...r,p});});Object.values(byTeam).forEach((rows,i)=>{html+='<div class="mm-result-team"><div style="font-weight:900;color:#ffe000;margin-bottom:6px">'+(modeLabel.toLowerCase().includes('squad')?'👥 Squad':'👥 Duo Team')+' '+(i+1)+'</div>'+rows.map(r=>'<div class="mm-result-line"><span>'+esc(r.p.ign||r.p.display_name||'Player')+' · '+Number(r.kills||0)+' kills</span><strong>'+ (r.rank?'#'+r.rank:'—')+' · ₹'+Number(r.reward||0).toLocaleString('en-IN')+'</strong></div>').join('')+'</div>';});}else{html=data.map(r=>{const p=pm[r.uid]||{};return '<div class="mm-result-player"><div style="font-weight:900;color:#fff;margin-bottom:5px">'+esc(p.ign||p.display_name||'Player')+'</div><div class="mm-result-line"><span>FF UID</span><b>'+esc(p.ffuid||'-')+'</b></div><div class="mm-result-line"><span>Rank</span><b>#'+(r.rank||'-')+'</b></div><div class="mm-result-line"><span>Kills</span><b>'+Number(r.kills||0)+'</b></div><div class="mm-result-line"><span>Prize</span><b style="color:#ffe000">₹'+Number(r.reward||0).toLocaleString('en-IN')+'</b></div></div>';}).join('');}body.innerHTML=html;
+  }catch(e){console.error('Public match result load failed',e);body.innerHTML='<div style="padding:22px;text-align:center;color:#ff7777">Could not load results. Please retry later.</div>';}
 }
 
 // ====== WALLET ======
@@ -3529,10 +3580,10 @@ function toast(msg,type='info'){
 function getMatchStatus(t){
   if(t.status==='cancelled') return 'cancelled';
   if(!t.matchTime) return t.status||'upcoming';
-  const now=Date.now(), mt=t.matchTime, liveWindow=20*60*1000;
-  if(now<mt) return 'upcoming';
-  if(now<mt+liveWindow) return 'live';
-  return t.resultSubmitted ? 'completed' : 'ended';
+  const now=Date.now(), mt=Number(t.matchTime), liveStart=mt-15*60*1000, liveEnd=mt+20*60*1000;
+  if(now<liveStart) return 'upcoming';
+  if(now<liveEnd) return 'live';
+  return 'completed';
 }
 function esc(s){if(s===null||s===undefined)return'';if(typeof s==='object')return'';const d=document.createElement('div');d.textContent=String(s);return d.innerHTML;}
 function formatCountdown(ms){
