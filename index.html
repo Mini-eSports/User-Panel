@@ -136,6 +136,27 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 /* APPROVAL BANNER */
 .approval-banner{background:rgba(255,215,0,0.08);border:1px solid var(--byellow);border-radius:10px;padding:10px 12px;margin:10px 14px 0;text-align:center;font-size:12px;color:var(--yellow)}
 /* CARDS — Premium Esports Style */
+
+/* Premium home screen inspired by the supplied reference */
+.home-match-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:10px 0 16px}
+.home-match-card{min-height:128px;border-radius:20px;padding:17px 8px 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;position:relative;overflow:hidden;touch-action:manipulation;transition:transform .15s,box-shadow .15s}
+.home-match-card:active{transform:scale(.98)}
+.home-match-card .home-card-art{font-size:34px;line-height:1.15;margin-bottom:10px;filter:drop-shadow(0 0 10px currentColor)}
+.home-card-title{font-size:clamp(13px,3.7vw,19px);font-weight:900;line-height:1.2}
+.home-card-sub{font-size:11px;color:#aaa;margin-top:7px;line-height:1.2}
+.home-match-card.paid{background:linear-gradient(135deg,#3a2a00,#100d00 80%);border:2px solid #ffd600;color:#ffd21a;box-shadow:inset 0 0 24px #b58b0033,0 0 10px #ffd60022}
+.home-match-card.free{background:linear-gradient(135deg,#002c4c,#020a12 80%);border:2px solid #129df5;color:#18b8ff;box-shadow:inset 0 0 24px #008cff22}
+.home-match-card.mine{background:linear-gradient(135deg,#300044,#100018 80%);border:2px solid #d000ff;color:#e12bff;box-shadow:inset 0 0 24px #d000ff22}
+.home-filter-panel{border:1px solid rgba(255,215,0,.38);border-radius:17px;padding:12px;margin:0 0 12px;background:linear-gradient(120deg,rgba(255,215,0,.035),rgba(255,255,255,.012))}
+.home-filter-heading{display:flex;align-items:center;gap:10px;color:var(--yellow);font-size:17px;font-weight:900;margin:0 0 12px}
+.home-filter-heading i{height:1px;flex:1;background:linear-gradient(90deg,var(--yellow),transparent)}
+.home-game-modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.home-game-modes .mode-filter-box{display:flex;align-items:center;justify-content:center;min-height:58px;padding:9px 5px;white-space:normal;text-align:center;font-size:clamp(11px,3.1vw,15px);border-radius:13px;border:1.5px solid #41414b;background:linear-gradient(145deg,#111217,#050506);color:#ddd}
+.home-game-modes .mode-filter-box.active{border-color:var(--yellow);background:linear-gradient(135deg,rgba(255,215,0,.24),rgba(255,180,0,.07));color:var(--yellow);box-shadow:0 0 13px #ffd60022}
+#homeModeFilter{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:8px!important}
+#homeModeFilter>div{display:flex;align-items:center;justify-content:center;min-height:58px;padding:9px 4px!important;border-radius:13px!important;font-size:clamp(11px,3.2vw,15px)!important;border:1.5px solid #41414b!important;white-space:normal}
+@media(min-width:700px){.home-match-cards{gap:16px}.home-match-card{min-height:190px;border-radius:24px}.home-match-card .home-card-art{font-size:48px}.home-card-title{font-size:24px}.home-card-sub{font-size:15px}.home-filter-panel{padding:18px}.home-game-modes .mode-filter-box,#homeModeFilter>div{min-height:76px;font-size:18px!important}}
+@media(max-width:360px){.home-match-cards{gap:6px}.home-match-card{min-height:112px;padding:12px 4px}.home-match-card .home-card-art{font-size:28px}.home-card-sub{font-size:10px}.home-filter-panel{padding:9px}.home-game-modes{gap:5px}#homeModeFilter{gap:5px!important}}
 .mode-filter-box{
   text-align:center;padding:10px 14px;border-radius:11px;font-size:12px;font-weight:800;letter-spacing:0.5px;
   background:rgba(255,255,255,0.04);border:1.5px solid rgba(255,255,255,0.08);color:#888;
@@ -485,25 +506,32 @@ textarea.form-input{resize:none;min-height:80px}
   <div class="content-area" id="contentArea">
     <!-- HOME -->
     <div class="screen active" id="screen-home">
-      <!-- Match Type Selector -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-        <div id="boxPaid" onclick="selectHomeFilter('paid')" style="background:linear-gradient(135deg,rgba(255,215,0,0.18),rgba(255,180,0,0.06));border:2px solid var(--yellow);border-radius:16px;padding:22px 10px;cursor:pointer;text-align:center;touch-action:manipulation;transition:all .15s ease;">
-          <div style="font-size:24px;margin-bottom:4px;">💰</div>
-          <div style="font-size:13px;font-weight:800;color:var(--yellow);">Paid Matches</div>
-          <div style="font-size:10px;color:var(--dim);margin-top:2px;">Win Real Money</div>
+      <!-- Premium Home Match Selector -->
+      <div class="home-match-cards">
+        <div id="boxPaid" class="home-match-card paid" onclick="selectHomeFilter('paid')">
+          <div class="home-card-art">🪙</div><div class="home-card-title">Paid Matches</div>
+          <div class="home-card-sub">Win Real Money</div>
         </div>
-        <div id="boxFree" onclick="selectHomeFilter('coin')" style="background:linear-gradient(135deg,rgba(100,200,255,0.10),rgba(50,150,255,0.04));border:2px solid #333;border-radius:16px;padding:22px 10px;cursor:pointer;text-align:center;touch-action:manipulation;transition:all .15s ease;">
-          <div style="font-size:24px;margin-bottom:4px;">🎮</div>
-          <div style="font-size:13px;font-weight:800;color:#64c8ff;">Free Matches</div>
-          <div style="font-size:10px;color:var(--dim);margin-top:2px;">Play with Coins</div>
+        <div id="boxFree" class="home-match-card free" onclick="selectHomeFilter('coin')">
+          <div class="home-card-art">🪙</div><div class="home-card-title">Free Matches</div>
+          <div class="home-card-sub">Play with Coins</div>
+        </div>
+        <div class="home-match-card mine" onclick="go('matches')">
+          <div class="home-card-art">🏆</div><div class="home-card-title">My Matches</div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;" id="homeCategoryFilter">
-        <div class="mode-filter-box active" data-cat="Battle Royale" onclick="selectHomeCategory('Battle Royale')">🪂 Battle Royale</div>
-        <div class="mode-filter-box" data-cat="Clash Squad" onclick="selectHomeCategory('Clash Squad')">⚔️ Clash Squad</div>
-        <div class="mode-filter-box" data-cat="Lone Wolf" onclick="selectHomeCategory('Lone Wolf')">🐺 Lone Wolf</div>
-      </div>
-      <div style="display:grid;margin-bottom:14px;" id="homeModeFilter"></div>
+      <section class="home-filter-panel">
+        <div class="home-filter-heading"><span>Game Mode</span><i></i></div>
+        <div class="home-game-modes" id="homeCategoryFilter">
+          <div class="mode-filter-box active" data-cat="Battle Royale" onclick="selectHomeCategory('Battle Royale')">Battle Royale</div>
+          <div class="mode-filter-box" data-cat="Clash Squad" onclick="selectHomeCategory('Clash Squad')">Clash Squad</div>
+          <div class="mode-filter-box" data-cat="Lone Wolf" onclick="selectHomeCategory('Lone Wolf')">Lone Wolf</div>
+        </div>
+      </section>
+      <section class="home-filter-panel match-type-panel">
+        <div class="home-filter-heading"><span>Match Type</span><i></i></div>
+        <div style="display:grid;margin-bottom:0;" id="homeModeFilter"></div>
+      </section>
             <div id="homeMatchList"><div class="empty-state"><div class="emoji">★</div><div class="msg">Loading matches...</div></div></div>
     </div>
 
