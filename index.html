@@ -432,6 +432,80 @@ textarea.form-input{resize:none;min-height:80px}
 @media(max-width:420px){#screen-home #boxPaid,#screen-home #boxFree{min-height:118px;padding:14px 8px!important;border-radius:18px!important}#screen-home #boxPaid:after,#screen-home #boxFree:after{right:7px;width:27px;height:32px;font-size:23px}#screen-home #boxPaid>div:nth-child(2),#screen-home #boxFree>div:nth-child(2){max-width:78%;font-size:14px!important}#screen-home #homeCategoryFilter .mode-filter-box{min-height:66px;font-size:11px;padding:8px 4px}#screen-home #homeModeFilter>div{min-height:56px;font-size:12px!important}}
 
 </style>
+
+<style id="premium-home-reference-overrides">
+/* Premium home design matching the supplied reference */
+#screen-home{padding-top:0}
+#header{background:radial-gradient(ellipse at 50% 0%,rgba(255,194,0,.10),transparent 65%),#030303;border-bottom:2px solid #b88c00;box-shadow:0 6px 24px rgba(255,190,0,.08)}
+#header .header-row{min-height:78px;padding:12px 20px;gap:10px;background:linear-gradient(115deg,rgba(255,190,0,.07),transparent 42%,rgba(255,190,0,.035))}
+#header .header-left{gap:10px;min-width:0}
+#header .header-left svg{width:38px!important;height:38px!important;filter:drop-shadow(0 0 7px #ffd00066)}
+#header .header-left .brand{font-size:clamp(20px,4.8vw,34px);font-style:italic;letter-spacing:-.8px;white-space:nowrap}
+#header .header-right{gap:10px}
+#header .h-icon{width:44px;height:44px;border:1.5px solid #d5a900;border-radius:13px;background:#080808}
+#header .h-icon svg{width:27px;height:27px}
+#header .chip{min-height:42px;padding:6px 13px;font-size:clamp(12px,2.5vw,19px);gap:7px;border-radius:24px;white-space:nowrap}
+#header .coin-chip{box-shadow:inset 0 0 15px #ffd00020,0 0 10px #ffd00015;border-color:#8c6a00}
+#header .money-chip{border-color:#555;background:linear-gradient(135deg,#151515,#050505)}
+#header .ticker-wrap{height:66px;margin:0 20px 14px;border:1px solid #b89112;border-radius:0 0 24px 24px;border-top-color:#65500c;background:linear-gradient(100deg,#171100,#090909 58%,#171100);box-shadow:0 6px 20px #ffd00012;position:relative;padding:0 58px 0 70px}
+#header .ticker-wrap:before{content:"📢";position:absolute;left:20px;top:50%;transform:translateY(-50%);font-size:29px;z-index:2}
+#header .ticker-wrap:after{content:"❯";position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:28px;font-weight:900;color:#ffd21a;z-index:2}
+#header .ticker-content{font-size:clamp(15px,2.6vw,25px);font-weight:900;padding-left:100%;text-shadow:0 0 9px #ffd00035}
+.home-match-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0 18px;padding:0 2px}
+.home-match-card{min-height:clamp(150px,27vw,280px);border-radius:26px;padding:20px 12px;justify-content:center}
+.home-match-card:before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(132deg,transparent 0 23px,rgba(255,255,255,.045) 24px 28px,transparent 29px 45px);opacity:.75}
+.home-match-card .home-card-art{font-size:clamp(42px,7vw,78px);line-height:1;margin-bottom:12px;z-index:1}
+.home-card-title{font-size:clamp(19px,3.6vw,34px);font-weight:900;line-height:1.15;z-index:1}
+.home-card-sub{font-size:clamp(12px,2.1vw,20px);margin-top:10px;z-index:1}
+.home-match-card.paid{background:linear-gradient(120deg,#3b2800,#110d00 65%,#211600);border:3px solid #ffd21a;box-shadow:inset 0 0 35px #ffcc002c,0 0 14px #ffd0002b}
+.home-match-card.free{background:linear-gradient(120deg,#003d73,#00101f 65%,#00284b);border:3px solid #08b8ff;color:#13baff;box-shadow:inset 0 0 35px #008cff30,0 0 14px #009dff2b}
+.home-match-card .home-card-art{filter:drop-shadow(0 0 12px currentColor)}
+.home-filter-panel{border:1px solid #8b6d0c;border-radius:22px;padding:18px 18px 16px;margin-bottom:14px;background:linear-gradient(115deg,rgba(255,215,0,.045),rgba(10,10,10,.92));box-shadow:inset 0 0 20px #ffd00008}
+.home-filter-heading{font-size:clamp(20px,3vw,30px);margin-bottom:17px}
+.home-game-modes{gap:12px}
+.home-game-modes .mode-filter-box{min-height:clamp(64px,9vw,112px);font-size:clamp(14px,2.8vw,28px);font-weight:900;border-radius:20px;border:2px solid #4b4b55;background:linear-gradient(145deg,#11151b,#030405);padding:10px}
+.home-game-modes .mode-filter-box.active{border:3px solid #ffd21a;background:linear-gradient(130deg,rgba(255,210,0,.25),rgba(35,22,0,.45));box-shadow:0 0 18px #ffd00035,inset 0 0 22px #ffd00018}
+#homeModeFilter{gap:12px!important}
+#homeModeFilter>div{min-height:clamp(64px,8.5vw,108px);font-size:clamp(14px,2.6vw,26px)!important;font-weight:900;border-radius:20px!important;border:2px solid #484852!important;background:linear-gradient(145deg,#11151b,#030405)!important;color:#eee!important}
+#homeModeFilter>div.active,#homeModeFilter>div[aria-pressed="true"]{background:linear-gradient(135deg,#ffe500,#ffb800)!important;color:#080808!important;border-color:#fff0a0!important;box-shadow:0 0 20px #ffd00042}
+@media(max-width:520px){
+ #header .header-row{min-height:74px;padding:10px 14px;gap:5px}
+ #header .header-left{gap:6px}
+ #header .header-left svg{width:30px!important;height:30px!important}
+ #header .header-left .brand{font-size:clamp(18px,5.1vw,25px);letter-spacing:-.6px}
+ #header .header-right{gap:5px}
+ #header .h-icon{width:38px;height:38px;border-radius:11px;border:0;background:transparent}
+ #header .h-icon svg{width:24px;height:24px}
+ #header .chip{min-height:35px;padding:5px 8px;font-size:clamp(11px,2.9vw,15px);gap:4px}
+ #header .coin-3d{font-size:15px}
+ #header .ticker-wrap{height:62px;margin:0 10px 12px;padding-left:54px;padding-right:38px;border-radius:0 0 22px 22px}
+ #header .ticker-wrap:before{left:13px;font-size:23px}
+ #header .ticker-wrap:after{right:12px;font-size:21px}
+ #header .ticker-content{font-size:16px}
+ .home-match-cards{gap:10px;margin:12px 0 16px;padding:0 1px}
+ .home-match-card{min-height:clamp(160px,52vw,225px);border-radius:22px;padding:16px 7px}
+ .home-match-card .home-card-art{font-size:clamp(38px,11vw,58px);margin-bottom:12px}
+ .home-card-title{font-size:clamp(18px,5.1vw,25px)}
+ .home-card-sub{font-size:clamp(12px,3.5vw,17px);margin-top:8px}
+ .home-filter-panel{padding:16px 14px 14px;border-radius:22px}
+ .home-filter-heading{font-size:22px;margin-bottom:15px}
+ .home-game-modes{gap:9px}
+ .home-game-modes .mode-filter-box{min-height:72px;padding:8px 4px;font-size:clamp(12px,3.5vw,17px);border-radius:17px}
+ #homeModeFilter{gap:9px!important}
+ #homeModeFilter>div{min-height:68px;font-size:clamp(12px,3.6vw,17px)!important;border-radius:17px!important;padding:8px 3px!important}
+}
+@media(max-width:370px){
+ #header .header-row{padding-left:9px;padding-right:9px}
+ #header .header-left .brand{font-size:17px}
+ #header .header-right{gap:2px}
+ #header .chip{padding:4px 6px;font-size:10px}
+ #header .coin-3d{display:none}
+ .home-match-card{min-height:150px}
+ .home-card-title{font-size:17px}
+ .home-card-sub{font-size:11px}
+}
+</style>
+
 </head>
 <body>
 
@@ -515,9 +589,6 @@ textarea.form-input{resize:none;min-height:80px}
         <div id="boxFree" class="home-match-card free" onclick="selectHomeFilter('coin')">
           <div class="home-card-art">🪙</div><div class="home-card-title">Free Matches</div>
           <div class="home-card-sub">Play with Coins</div>
-        </div>
-        <div class="home-match-card mine" onclick="go('matches')">
-          <div class="home-card-art">🏆</div><div class="home-card-title">My Matches</div>
         </div>
       </div>
       <section class="home-filter-panel">
