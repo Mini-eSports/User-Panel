@@ -97,11 +97,13 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .screen{display:none;padding:14px;animation:fadeIn .2s}
 .screen.active{display:block}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-/* BOTTOM NAV */
-.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#0a0a0a;border-top:1px solid rgba(255,215,0,0.12);display:flex;z-index:100;padding:6px 0;padding-bottom:env(safe-area-inset-bottom,6px)}
-.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;cursor:pointer;color:#555;font-size:10px;font-weight:600;transition:color .1s ease;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-.nav-item.active{color:var(--red)}
-.nav-item svg{width:22px;height:22px;fill:currentColor}
+/* PREMIUM BOTTOM NAV — 5 sections; Matches is accessed from the Home match cards */
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:calc(100% - 16px);max-width:900px;background:linear-gradient(180deg,#15120a 0%,#050505 52%,#0b0904 100%);border:1px solid rgba(255,215,0,.7);border-radius:22px;box-shadow:0 -3px 20px rgba(255,190,0,.12),inset 0 0 18px rgba(255,190,0,.06);display:flex;z-index:100;padding:5px 4px calc(5px + env(safe-area-inset-bottom,0px));overflow:hidden}
+.nav-item{position:relative;flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 2px 7px;cursor:pointer;color:#8d8d8d;font-size:clamp(10px,2.7vw,13px);font-weight:600;transition:color .16s ease,background .16s ease;-webkit-tap-highlight-color:transparent;touch-action:manipulation;border-radius:15px;text-align:center}
+.nav-item.active{color:var(--yellow);background:linear-gradient(180deg,rgba(255,215,0,.16),rgba(255,215,0,.025));box-shadow:inset 0 0 0 1px rgba(255,215,0,.38),0 0 14px rgba(255,190,0,.12)}
+.nav-item.active:after{content:"";position:absolute;bottom:0;left:28%;right:28%;height:3px;border-radius:4px;background:var(--yellow);box-shadow:0 0 9px rgba(255,215,0,.9)}
+.nav-item svg{width:25px;height:25px;fill:currentColor;filter:drop-shadow(0 0 3px rgba(255,215,0,.18))}
+@media(max-width:380px){.bottom-nav{width:calc(100% - 10px);border-radius:16px}.nav-item{font-size:10px;padding-left:0;padding-right:0}.nav-item svg{width:22px;height:22px}}
 
 /* ============ RESPONSIVE: TABLET & DESKTOP (Change 22) ============ */
 /* Mobile (<=767px) is untouched — these only apply from tablet width upward. */
@@ -700,24 +702,21 @@ textarea.form-input{resize:none;min-height:80px}
   </div>
 
   <!-- BOTTOM NAV -->
-  <div class="bottom-nav">
-    <div class="nav-item active" onclick="go('home')">
-      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Home
+  <div class="bottom-nav" aria-label="Main navigation">
+    <div class="nav-item active" data-screen="home" onclick="go('home')">
+      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><span>Home</span>
     </div>
-    <div class="nav-item" onclick="go('special')">
-      <svg viewBox="0 0 24 24"><path d="M5 16L3 5l5.5 5L12 2l3.5 8L21 5l-2 11H5zm2.1 2a.9.9 0 0 0 0 1.8h9.8a.9.9 0 0 0 0-1.8H7.1z"/></svg>Special
+    <div class="nav-item" data-screen="special" onclick="go('special')">
+      <svg viewBox="0 0 24 24"><path d="M5 16L3 5l5.5 5L12 2l3.5 8L21 5l-2 11H5zm2.1 2a.9.9 0 0 0 0 1.8h9.8a.9.9 0 0 0 0-1.8H7.1z"/></svg><span>Special</span>
     </div>
-    <div class="nav-item" onclick="go('mymatches')">
-      <svg viewBox="0 0 24 24"><path d="M14.5 2.5L12 5l5 5 2.5-2.5-5-5zM9.5 7.5l-7 7 1.5 1.5 3-3 1.5 1.5-4.5 4.5 1.5 1.5L10 15.5l1.5 1.5-3 3 1.5 1.5 7-7-1.5-1.5-1.5 1.5-3-3 3-3 1.5 1.5 1.5-1.5-1.5-1.5z"/></svg>Matches
+    <div class="nav-item" data-screen="wallet" onclick="go('wallet')">
+      <svg viewBox="0 0 24 24"><path d="M21 18v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1h-9a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h9zm-9-2h10V8H12v8zm4-2.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg><span>Wallet</span>
     </div>
-    <div class="nav-item" onclick="go('wallet')">
-      <svg viewBox="0 0 24 24"><path d="M21 18v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1h-9a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h9zm-9-2h10V8H12v8zm4-2.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg>Wallet
+    <div class="nav-item" data-screen="rank" onclick="go('rank')">
+      <svg viewBox="0 0 24 24"><path d="M7 4H2v16h5V4zm5-2h-4v18h4V2zm5 7h-4v11h4V9zm5 3h-4v8h4v-8z"/></svg><span>Rank</span>
     </div>
-    <div class="nav-item" onclick="go('rank')">
-      <svg viewBox="0 0 24 24"><path d="M7 4H2v16h5V4zm5-2h-4v18h4V2zm5 7h-4v11h4V9zm5 3h-4v8h4v-8z"/></svg>Rank
-    </div>
-    <div class="nav-item" onclick="go('profile')">
-      <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>Profile
+    <div class="nav-item" data-screen="profile" onclick="go('profile')">
+      <svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg><span>Profile</span>
     </div>
   </div>
 </div>
@@ -1366,9 +1365,8 @@ function goInternal(screen){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   const el=document.getElementById('screen-'+screen);
   if(el)el.classList.add('active');
-  document.querySelectorAll('.nav-item').forEach((n,i)=>{
-    n.classList.remove('active');
-    if(screenOrder[i]===screen)n.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    n.classList.toggle('active', n.dataset.screen===screen);
   });
   document.getElementById('contentArea').scrollTop=0;
   if(screen==='wallet'){updateWallet();setTimeout(()=>drawDonut(),50);}
