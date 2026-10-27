@@ -572,6 +572,17 @@ textarea.form-input{resize:none;min-height:80px}
 #screen-home .match-type-panel{border-color:#168ee4;}
 @media(max-width:520px){#screen-home .home-match-card{min-height:clamp(132px,29vw,170px);border-radius:22px;}#screen-home .home-filter-panel{padding:13px 12px 12px;}#screen-home .home-filter-heading{font-size:clamp(20px,5.4vw,25px);}#screen-home .home-game-modes{gap:7px;}#screen-home .home-game-modes .mode-filter-box{padding:7px 3px;font-size:clamp(11px,3.1vw,15px);}#screen-home #homeModeFilter{gap:7px!important;}#screen-home #homeModeFilter>div{min-height:54px;font-size:clamp(11px,3.2vw,15px)!important;}}
 </style>
+<style id="home-paid-free-selection-fix">
+#screen-home .home-match-card{cursor:pointer;transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease,filter .18s ease;position:relative;}
+#screen-home .home-match-card .home-card-art{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;font-size:clamp(38px,8vw,58px);line-height:1;filter:drop-shadow(0 0 10px currentColor);}
+#screen-home .home-match-card .home-card-art svg{display:none!important;}
+#screen-home .home-match-card.paid.active{border:3px solid #ffd21a!important;box-shadow:0 0 0 2px #ffd21a30,0 0 24px #ffcc2470,inset 0 0 30px #ffcc2430!important;filter:brightness(1.12);transform:translateY(-1px);}
+#screen-home .home-match-card.free.active{border:3px solid #16baff!important;box-shadow:0 0 0 2px #16baff30,0 0 24px #16baff70,inset 0 0 30px #16baff30!important;filter:brightness(1.12);transform:translateY(-1px);}
+#screen-home .home-match-card:not(.active){filter:saturate(.78) brightness(.84);box-shadow:inset 0 0 0 1px #ffffff08!important;}
+#screen-home .home-match-card.active:after{content:"SELECTED";position:absolute;top:10px;right:10px;padding:4px 7px;border-radius:6px;font:800 9px/1.2 system-ui,sans-serif;letter-spacing:1px;color:#080808;background:#ffd21a;box-shadow:0 0 10px #ffd21a66;}
+#screen-home .home-match-card.free.active:after{background:#16baff;box-shadow:0 0 10px #16baff66;}
+@media(max-width:520px){#screen-home .home-match-card.active:after{top:7px;right:7px;font-size:8px;padding:4px 5px;}}
+</style>
 
 </head>
 <body>
@@ -649,12 +660,12 @@ textarea.form-input{resize:none;min-height:80px}
     <div class="screen active" id="screen-home">
       <!-- Premium Home Match Selector -->
       <div class="home-match-cards">
-        <div id="boxPaid" class="home-match-card paid" onclick="selectHomeFilter('paid')">
-          <div class="home-card-art" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M18 19c0-5 7-8 14-8s14 3 14 8l8 10c3 4 2 10-3 12L37 48c-3 2-7 2-10 0L13 41c-5-2-6-8-3-12z" fill="currentColor"/><path d="M25 14c1-6 5-9 8-9 4 0 6 3 6 7-3 2-8 4-14 2z" fill="currentColor"/><path d="M36 20c-2-2-8-2-10 2-3 6 9 6 7 11-1 3-6 4-10 1M31 18l-5 20" fill="none" stroke="#332000" stroke-width="4" stroke-linecap="round"/></svg></div><div class="home-card-title">Paid Matches</div>
+        <div id="boxPaid" class="home-match-card paid active" aria-pressed="true" onclick="selectHomeFilter('paid')">
+          <div class="home-card-art paid-emoji" aria-hidden="true">💰</div><div class="home-card-title">Paid Matches</div>
           <div class="home-card-sub">Win Real Money</div>
         </div>
-        <div id="boxFree" class="home-match-card free" onclick="selectHomeFilter('coin')">
-          <div class="home-card-art" aria-hidden="true"><svg viewBox="0 0 64 64"><ellipse cx="28" cy="43" rx="17" ry="7" fill="currentColor"/><path d="M11 35v8c0 4 8 8 17 8s17-4 17-8v-8" fill="currentColor"/><ellipse cx="28" cy="35" rx="17" ry="7" fill="#ffe58a"/><ellipse cx="42" cy="25" rx="13" ry="6" fill="currentColor"/><path d="M29 18v7c0 3 6 6 13 6s13-3 13-6v-7" fill="currentColor"/><ellipse cx="42" cy="18" rx="13" ry="6" fill="#fff0a8"/><path d="M36 18h12M42 14v8" stroke="#966800" stroke-width="2"/></svg></div><div class="home-card-title">Free Matches</div>
+        <div id="boxFree" class="home-match-card free" aria-pressed="false" onclick="selectHomeFilter('coin')">
+          <div class="home-card-art free-emoji" aria-hidden="true">🪙</div><div class="home-card-title">Free Matches</div>
           <div class="home-card-sub">Play with Coins</div>
         </div>
       </div>
@@ -1618,16 +1629,15 @@ async function updateApprovalBanner(){
 // toggleHomeDropdown removed - using boxes now
 function selectHomeFilter(filter){
   currentHomeTab=filter;
-  // Update box styles
   const bPaid=document.getElementById('boxPaid');
   const bFree=document.getElementById('boxFree');
   if(bPaid){
-    bPaid.style.border=filter==='paid'?'2px solid var(--yellow)':'2px solid #333';
-    bPaid.style.background=filter==='paid'?'linear-gradient(135deg,rgba(255,215,0,0.18),rgba(255,180,0,0.08))':'linear-gradient(135deg,rgba(255,215,0,0.04),rgba(0,0,0,0))';
+    bPaid.classList.toggle('active',filter==='paid');
+    bPaid.setAttribute('aria-pressed',filter==='paid'?'true':'false');
   }
   if(bFree){
-    bFree.style.border=filter==='coin'?'2px solid #64c8ff':'2px solid #333';
-    bFree.style.background=filter==='coin'?'linear-gradient(135deg,rgba(100,200,255,0.15),rgba(50,150,255,0.08))':'linear-gradient(135deg,rgba(100,200,255,0.04),rgba(0,0,0,0))';
+    bFree.classList.toggle('active',filter==='coin');
+    bFree.setAttribute('aria-pressed',filter==='coin'?'true':'false');
   }
   renderHome();
 }
