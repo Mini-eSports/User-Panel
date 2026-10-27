@@ -277,8 +277,8 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .rank-hero-earnings{min-width:0;text-align:right;flex:1}
 .rank-hero-total{display:flex;justify-content:flex-end;align-items:center;gap:7px;margin-top:7px;font-size:22px;font-weight:900;color:var(--yellow);white-space:nowrap}
 .rank-hero-total span:first-child{font-size:24px}
-.rank-earning-types{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:0 0 18px}
-.rank-earning-card{cursor:pointer;transition:transform .16s ease,filter .16s ease;min-width:0;min-height:108px;border:2px solid;border-radius:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8px 2px;font-size:10px;font-weight:700;line-height:1.35;color:#fff;background:#080808;box-shadow:inset 0 0 12px rgba(255,255,255,.025)}
+.rank-earning-types{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 18px}
+.rank-earning-card{cursor:pointer;transition:transform .16s ease,filter .16s ease;min-width:0;min-height:0;aspect-ratio:1 / 1;border:2px solid;border-radius:13px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:7px 3px;font-size:10px;font-weight:700;line-height:1.35;color:#fff;background:#080808;box-shadow:inset 0 0 12px rgba(255,255,255,.025);box-sizing:border-box;overflow-wrap:anywhere}
 .rank-earning-icon{font-size:25px;line-height:1;margin-bottom:8px}
 .rank-earning-card.match{border-color:#00f58a;box-shadow:0 0 10px rgba(0,245,138,.20),inset 0 0 12px rgba(0,245,138,.08)}
 .rank-earning-card.match .rank-earning-icon{color:#00f58a}
@@ -649,7 +649,7 @@ textarea.form-input{resize:none;min-height:80px}
       </div>
       <div class="header-right">
         <div class="h-icon" onclick="toggleSearch()" style="color:var(--yellow)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
-        <div class="chip coin-chip" onclick="go('wallet')"><span class="coin-3d" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="10" fill="#f8c928" stroke="#ffe98a" stroke-width="1.5"/><circle cx="12" cy="12" r="7" fill="none" stroke="#b98208" stroke-width="1"/><path d="M8 8h8M8 12h8M8 16h8" stroke="#9a6b00" stroke-width="1.2"/></svg></span> <span id="hCoins">0</span></div>
+        <div class="chip coin-chip" onclick="go('wallet')"><span class="coin-3d" aria-hidden="true">🪙</span> <span id="hCoins">0</span></div>
         <div class="chip money-chip" onclick="go('wallet')"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M21 18v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1h-9a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h9zm-9-2h10V8H12v8zm4-2.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg> ₹<span id="hMoney">0</span></div>
 
       </div>
@@ -766,7 +766,6 @@ textarea.form-input{resize:none;min-height:80px}
       </div>
       <div class="rank-earning-types" aria-label="Earning categories">
         <div class="rank-earning-card match" data-lb-category="match" role="button" tabindex="0" onclick="selectLeaderboardCategory('match')"><div class="rank-earning-icon">🎮</div><div>Match<br>Earnings</div></div>
-        <div class="rank-earning-card referral" data-lb-category="referral" role="button" tabindex="0" onclick="selectLeaderboardCategory('referral')"><div class="rank-earning-icon">👥</div><div>Referral<br>Earnings</div></div>
         <div class="rank-earning-card bonus" data-lb-category="bonus" role="button" tabindex="0" onclick="selectLeaderboardCategory('bonus')"><div class="rank-earning-icon">🎁</div><div>Bonus<br>Earnings</div></div>
         <div class="rank-earning-card convert" data-lb-category="convert" role="button" tabindex="0" onclick="selectLeaderboardCategory('convert')"><div class="rank-earning-icon">🪙</div><div>Coin to Money<br>Earnings</div></div>
         <div class="rank-earning-card withdrawal" data-lb-category="withdrawal" role="button" tabindex="0" onclick="selectLeaderboardCategory('withdrawal')"><div class="rank-earning-icon">💸</div><div>Withdrawal<br>Earnings</div></div>
@@ -1614,7 +1613,7 @@ function updateHeader(){
   if(!UD)return;
   document.getElementById('hCoins').textContent=(UD.coins||0).toLocaleString();
   const rm=UD.realMoney||{};
-  document.getElementById('hMoney').textContent=(Number(rm.deposited)||0)+(Number(rm.winnings)||0)+(Number(rm.bonus)||0)+(Number(rm.coinToMoney)||0);
+  document.getElementById('hMoney').textContent=(Number(rm.deposited)||0)+(Number(rm.winnings)||0)+(Number(rm.bonus)||0)+(Number(rm.referralEarnings??rm.referral_earnings??rm.referral)||0)+(Number(rm.coinToMoney??rm.coin_to_money)||0);
 
   // Avatar shown only in profile page now
 }
@@ -2131,11 +2130,12 @@ async function openMatchResult(tournamentId, tournamentName, modeLabel){
 function updateWallet(){
   if(!UD)return;
   const rm=UD.realMoney||{};
-  const dep=Number(rm.deposited)||0,win=Number(rm.winnings)||0,bon=Number(rm.bonus)||0,coinMoney=Number(rm.coinToMoney)||0;
-  document.getElementById('wTotal').textContent=(dep+win+bon+coinMoney).toFixed(2).replace(/\.00$/,'');
+  const dep=Number(rm.deposited)||0,win=Number(rm.winnings)||0,bon=Number(rm.bonus)||0,referral=Number(rm.referralEarnings??rm.referral_earnings??rm.referral)||0,coinMoney=Number(rm.coinToMoney??rm.coin_to_money)||0;
+  document.getElementById('wTotal').textContent=(dep+win+bon+referral+coinMoney).toFixed(2).replace(/\.00$/,'');
   document.getElementById('wDep').textContent=dep;
   document.getElementById('wWin').textContent=win;
   document.getElementById('wBon').textContent=bon;
+  const referralEl=document.getElementById('wReferral');if(referralEl)referralEl.textContent=referral.toFixed(2).replace(/\.00$/,'');
   const coinMoneyEl=document.getElementById('wCoinMoney');if(coinMoneyEl)coinMoneyEl.textContent=coinMoney.toFixed(2).replace(/\.00$/,'');
   document.getElementById('wCoins').textContent=UD.coins||0;
   drawDonut();
@@ -2147,19 +2147,19 @@ function drawDonut(){
   if(!c)return;
   const ctx=c.getContext('2d');
   const rm=UD?(UD.realMoney||{}):{}; 
-  const dep=Number(rm.deposited)||0,win=Number(rm.winnings)||0,bon=Number(rm.bonus)||0,coinMoney=Number(rm.coinToMoney)||0;
-  const total=dep+win+bon+coinMoney||1;
+  const dep=Number(rm.deposited)||0,win=Number(rm.winnings)||0,bon=Number(rm.bonus)||0,referral=Number(rm.referralEarnings??rm.referral_earnings??rm.referral)||0,coinMoney=Number(rm.coinToMoney??rm.coin_to_money)||0;
+  const total=dep+win+bon+referral+coinMoney||1;
   ctx.clearRect(0,0,90,90);
   let start=-Math.PI/2;
-  [{val:dep,color:'#FFD700'},{val:win,color:'#FFFFFF'},{val:bon,color:'#FF0000'},{val:coinMoney,color:'#20d6a2'}].forEach(d=>{
+  [{val:dep,color:'#FFD700'},{val:win,color:'#FFFFFF'},{val:bon,color:'#FF0000'},{val:referral,color:'#168cff'},{val:coinMoney,color:'#20d6a2'}].forEach(d=>{
     const angle=(d.val/total)*Math.PI*2;
     if(angle===0)return;
     ctx.beginPath();ctx.arc(45,45,34,start,start+angle);ctx.lineWidth=11;ctx.strokeStyle=d.color;ctx.stroke();
     start+=angle;
   });
-  if(!dep&&!win&&!bon&&!coinMoney){ctx.beginPath();ctx.arc(45,45,34,0,Math.PI*2);ctx.lineWidth=11;ctx.strokeStyle='#333';ctx.stroke();}
+  if(!dep&&!win&&!bon&&!referral&&!coinMoney){ctx.beginPath();ctx.arc(45,45,34,0,Math.PI*2);ctx.lineWidth=11;ctx.strokeStyle='#333';ctx.stroke();}
   ctx.fillStyle='#fff';ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.fillText('₹'+(dep+win+bon+coinMoney),45,45);
+  ctx.fillText('₹'+(dep+win+bon+referral+coinMoney),45,45);
 }
 let dailyClaimReward = 10;
 let dailyClaimRewardLoad = null;
@@ -2431,7 +2431,7 @@ function openCreateTicket(){
     '<div style="font-size:13px;font-weight:800;color:#d7d9e0;margin-bottom:8px;">Receiver UID</div><div style="display:flex;align-items:center;gap:9px;padding:13px;border-radius:13px;border:1.5px solid #3a3d47;background:#0d0e12;"><span style="font-size:20px;">👤</span><input id="tcUID" type="text" placeholder="Enter receiver UID" oninput="verifyTicketReceiver()" style="min-width:0;flex:1;background:transparent;border:0;outline:0;color:#fff;font-size:15px;"><span id="tcVerifyIcon"></span></div><div id="tcReceiverInfo" style="margin-top:7px;"></div><div style="font-size:11px;color:#9da3ad;margin:8px 0 18px;">🛡️ Only registered app users can receive tickets</div>'+
     '<button id="tcSendBtn" onclick="confirmSendTicket()" style="width:100%;padding:16px;border:0;border-radius:14px;background:linear-gradient(100deg,#ffe51c,#ffb900);color:#090909;font-size:15px;font-weight:950;box-shadow:0 0 22px rgba(255,204,0,.25);">CONFIRM &amp; SEND　➜</button></div>');
   window._ticketType='coin';window._ticketReceiver=null;
-  const coinBal=Number(UD?.coins||0);const moneyBal=Number((UD?.realMoney?.deposited||0)+(UD?.realMoney?.winnings||0)+(UD?.realMoney?.bonus||0)+(UD?.realMoney?.coinToMoney||0));
+  const coinBal=Number(UD?.coins||0);const moneyBal=Number((UD?.realMoney?.deposited||0)+(UD?.realMoney?.winnings||0)+(UD?.realMoney?.bonus||0)+(UD?.realMoney?.referralEarnings??UD?.realMoney?.referral_earnings??UD?.realMoney?.referral??0)+(UD?.realMoney?.coinToMoney??UD?.realMoney?.coin_to_money??0));
   const bal=document.getElementById('tcBal');if(bal){bal.textContent=coinBal+' Coins';bal._coinBal=coinBal;bal._moneyBal=moneyBal;}
 }
 
@@ -3028,11 +3028,12 @@ function lbCategoryValue(u,category){
   const rm=u.real_money&&typeof u.real_money==='object'?u.real_money:{};
   const first=(...vals)=>{for(const v of vals){if(v!==undefined&&v!==null&&v!==''&&Number.isFinite(Number(v)))return Math.max(0,Number(v));}return 0;};
   const match=first(s.matchEarnings,s.match_earnings)||first(s.earnings,u.earnings,rm.winnings);
-  const referral=first(s.referralEarnings,s.referral_earnings,s.referralsEarnings,s.referral_earnings_total);
+  const referral=first(s.referralEarnings,s.referral_earnings,s.referralsEarnings,s.referral_earnings_total)||first(rm.referralEarnings,rm.referral_earnings,rm.referral);
   const bonus=first(s.bonusEarnings,s.bonus_earnings)||first(rm.bonus);
-  const convert=first(s.coinToMoneyEarnings,s.coin_to_money_earnings,s.convertedMoneyEarnings,s.converted_money_earnings);
-  const withdrawal=first(s.withdrawalEarnings,s.withdrawal_earnings,s.withdrawnEarnings,s.withdrawn_earnings);
-  const all=match+referral+bonus+convert+withdrawal;
+  const convert=first(s.coinToMoneyEarnings,s.coin_to_money_earnings,s.convertedMoneyEarnings,s.converted_money_earnings)||first(rm.coinToMoney,rm.coin_to_money);
+  const withdrawal=first(s.withdrawalEarnings,s.withdrawal_earnings,s.withdrawnEarnings,s.withdrawn_earnings)||first(rm.withdrawal,rm.withdrawals);
+  // Total earnings exclude deposits and withdrawals; count actual earned categories only.
+  const all=match+referral+bonus+convert;
   return ({total:all,match,referral,bonus,convert,withdrawal})[category]||0;
 }
 async function renderLeaderboard(sortBy){
@@ -3879,37 +3880,7 @@ function fileToBase64(file){return new Promise((res,rej)=>{const r=new FileReade
 </script>
 
 
-<style>
-.coin-gift-icon{display:inline-block;width:1.08em;height:1.08em;vertical-align:-.17em;flex:0 0 auto;filter:drop-shadow(0 0 3px rgba(255,205,25,.75)) drop-shadow(0 0 7px rgba(255,190,0,.3));}
-.wallet-coin-icon{width:1.12em;height:1.12em;vertical-align:-.18em;}
-</style>
-<script>
-(function(){
- const iconMarkup = '<svg class="coin-gift-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><defs><radialGradient id="coinGold" cx="35%" cy="25%" r="75%"><stop offset="0" stop-color="#fff5a6"/><stop offset=".42" stop-color="#ffd83d"/><stop offset="1" stop-color="#c88700"/></radialGradient></defs><circle cx="12" cy="12" r="10" fill="url(#coinGold)" stroke="#fff0a0" stroke-width="1.3"/><circle cx="12" cy="12" r="7.2" fill="none" stroke="#fff0a0" stroke-width=".8"/><path d="M8 8.5h8M8 12h8M8 15.5h8" stroke="#a56b00" stroke-width="1.2" stroke-linecap="round"/><path d="M9 6.5h6" stroke="#fff8c8" stroke-width=".8"/></svg>';
- function replaceCoinEmoji(root){
-  if(!root)return;
-  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode(n){
-   if(!n.nodeValue||!n.nodeValue.includes('🪙'))return NodeFilter.FILTER_REJECT;
-   const p=n.parentElement;
-   if(!p||p.closest('script,style,textarea,input'))return NodeFilter.FILTER_REJECT;
-   return NodeFilter.FILTER_ACCEPT;
-  }});
-  const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
-  nodes.forEach(n=>{
-   const parts=n.nodeValue.split('🪙');if(parts.length<2)return;
-   const frag=document.createDocumentFragment();
-   parts.forEach((part,i)=>{if(part)frag.appendChild(document.createTextNode(part));if(i<parts.length-1){
-    const parent=n.parentElement;
-    if(parent&&parent.closest('option,select'))frag.appendChild(document.createTextNode('◉'));
-    else {const span=document.createElement('span');span.innerHTML=iconMarkup;frag.appendChild(span.firstElementChild);}
-   }});
-   n.parentNode&&n.parentNode.replaceChild(frag,n);
-  });
- }
- function start(){replaceCoinEmoji(document.body);const mo=new MutationObserver(ms=>ms.forEach(m=>{m.addedNodes&&m.addedNodes.forEach(n=>{if(n.nodeType===Node.TEXT_NODE)replaceCoinEmoji(n.parentElement);else if(n.nodeType===Node.ELEMENT_NODE)replaceCoinEmoji(n);});}));mo.observe(document.body,{subtree:true,childList:true,characterData:true});}
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
-})();
-</script>
+
 
 </body>
 </html>
