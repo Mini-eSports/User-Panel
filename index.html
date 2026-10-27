@@ -931,7 +931,7 @@ function toSnake(obj) {
     isGoogleUser:'is_google_user', lastSeen:'last_seen',
     teammateFFUID:'teammate_ffuid', userUpiId:'user_upi_id', screenshotBase64:'screenshot_base64',
     lastMessageAt:'last_message_at', unreadByAdmin:'unread_by_admin', unreadByUser:'unread_by_user',
-    playerName:'player_name',
+    playerName:'player_name', currentIGN:'current_ign', newIGN:'new_ign', newFFUID:'new_ffuid', rejectionReason:'rejection_reason',
   };
   const result = {};
   for(const k in obj) result[map[k]||k] = obj[k];
@@ -949,7 +949,7 @@ function toCamel(obj) {
     is_google_user:'isGoogleUser', last_seen:'lastSeen',
     teammate_ffuid:'teammateFFUID', user_upi_id:'userUpiId', screenshot_base64:'screenshotBase64',
     last_message_at:'lastMessageAt', unread_by_admin:'unreadByAdmin', unread_by_user:'unreadByUser',
-    player_name:'playerName',
+    player_name:'playerName', current_ign:'currentIGN', new_ign:'newIGN', new_ffuid:'newFFUID', rejection_reason:'rejectionReason',
   };
   const result = {};
   for(const k in obj) result[map[k]||k] = obj[k];
@@ -2582,7 +2582,7 @@ async function openConvertCoins(){
     #modalContent:has(.coin-convert-premium){width:min(100%,560px);height:calc(100vh - 8px);max-height:calc(100vh - 8px);overflow:hidden;padding:0!important;background:#07090b;border:1px solid #d9b900;box-shadow:0 0 28px #f5cf0030;border-radius:24px;color:#fff;box-sizing:border-box;}
     @supports(height:100dvh){#modalContent:has(.coin-convert-premium){height:calc(100dvh - 8px);max-height:calc(100dvh - 8px)}}
     .coin-convert-premium{height:100%;box-sizing:border-box;overflow:hidden;padding:16px 14px 12px;display:flex;flex-direction:column;justify-content:space-between;gap:5px;background:radial-gradient(ellipse at 50% 0%,#3b300b44,transparent 48%),linear-gradient(160deg,#080a0b,#060708);}
-    .cc-head{display:flex;align-items:center;gap:12px;padding:4px 42px 0 0;position:relative}.cc-logo{width:54px;height:54px;flex:0 0 54px;border-radius:15px;display:grid;place-items:center;font-size:29px;color:#ffdf25;background:linear-gradient(145deg,#302707,#0c0c0b);border:1px solid #e5c400;box-shadow:0 0 18px #f5d00028}.cc-title{font-size:clamp(19px,4.6vw,25px);font-weight:950;line-height:1.15}.cc-sub{font-size:12px;color:#b7bbc4;margin-top:6px;line-height:1.4}.cc-hero{height:clamp(62px,11vh,100px);flex:0 0 auto;display:flex;align-items:center;justify-content:space-around;gap:6px;padding:4px 0}.cc-hero-coin{font-size:clamp(38px,7vh,58px);filter:drop-shadow(0 0 15px #ffcf00aa)}.cc-hero-arrow{font-size:clamp(23px,4vh,32px);letter-spacing:-9px;color:#ffe22d;text-shadow:0 0 14px #ffdc25}.cc-hero-wallet{font-size:clamp(40px,7vh,58px);filter:drop-shadow(0 0 14px #00e58a99)}.cc-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:0;flex:0 0 auto}.cc-info{min-width:0;padding:8px 9px;border-radius:15px;border:1px solid #66551c;background:linear-gradient(145deg,#15140e,#0b0d0e)}.cc-info-label{font-size:11px;color:#c7c9d0;margin-bottom:6px}.cc-info-value{font-size:clamp(15px,3.8vw,20px);font-weight:950;color:#ffdc25;line-height:1.25}.cc-info-note{font-size:9px;color:#a8abb4;margin-top:5px;line-height:1.35}.cc-balance{display:flex;align-items:center;justify-content:center;gap:12px;padding:7px 10px;border:1px solid #8b751b;border-radius:15px;background:linear-gradient(100deg,#171609,#10120e);margin-bottom:0;flex:0 0 auto}.cc-balance-icon{font-size:30px;filter:drop-shadow(0 0 8px #ffd21c99)}.cc-label{font-size:12px;color:#c7c9d0}.cc-balance-number{font-size:clamp(23px,4.5vh,31px);font-weight:950;color:#ffdb20;line-height:1.1;margin-top:3px}.cc-input-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 3px 8px;font-size:14px;font-weight:850}.cc-clear{border:0;background:none;color:#ffdc25;font-weight:800;font-size:12px;padding:5px}.cc-input-wrap{display:flex;align-items:center;gap:10px;border:1px solid #e4c400;border-radius:15px;background:#090c0f;padding:0 13px;flex:0 0 auto;box-shadow:inset 0 0 14px #f6d0000b}.cc-input-icon{font-size:26px}.cc-input{width:100%;min-width:0;height:44px;background:transparent;border:0;outline:none;color:#fff;font-size:20px;font-weight:800}.cc-input::placeholder{color:#777d87;font-size:15px;font-weight:500}.cc-quick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:0;flex:0 0 auto}.cc-quick button{min-width:0;padding:6px 4px;border:1px solid #bfa400;border-radius:13px;background:linear-gradient(145deg,#19170b,#090a0b);color:#ffdc25;font-size:16px;font-weight:950}.cc-quick small{display:block;color:#c1c3ca;font-size:10px;font-weight:600;margin-top:4px}.cc-result{display:flex;align-items:center;gap:9px;margin:0;padding:8px 10px;flex:0 0 auto;border-radius:17px;border:1px solid #10a968;background:linear-gradient(110deg,#062519,#07140f);box-shadow:0 0 15px #00d78314}.cc-result-wallet{font-size:29px}.cc-result-main{flex:1;min-width:0}.cc-result-amount{font-size:clamp(22px,4.5vh,30px);font-weight:950;color:#16e998;line-height:1.2}.cc-result-side{border-left:1px solid #32634d;padding-left:10px;font-size:11px;color:#e5e9e8;white-space:nowrap;line-height:1.7}.cc-primary{width:100%;min-height:44px;flex:0 0 auto;border:0;border-radius:15px;background:linear-gradient(100deg,#ffe51c,#ffb800);color:#090909;font-size:16px;font-weight:950;box-shadow:0 5px 18px #f3cb0030}.cc-footnote{text-align:center;font-size:10px;color:#a9adb7;line-height:1.3;margin:0 3px;flex:0 0 auto}.cc-min-error{font-size:11px;color:#ff647d;margin:7px 4px 0;min-height:15px}
+    .cc-head{display:flex;align-items:center;gap:12px;padding:4px 42px 0 0;position:relative}.cc-logo{width:54px;height:54px;flex:0 0 54px;border-radius:15px;display:grid;place-items:center;font-size:29px;color:#ffdf25;background:linear-gradient(145deg,#302707,#0c0c0b);border:1px solid #e5c400;box-shadow:0 0 18px #f5d00028}.cc-title{font-size:clamp(19px,4.6vw,25px);font-weight:950;line-height:1.15}.cc-sub{font-size:12px;color:#b7bbc4;margin-top:6px;line-height:1.4}.cc-hero{height:clamp(62px,11vh,100px);flex:0 0 auto;display:flex;align-items:center;justify-content:space-around;gap:6px;padding:4px 0}.cc-hero-coin{font-size:clamp(38px,7vh,58px);filter:drop-shadow(0 0 15px #ffcf00aa)}.cc-hero-arrow{font-size:clamp(23px,4vh,32px);letter-spacing:-9px;color:#ffe22d;text-shadow:0 0 14px #ffdc25}.cc-hero-wallet{font-size:clamp(40px,7vh,58px);filter:drop-shadow(0 0 14px #00e58a99)}.cc-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:0;flex:0 0 auto}.cc-info{min-width:0;padding:8px 9px;border-radius:15px;border:1px solid #66551c;background:linear-gradient(145deg,#15140e,#0b0d0e)}.cc-info-label{font-size:11px;color:#c7c9d0;margin-bottom:6px}.cc-info-value{font-size:clamp(15px,3.8vw,20px);font-weight:950;color:#ffdc25;line-height:1.25}.cc-info-note{font-size:9px;color:#a8abb4;margin-top:5px;line-height:1.35}.cc-balance{display:flex;align-items:center;justify-content:center;gap:12px;padding:7px 10px;border:1px solid #8b751b;border-radius:15px;background:linear-gradient(100deg,#171609,#10120e);margin-bottom:0;flex:0 0 auto}.cc-balance-icon{font-size:30px;filter:drop-shadow(0 0 8px #ffd21c99)}.cc-label{font-size:12px;color:#c7c9d0}.cc-balance-number{font-size:clamp(23px,4.5vh,31px);font-weight:950;color:#ffdb20;line-height:1.1;margin-top:3px}.cc-input-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 3px 8px;font-size:14px;font-weight:850}.cc-clear{border:0;background:none;color:#ffdc25;font-weight:800;font-size:12px;padding:5px}.cc-input-wrap{display:flex;align-items:center;gap:10px;border:1px solid #e4c400;border-radius:15px;background:#090c0f;padding:0 13px;flex:0 0 auto;box-shadow:inset 0 0 14px #f6d0000b}.cc-input-icon{font-size:26px}.cc-input{width:100%;min-width:0;height:44px;background:transparent;border:0;outline:none;color:#fff;font-size:20px;font-weight:800}.cc-input::placeholder{color:#777d87;font-size:15px;font-weight:500}.cc-quick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:0;flex:0 0 auto}.cc-quick button{min-width:0;padding:6px 4px;border:1px solid #bfa400;border-radius:13px;background:linear-gradient(145deg,#19170b,#090a0b);color:#ffdc25;font-size:16px;font-weight:950}.cc-quick small{display:block;color:#c1c3ca;font-size:10px;font-weight:600;margin-top:4px}.cc-result{display:flex;align-items:center;gap:9px;margin:0;padding:8px 10px;flex:0 0 auto;border-radius:17px;border:1px solid #10a968;background:linear-gradient(110deg,#062519,#07140f);box-shadow:0 0 15px #00d78314}.cc-result-wallet{font-size:29px}.cc-result-main{flex:1;min-width:0;overflow:hidden}.cc-result-amount{font-size:clamp(18px,4.2vh,30px);font-weight:950;color:#16e998;line-height:1.2;max-width:100%;overflow-wrap:anywhere;word-break:break-word}.cc-result-side{border-left:1px solid #32634d;padding-left:10px;font-size:11px;color:#e5e9e8;white-space:normal;overflow-wrap:anywhere;word-break:break-word;min-width:0;max-width:42%;line-height:1.5}.cc-primary{width:100%;min-height:44px;flex:0 0 auto;border:0;border-radius:15px;background:linear-gradient(100deg,#ffe51c,#ffb800);color:#090909;font-size:16px;font-weight:950;box-shadow:0 5px 18px #f3cb0030}.cc-footnote{text-align:center;font-size:10px;color:#a9adb7;line-height:1.3;margin:0 3px;flex:0 0 auto}.cc-min-error{font-size:11px;color:#ff647d;margin:7px 4px 0;min-height:15px}
     @media(max-width:380px){.coin-convert-premium{padding:12px 10px 9px;gap:3px}.cc-hero{height:clamp(48px,8vh,66px)}.cc-hero-coin,.cc-hero-wallet{font-size:clamp(34px,6vh,46px)}.cc-hero-arrow{font-size:24px}.cc-info{padding:7px 7px}.cc-result{gap:6px;padding:7px 7px}.cc-result-side{padding-left:7px;font-size:10px}}
   @media(max-height:760px){.coin-convert-premium{padding-top:9px;padding-bottom:8px;gap:3px}.cc-head{gap:8px}.cc-logo{width:42px;height:42px;flex-basis:42px;font-size:23px}.cc-sub{font-size:10px;margin-top:3px}.cc-hero{height:clamp(42px,7vh,58px)}.cc-info-label{font-size:10px;margin-bottom:3px}.cc-info-value{font-size:15px}.cc-info-note{font-size:8px;line-height:1.2}.cc-balance{padding:5px 8px}.cc-balance-icon{font-size:25px}.cc-input-head{font-size:12px;margin-bottom:3px}.cc-input{height:38px}.cc-input-icon{font-size:21px}.cc-min-error{min-height:0;font-size:9px;margin:1px 3px 0}.cc-quick button{padding:4px 3px;font-size:14px}.cc-quick small{font-size:9px;margin-top:2px}.cc-result{padding:6px 8px}.cc-result-wallet{font-size:24px}.cc-result-side{font-size:10px;line-height:1.45}.cc-primary{min-height:40px;font-size:14px}.cc-footnote{font-size:9px}}
   </style>
@@ -2595,7 +2595,7 @@ async function openConvertCoins(){
     </div>
     <div class="cc-balance"><div class="cc-balance-icon">🪙</div><div><div class="cc-label">Available Coins</div><div class="cc-balance-number">${fmt(coins)}</div></div></div>
     <div class="cc-input-head"><label for="convertCoinsInput">Coins to Convert</label><button type="button" class="cc-clear" onclick="setConvertAmt(0)">⟳ Clear</button></div>
-    <div class="cc-input-wrap"><span class="cc-input-icon">🪙</span><input class="cc-input" type="number" inputmode="numeric" id="convertCoinsInput" min="1000" max="${coins}" step="1" placeholder="Enter coin amount" oninput="updateConvertPreview()"></div>
+    <div class="cc-input-wrap"><span class="cc-input-icon">🪙</span><input class="cc-input" type="text" inputmode="numeric" autocomplete="off" id="convertCoinsInput" maxlength="15" aria-describedby="convertMinError" placeholder="Enter coin amount" oninput="sanitizeConvertInput();updateConvertPreview()"></div>
     <div class="cc-min-error" id="convertMinError"></div>
     <div class="cc-quick">
       <button type="button" onclick="setConvertAmt(${Math.min(coins,max25)})">25%<small>( ${fmt(max25)} Coins )</small></button>
@@ -2609,20 +2609,34 @@ async function openConvertCoins(){
   const modalContent=document.getElementById('modalContent'); if(modalContent) modalContent.scrollTop=0;
   updateConvertPreview();
 }
+function sanitizeConvertInput(){
+  const inp=document.getElementById('convertCoinsInput');
+  if(!inp) return;
+  // Accept digits only; cap length so pasted values cannot overflow the preview or lose integer precision.
+  const clean=inp.value.replace(/\D/g,'').slice(0,15);
+  if(inp.value!==clean) inp.value=clean;
+}
 function setConvertAmt(v){
   const inp=document.getElementById('convertCoinsInput');
-  if(inp){inp.value=Math.max(0,v);updateConvertPreview();}
+  if(inp){inp.value=String(Math.max(0,Math.floor(Number(v)||0)).toString().slice(0,15));updateConvertPreview();}
 }
 function updateConvertPreview(){
-  const coins = Math.max(0,parseInt(document.getElementById('convertCoinsInput')?.value)||0);
-  const money = (coins/_coinConvertRate).toFixed(2);
+  sanitizeConvertInput();
+  const raw=document.getElementById('convertCoinsInput')?.value||'';
+  const parsed=raw===''?0:Number(raw);
+  const coins=Number.isSafeInteger(parsed)&&parsed>=0?parsed:Number.MAX_SAFE_INTEGER;
+  const rate=Number(_coinConvertRate);
+  const validRate=Number.isFinite(rate)&&rate>0?rate:10;
+  const money = (coins/validRate).toFixed(2);
   const el = document.getElementById('convertPreview');
   if(el) el.textContent = `₹${Number(money).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:2})}`;
   const coinEl=document.getElementById('convertPreviewCoins');if(coinEl)coinEl.textContent=`${coins.toLocaleString('en-IN')} Coins`;
   const moneyEl=document.getElementById('convertPreviewMoney');if(moneyEl)moneyEl.textContent=`₹${Number(money).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:2})} Money`;
   const errorEl=document.getElementById('convertMinError');
-  if(errorEl)errorEl.textContent=coins>0&&coins<1000?'Minimum 1,000 coins required for conversion.':(coins>(Number(UD?.coins)||0)?'You do not have enough coins.':'');
-  const btn=document.getElementById('convertCoinsBtn');if(btn)btn.disabled=coins<1000||coins>(Number(UD?.coins)||0);
+  const balance=Math.max(0,Math.floor(Number(UD?.coins)||0));
+  const inputInvalid=raw!==''&&(!Number.isSafeInteger(parsed)||parsed<0);
+  if(errorEl)errorEl.textContent=inputInvalid?'Enter a valid whole-number coin amount.':(coins>0&&coins<1000?'Minimum 1,000 coins required for conversion.':(coins>balance?'You do not have enough coins.':''));
+  const btn=document.getElementById('convertCoinsBtn');if(btn)btn.disabled=inputInvalid||coins<1000||coins>balance||!Number.isFinite(rate)||rate<=0; 
 }
 let _convertingCoins = false;
 async function submitConvertCoins(){
@@ -3861,6 +3875,39 @@ function fileToBase64(file){return new Promise((res,rej)=>{const r=new FileReade
   else restorePosition();
   window.setInterval(function () { if (updatePending) activateUpdate(); else checkVersion(); }, checkEveryMs);
   document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') { if (updatePending) activateUpdate(); else checkVersion(); } });
+})();
+</script>
+
+
+<style>
+.coin-gift-icon{display:inline-block;width:1.08em;height:1.08em;vertical-align:-.17em;flex:0 0 auto;filter:drop-shadow(0 0 3px rgba(255,205,25,.75)) drop-shadow(0 0 7px rgba(255,190,0,.3));}
+.wallet-coin-icon{width:1.12em;height:1.12em;vertical-align:-.18em;}
+</style>
+<script>
+(function(){
+ const iconMarkup = '<svg class="coin-gift-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><defs><radialGradient id="coinGold" cx="35%" cy="25%" r="75%"><stop offset="0" stop-color="#fff5a6"/><stop offset=".42" stop-color="#ffd83d"/><stop offset="1" stop-color="#c88700"/></radialGradient></defs><circle cx="12" cy="12" r="10" fill="url(#coinGold)" stroke="#fff0a0" stroke-width="1.3"/><circle cx="12" cy="12" r="7.2" fill="none" stroke="#fff0a0" stroke-width=".8"/><path d="M8 8.5h8M8 12h8M8 15.5h8" stroke="#a56b00" stroke-width="1.2" stroke-linecap="round"/><path d="M9 6.5h6" stroke="#fff8c8" stroke-width=".8"/></svg>';
+ function replaceCoinEmoji(root){
+  if(!root)return;
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode(n){
+   if(!n.nodeValue||!n.nodeValue.includes('🪙'))return NodeFilter.FILTER_REJECT;
+   const p=n.parentElement;
+   if(!p||p.closest('script,style,textarea,input'))return NodeFilter.FILTER_REJECT;
+   return NodeFilter.FILTER_ACCEPT;
+  }});
+  const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
+  nodes.forEach(n=>{
+   const parts=n.nodeValue.split('🪙');if(parts.length<2)return;
+   const frag=document.createDocumentFragment();
+   parts.forEach((part,i)=>{if(part)frag.appendChild(document.createTextNode(part));if(i<parts.length-1){
+    const parent=n.parentElement;
+    if(parent&&parent.closest('option,select'))frag.appendChild(document.createTextNode('◉'));
+    else {const span=document.createElement('span');span.innerHTML=iconMarkup;frag.appendChild(span.firstElementChild);}
+   }});
+   n.parentNode&&n.parentNode.replaceChild(frag,n);
+  });
+ }
+ function start(){replaceCoinEmoji(document.body);const mo=new MutationObserver(ms=>ms.forEach(m=>{m.addedNodes&&m.addedNodes.forEach(n=>{if(n.nodeType===Node.TEXT_NODE)replaceCoinEmoji(n.parentElement);else if(n.nodeType===Node.ELEMENT_NODE)replaceCoinEmoji(n);});}));mo.observe(document.body,{subtree:true,childList:true,characterData:true});}
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
 </script>
 
