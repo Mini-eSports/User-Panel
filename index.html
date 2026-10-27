@@ -504,6 +504,65 @@ textarea.form-input{resize:none;min-height:80px}
 }
 </style>
 
+
+<style id="home-filter-height-and-grid-fix">
+/* Home-only refinements: match the supplied reference while keeping the rest untouched. */
+#screen-home .home-match-cards{grid-template-columns:repeat(2,minmax(0,1fr));}
+#screen-home .home-filter-panel{padding:14px 14px 12px;margin-bottom:12px;}
+#screen-home .home-filter-heading{margin-bottom:11px;}
+#screen-home .home-game-modes{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+#screen-home .home-game-modes .mode-filter-box{min-height:58px;height:auto;padding:8px 5px;font-size:clamp(12px,2.6vw,19px);border-radius:16px;line-height:1.2;}
+#screen-home #homeModeFilter{display:grid;grid-auto-flow:row;gap:10px!important;}
+#screen-home #homeModeFilter>div{min-width:0;min-height:54px;height:auto;box-sizing:border-box;padding:8px 4px!important;font-size:clamp(12px,2.6vw,19px)!important;line-height:1.2;border-radius:16px!important;}
+@media(min-width:700px){
+ #screen-home .home-filter-panel{padding:18px 18px 15px;}
+ #screen-home .home-game-modes .mode-filter-box{min-height:78px;font-size:20px;}
+ #screen-home #homeModeFilter>div{min-height:72px;font-size:20px!important;}
+}
+@media(max-width:520px){
+ #screen-home .home-match-cards{gap:10px;margin:12px 0 16px;}
+ #screen-home .home-match-card{min-height:clamp(140px,31vw,190px);padding:15px 7px;border-radius:22px;}
+ #screen-home .home-match-card .home-card-art{font-size:clamp(38px,9vw,54px);margin-bottom:8px;}
+ #screen-home .home-card-title{font-size:clamp(17px,4.6vw,23px);}
+ #screen-home .home-card-sub{font-size:clamp(12px,3vw,16px);margin-top:6px;}
+ #screen-home .home-filter-panel{padding:13px 12px 12px;border-radius:20px;margin-bottom:12px;}
+ #screen-home .home-filter-heading{font-size:21px;margin-bottom:10px;}
+ #screen-home .home-game-modes{gap:8px;}
+ #screen-home .home-game-modes .mode-filter-box{min-height:56px;padding:7px 3px;font-size:clamp(11px,3.1vw,15px);border-radius:15px;}
+ #screen-home #homeModeFilter{gap:8px!important;}
+ #screen-home #homeModeFilter>div{min-height:52px;padding:7px 2px!important;font-size:clamp(11px,3.2vw,15px)!important;border-radius:15px!important;}
+}
+@media(max-width:370px){
+ #screen-home .home-match-card{min-height:132px;}
+ #screen-home .home-card-title{font-size:16px;}
+ #screen-home .home-card-sub{font-size:11px;}
+ #screen-home .home-filter-panel{padding:11px 9px 10px;}
+ #screen-home .home-game-modes{gap:6px;}
+ #screen-home .home-game-modes .mode-filter-box{font-size:11px;}
+ #screen-home #homeModeFilter{gap:6px!important;}
+ #screen-home #homeModeFilter>div{font-size:11px!important;}
+}
+/* Reference-inspired neon category artwork and emoji match-type tiles; Home only. */
+#screen-home .home-filter-panel{border-color:#168dff;box-shadow:0 0 12px rgba(0,150,255,.12),inset 0 0 20px rgba(0,100,255,.035)}
+#screen-home .home-filter-heading{color:#ffd91a}
+#screen-home .home-filter-heading i{background:linear-gradient(90deg,#ffd91a,#168dff,transparent)}
+#screen-home .home-game-modes .mode-filter-box{position:relative;overflow:hidden;min-height:clamp(56px,12vw,76px);padding:8px 4px;background:linear-gradient(135deg,#062b64,#031024)!important;border:2px solid #168dff!important;color:#f4f7ff!important;box-shadow:inset 0 0 18px rgba(0,145,255,.22),0 0 6px rgba(0,145,255,.16);}
+#screen-home .home-game-modes .mode-filter-box:nth-child(1){background:linear-gradient(135deg,rgba(0,83,190,.72),rgba(0,18,48,.95)),repeating-linear-gradient(130deg,transparent 0 22px,rgba(0,170,255,.12) 23px 27px)!important;border-color:#00caff!important}
+#screen-home .home-game-modes .mode-filter-box:nth-child(2){background:linear-gradient(135deg,rgba(148,52,0,.86),rgba(39,12,0,.96)),repeating-linear-gradient(130deg,transparent 0 22px,rgba(255,130,0,.15) 23px 27px)!important;border-color:#ff8200!important}
+#screen-home .home-game-modes .mode-filter-box:nth-child(3){background:linear-gradient(135deg,rgba(85,0,135,.86),rgba(19,0,36,.96)),repeating-linear-gradient(130deg,transparent 0 22px,rgba(190,0,255,.16) 23px 27px)!important;border-color:#c000ff!important}
+#screen-home .home-game-modes .mode-filter-box.active{box-shadow:0 0 14px currentColor,inset 0 0 18px rgba(255,255,255,.09);filter:brightness(1.18)}
+#screen-home #homeModeFilter .home-match-type-option{min-width:0;min-height:clamp(72px,16vw,94px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:6px 3px!important;box-sizing:border-box;overflow:hidden;border:2px solid #168dff!important;border-radius:15px!important;background:linear-gradient(145deg,#062957,#030b18)!important;color:#f5f8ff!important;box-shadow:inset 0 0 17px rgba(0,140,255,.2),0 0 6px rgba(0,140,255,.12);font-weight:900;letter-spacing:0;line-height:1.1;}
+#screen-home #homeModeFilter .home-match-type-icon{font-size:clamp(23px,6vw,34px);line-height:1.05;filter:drop-shadow(0 0 5px currentColor)}
+#screen-home #homeModeFilter .home-match-type-label{display:block;width:100%;padding:5px 1px;border-radius:9px;background:rgba(0,0,0,.68);font-size:clamp(11px,3.3vw,16px);text-align:center;white-space:nowrap}
+#screen-home #homeModeFilter[data-category="Battle Royale"] .home-match-type-option{border-color:#168dff!important;background:linear-gradient(145deg,#06376b,#03101f)!important;box-shadow:inset 0 0 16px rgba(0,140,255,.22)}
+#screen-home #homeModeFilter[data-category="Battle Royale"] .home-match-type-option.active{border-color:#00d9ff!important;box-shadow:0 0 13px rgba(0,217,255,.5),inset 0 0 17px rgba(0,140,255,.24)}
+#screen-home #homeModeFilter[data-category="Clash Squad"] .home-match-type-option{border-color:#ff8200!important;background:linear-gradient(145deg,#672400,#1d0a00)!important;box-shadow:inset 0 0 16px rgba(255,115,0,.2)}
+#screen-home #homeModeFilter[data-category="Clash Squad"] .home-match-type-option.active{border-color:#ff9b00!important;box-shadow:0 0 13px rgba(255,125,0,.55),inset 0 0 17px rgba(255,115,0,.22)}
+#screen-home #homeModeFilter[data-category="Lone Wolf"] .home-match-type-option{border-color:#b900ff!important;background:linear-gradient(145deg,#3c075d,#10001e)!important;box-shadow:inset 0 0 16px rgba(185,0,255,.2)}
+#screen-home #homeModeFilter[data-category="Lone Wolf"] .home-match-type-option.active{border-color:#e100ff!important;box-shadow:0 0 13px rgba(210,0,255,.55),inset 0 0 17px rgba(185,0,255,.22)}
+@media(max-width:520px){#screen-home #homeModeFilter .home-match-type-option{min-height:68px;padding:5px 2px!important;border-radius:13px!important}#screen-home #homeModeFilter .home-match-type-icon{font-size:25px}#screen-home #homeModeFilter .home-match-type-label{font-size:clamp(10px,3vw,14px);padding:4px 0}}
+</style>
+
 </head>
 <body>
 
@@ -1579,18 +1638,17 @@ function selectHomeCategory(cat){
 function renderHomeModeFilter(){
   const modes = HOME_CATEGORY_MODES[currentHomeCategory] || HOME_CATEGORY_MODES['Battle Royale'];
   const el = document.getElementById('homeModeFilter');
-  el.style.gridTemplateColumns = `repeat(${modes.length}, 1fr)`;
-  el.style.gap = '6px';
+  if(!el) return;
+  // Always distribute the 4 / 3 / 3 buttons evenly across the full row.
+  el.dataset.category = currentHomeCategory;
+  el.style.setProperty('grid-template-columns', `repeat(${modes.length}, minmax(0, 1fr))`, 'important');
+  el.style.setProperty('gap', '9px', 'important');
+  const icons = {'All':'👥','Solo':'👤','Duo':'👥','Squad':'👥','2v2':'👥','4v4':'👥','1v1':'👤'};
   el.innerHTML = modes.map(m=>`
-    <div data-mode="${m}" onclick="selectHomeMode('${m}')" style="
-      padding:10px 4px;text-align:center;border-radius:10px;cursor:pointer;
-      font-size:12px;font-weight:800;letter-spacing:0.5px;
-      transition:all .15s ease;touch-action:manipulation;
-      ${m===currentHomeMode?
-        'background:var(--yellow);color:#000;box-shadow:0 2px 10px rgba(255,215,0,0.3);':
-        'background:rgba(255,255,255,0.05);color:#888;border:1px solid rgba(255,255,255,0.08);'
-      }
-    ">${m.toUpperCase()}</div>`
+    <div class="home-match-type-option${m===currentHomeMode?' active':''}" data-mode="${m}" aria-pressed="${m===currentHomeMode?'true':'false'}" onclick="selectHomeMode('${m}')">
+      <span class="home-match-type-icon" aria-hidden="true">${icons[m]||'🎮'}</span>
+      <span class="home-match-type-label">${m==='All'?'ALL':m==='2v2'?'2 vs 2':m==='4v4'?'4 vs 4':m==='1v1'?'1 vs 1':m}</span>
+    </div>`
   ).join('');
 }
 function selectHomeMode(mode){
