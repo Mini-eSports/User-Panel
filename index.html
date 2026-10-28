@@ -2568,6 +2568,7 @@ async function claimTicketAction(ticketId, action){
 // ====== END TICKET SYSTEM ======
 
 // ====== CONVERT COINS TO MONEY ======
+const MAX_COINS_PER_CONVERSION = 499995; // 99,999 coins x 5; protects preview and conversion input from oversized values.
 let _coinConvertRate = 10;
 async function openConvertCoins(){
   if(!UD){toast('Please wait...','info');return;}
@@ -2575,9 +2576,10 @@ async function openConvertCoins(){
     const {data,error} = await _sb.from('app_config').select('value').eq('key','coinToMoneyRate').maybeSingle();
     if(!error && data?.value) _coinConvertRate = Number(data.value)||10;
   }catch(e){}
-  const coins = Math.max(0,Number(UD.coins)||0);
+  const coins = Math.max(0,Math.floor(Number(UD.coins)||0));
+  const availableForConversion = Math.min(coins,MAX_COINS_PER_CONVERSION);
   const fmt = n => Number(n||0).toLocaleString('en-IN');
-  const max25 = Math.floor(coins*0.25), max50 = Math.floor(coins*0.5);
+  const max25 = Math.floor(availableForConversion*0.25), max50 = Math.floor(availableForConversion*0.5);
   openModal(`<style>
     #modalContent:has(.coin-convert-premium){width:min(100%,560px);height:calc(100vh - 8px);max-height:calc(100vh - 8px);overflow:hidden;padding:0!important;background:#07090b;border:1px solid #d9b900;box-shadow:0 0 28px #f5cf0030;border-radius:24px;color:#fff;box-sizing:border-box;}
     @supports(height:100dvh){#modalContent:has(.coin-convert-premium){height:calc(100dvh - 8px);max-height:calc(100dvh - 8px)}}
@@ -2594,13 +2596,13 @@ async function openConvertCoins(){
       <div class="cc-info"><div class="cc-info-label">🛡️ Minimum Conversion</div><div class="cc-info-value">1,000 Coins (₹${(1000/_coinConvertRate).toFixed(2).replace(/\.00$/,'')})</div><div class="cc-info-note">Convert at least 1,000 coins at a time.</div></div>
     </div>
     <div class="cc-balance"><div class="cc-balance-icon">🪙</div><div><div class="cc-label">Available Coins</div><div class="cc-balance-number">${fmt(coins)}</div></div></div>
-    <div class="cc-input-head"><label for="convertCoinsInput">Coins to Convert</label><button type="button" class="cc-clear" onclick="setConvertAmt(0)">⟳ Clear</button></div>
-    <div class="cc-input-wrap"><span class="cc-input-icon">🪙</span><input class="cc-input" type="text" inputmode="numeric" autocomplete="off" id="convertCoinsInput" maxlength="15" aria-describedby="convertMinError" placeholder="Enter coin amount" oninput="sanitizeConvertInput();updateConvertPreview()"></div>
+    <div class="cc-input-head"><label for="convertCoinsInput">Coins to Convert <small style="display:block;color:#a8abb4;font-size:10px;font-weight:500;margin-top:3px">Maximum per conversion: 4,99,995 coins</small></label><button type="button" class="cc-clear" onclick="setConvertAmt(0)">⟳ Clear</button></div>
+    <div class="cc-input-wrap"><span class="cc-input-icon">🪙</span><input class="cc-input" type="text" inputmode="numeric" autocomplete="off" id="convertCoinsInput" maxlength="6" aria-describedby="convertMinError" placeholder="Enter coin amount" oninput="sanitizeConvertInput();updateConvertPreview()"></div>
     <div class="cc-min-error" id="convertMinError"></div>
     <div class="cc-quick">
       <button type="button" onclick="setConvertAmt(${Math.min(coins,max25)})">25%<small>( ${fmt(max25)} Coins )</small></button>
       <button type="button" onclick="setConvertAmt(${Math.min(coins,max50)})">50%<small>( ${fmt(max50)} Coins )</small></button>
-      <button type="button" onclick="setConvertAmt(${coins})">MAX<small>( ${fmt(coins)} Coins )</small></button>
+      <button type="button" onclick="setConvertAmt(${availableForConversion})">MAX<small>( ${fmt(availableForConversion)} Coins )</small></button>
     </div>
     <div class="cc-result"><div class="cc-result-wallet">👛</div><div class="cc-result-main"><div class="cc-label">You'll receive</div><div class="cc-result-amount" id="convertPreview">₹0</div></div><div class="cc-result-side"><div>🪙 <span id="convertPreviewCoins">0 Coins</span></div><div style="text-align:center;color:#8fa59b">↓</div><div>💚 <span id="convertPreviewMoney">₹0 Money</span></div></div></div>
     <button class="cc-primary" id="convertCoinsBtn" onclick="submitConvertCoins()">🔄 &nbsp; CONVERT NOW</button>
@@ -2612,13 +2614,20 @@ async function openConvertCoins(){
 function sanitizeConvertInput(){
   const inp=document.getElementById('convertCoinsInput');
   if(!inp) return;
-  // Accept digits only; cap length so pasted values cannot overflow the preview or lose integer precision.
-  const clean=inp.value.replace(/\D/g,'').slice(0,15);
+  // Digits only. Reject oversized values before they can overflow the preview or be submitted.
+  let clean=inp.value.replace(/\D/g,'').slice(0,6);
+  const numeric=clean===''?0:Number(clean);
+  if(numeric>MAX_COINS_PER_CONVERSION){
+    clean=String(MAX_COINS_PER_CONVERSION);
+    inp.dataset.limitHit='true';
+  }else{
+    inp.dataset.limitHit='false';
+  }
   if(inp.value!==clean) inp.value=clean;
 }
 function setConvertAmt(v){
   const inp=document.getElementById('convertCoinsInput');
-  if(inp){inp.value=String(Math.max(0,Math.floor(Number(v)||0)).toString().slice(0,15));updateConvertPreview();}
+  if(inp){inp.value=String(Math.min(MAX_COINS_PER_CONVERSION,Math.max(0,Math.floor(Number(v)||0))));inp.dataset.limitHit='false';updateConvertPreview();}
 }
 function updateConvertPreview(){
   sanitizeConvertInput();
@@ -2635,14 +2644,16 @@ function updateConvertPreview(){
   const errorEl=document.getElementById('convertMinError');
   const balance=Math.max(0,Math.floor(Number(UD?.coins)||0));
   const inputInvalid=raw!==''&&(!Number.isSafeInteger(parsed)||parsed<0);
-  if(errorEl)errorEl.textContent=inputInvalid?'Enter a valid whole-number coin amount.':(coins>0&&coins<1000?'Minimum 1,000 coins required for conversion.':(coins>balance?'You do not have enough coins.':''));
-  const btn=document.getElementById('convertCoinsBtn');if(btn)btn.disabled=inputInvalid||coins<1000||coins>balance||!Number.isFinite(rate)||rate<=0; 
+  const limitHit=document.getElementById('convertCoinsInput')?.dataset.limitHit==='true';
+  if(errorEl)errorEl.textContent=limitHit?'Maximum 4,99,995 coins per conversion. The amount has been capped.':(inputInvalid?'Enter a valid whole-number coin amount.':(coins>0&&coins<1000?'Minimum 1,000 coins required for conversion.':(coins>balance?'You do not have enough coins.':'')));
+  const btn=document.getElementById('convertCoinsBtn');if(btn)btn.disabled=limitHit||inputInvalid||coins<1000||coins>MAX_COINS_PER_CONVERSION||coins>balance||!Number.isFinite(rate)||rate<=0; 
 }
 let _convertingCoins = false;
 async function submitConvertCoins(){
   if(_convertingCoins) return;
-  const coins = parseInt(document.getElementById('convertCoinsInput')?.value)||0;
-  if(!coins || coins<1000){toast('Minimum 1,000 coins required for conversion','error');return;}
+  const coins = parseInt(document.getElementById('convertCoinsInput')?.value,10)||0;
+  if(coins>MAX_COINS_PER_CONVERSION){toast('Maximum 4,99,995 coins allowed per conversion','error');return;}
+  if(!Number.isSafeInteger(coins)||!coins || coins<1000){toast('Minimum 1,000 coins required for conversion','error');return;}
   if(coins > (UD.coins||0)){toast('You don\'t have enough coins','error');return;}
   _convertingCoins = true;
   const btn = document.getElementById('convertCoinsBtn');
@@ -3532,29 +3543,34 @@ async function handleAvatarUpload(e){
 // ====== REFER & EARN ======
 function openReferEarn(){
   const myCode=U?U.uid.slice(-6).toUpperCase():'XXXXXX';
-  openModal(`<div class="modal-bar"></div>
-    <h3 style="color:#ff8c00;">⊛ Refer & Earn</h3>
-    <p style="color:var(--dim);font-size:13px;margin-bottom:14px;">Share your code. When friends join & play, you earn bonus coins!</p>
-    <div style="background:rgba(255,140,0,0.08);border:1px solid rgba(255,140,0,0.3);border-radius:12px;padding:14px;text-align:center;margin-bottom:14px;">
-      <div style="font-size:10px;color:var(--dim);margin-bottom:5px;text-transform:uppercase;">Your Refer Code</div>
-      <div style="font-size:26px;font-weight:900;color:#ff8c00;letter-spacing:4px;">${myCode}</div>
-      <button class="copy-btn" style="margin-top:8px;border-color:rgba(255,140,0,0.4);color:#ff8c00;" onclick="copyText('${myCode}')">⎘ Copy Code</button>
+  const shareUrl=location.origin+location.pathname+'?ref='+encodeURIComponent(myCode);
+  openModal(`<style>
+    .refx{background:linear-gradient(145deg,#090805,#050505 70%);color:#f8f5e9;border:1px solid #8d6417;border-radius:16px;padding:12px;overflow:hidden}
+    .refx-hero{position:relative;display:flex;align-items:center;gap:12px;padding:14px 12px 18px;background:radial-gradient(ellipse at 78% 40%,rgba(255,174,0,.22),transparent 45%),linear-gradient(110deg,#171006,#090806);border:1px solid #8b5b10;border-radius:13px}
+    .refx-hero-icon{font-size:43px;color:#ffc400;flex-shrink:0}.refx-title{font-size:clamp(22px,5vw,32px);font-weight:900;font-style:italic;line-height:1.05;color:#fff}.refx-title span{color:#ffc400}.refx-sub{font-size:12px;color:#ddd;margin-top:8px;line-height:1.4}
+    .refx-panel{border:1px solid #a87918;border-radius:13px;padding:12px;margin-top:10px;background:linear-gradient(135deg,rgba(255,177,0,.07),rgba(0,0,0,.25))}
+    .refx-code{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;border:1px solid #d89e1a;border-radius:12px;padding:10px;margin:0 auto 10px;max-width:420px}
+    .refx-code strong{font-size:clamp(25px,6vw,34px);letter-spacing:3px;color:#ff9b19}.refx-copy{border:1px solid #9c6d14;border-radius:10px;background:#111;color:#ffcf42;padding:9px 12px;font-weight:800}
+    .refx-share{display:grid;grid-template-columns:1fr 1fr;gap:8px}.refx-share button{border-radius:10px;padding:11px 6px;font-weight:800;font-size:13px;color:white;border:1px solid #777;background:#171717}.refx-share .wa{background:linear-gradient(120deg,#078e45,#00b84f);border-color:#00e879}.refx-share .link{background:linear-gradient(120deg,#102eae,#3b21d7);border-color:#526bff}
+    .refx-label{font-size:13px;font-weight:900;color:#d4d4d4;margin:0 0 8px}.refx-apply{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}.refx-apply input{width:100%;min-width:0;box-sizing:border-box;background:#080b12;border:1px solid #3a3a43;border-radius:10px;color:white;padding:12px;font-size:14px}.refx-apply button{border:0;border-radius:10px;padding:0 15px;background:linear-gradient(120deg,#ffca00,#ff8a00);color:#171000;font-weight:900}
+    .refx-rewards{display:grid;grid-template-columns:1fr 1fr;gap:8px}.refx-reward{border:1px solid #b98b1e;border-radius:11px;padding:10px;background:linear-gradient(145deg,rgba(255,191,0,.14),rgba(20,15,3,.4));text-align:center}.refx-reward.blue{border-color:#237eff;background:linear-gradient(145deg,rgba(0,85,255,.18),rgba(3,10,30,.5))}.refx-reward small{display:block;color:#ddd;font-weight:800;font-size:10px}.refx-reward strong{display:block;color:#ffcc20;font-size:23px;margin:5px 0}.refx-reward p{font-size:11px;color:#ddd;margin:0;line-height:1.35}
+    .refx-section-title{font-weight:900;color:#ffcb39;margin-bottom:9px}.refx-note{font-size:11px;color:#aaa;line-height:1.55;background:#111;border-radius:10px;padding:10px;margin-top:10px}
+    @media(max-width:390px){.refx{padding:8px}.refx-hero{padding:12px 8px;gap:8px}.refx-hero-icon{font-size:34px}.refx-apply{grid-template-columns:1fr}.refx-apply button{padding:12px}.refx-reward strong{font-size:20px}}
+    #modalContent:has(.refx){background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;width:calc(100% - 16px);max-width:560px}
+    #modalContent:has(.refx)>.modal-global-x{z-index:5;right:10px;top:10px}
+  </style>
+  <div class="refx">
+    <div class="refx-hero"><div class="refx-hero-icon">👥</div><div><div class="refx-title">Refer <span>&amp; Earn</span></div><div class="refx-sub">Invite your friends. When they join and play, you can earn bonus coins!</div></div></div>
+    <div class="refx-panel">
+      <div class="refx-code"><div style="text-align:center"><div style="font-size:10px;color:#bbb;font-weight:800">YOUR REFER CODE</div><strong>${myCode}</strong></div><button class="refx-copy" onclick="copyText('${myCode}')">▣ Copy</button></div>
+      <div class="refx-share"><button class="wa" onclick="window.open('https://wa.me/?text='+encodeURIComponent('Join Mini eSports with my referral code '+ '${myCode}'+' '+ '${shareUrl}'),'_blank')">● Share on WhatsApp</button><button class="link" onclick="copyText('${shareUrl}')">↗ Share Link</button></div>
     </div>
-    <div class="form-group"><label>Enter Friend's Code</label><input class="form-input" type="text" id="friendRefCode" placeholder="Enter refer code" style="text-transform:uppercase;margin-top:5px;"></div>
-    <button class="btn btn-full" style="background:linear-gradient(135deg,#cc6600,#ff8c00);color:#000;padding:13px;" onclick="submitReferCode()">Apply Code</button>
-    <button class="btn btn-outline btn-full" style="margin-top:8px;" onclick="closeModal()">Close</button>
-  `);
+    <div class="refx-panel"><div class="refx-label">♟ ENTER FRIEND'S CODE</div><div class="refx-apply"><input type="text" id="friendRefCode" placeholder="ENTER REFER CODE" maxlength="32" style="text-transform:uppercase"><button onclick="submitReferCode()">APPLY CODE</button></div></div>
+    <div class="refx-panel"><div class="refx-section-title">🎁 Rewards for You &amp; Your Friend</div><div class="refx-rewards"><div class="refx-reward"><small>YOU WILL GET</small><strong>🪙 50 Coins</strong><p>When your friend joins and completes registration</p></div><div class="refx-reward blue"><small>YOUR FRIEND WILL GET</small><strong>🪙 50 Coins</strong><p>When they use your code and complete registration</p></div></div></div>
+    <div class="refx-panel"><div class="refx-section-title">☷ Your Referred Friends</div><div style="color:#aaa;font-size:12px;line-height:1.45">Referral history will appear here when verified referral records with friend IGN and UID are available.</div></div>
+    <div class="refx-note"><b style="color:#ffbf22">ⓘ Important Notes</b><br>• Rewards depend on configured referral eligibility.<br>• Bonus coins are credited after verification.<br>• Fake or self-referrals may be rejected.</div>
+  </div>`);
 }
-async function submitReferCode(){
-  const code=(document.getElementById('friendRefCode')?.value||'').trim().toUpperCase();
-  if(!code||code.length<6){toast('Enter valid refer code','error');return;}
-  if(U&&code===U.uid.slice(-6).toUpperCase()){toast('Cannot use your own code','error');return;}
-  try{
-    await db.ref('referrals').push({uid:U.uid,code,createdAt:Date.now(),status:'pending'});
-    closeModal();toast('Refer code applied! Bonus pending verification.','success');
-  }catch(e){toast('Error: '+e.message,'error');}
-}
-
 // ====== REDEEM VOUCHER ======
 function openRedeemVoucher(){
   openModal(`<style>
