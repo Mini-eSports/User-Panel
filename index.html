@@ -592,6 +592,8 @@ textarea.form-input{resize:none;min-height:80px}
 @media(max-width:520px){#screen-home .home-match-card.active:after{top:7px;right:7px;font-size:8px;padding:4px 5px;}}
 </style>
 
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#000000">
 </head>
 <body>
 
@@ -3920,5 +3922,13 @@ function fileToBase64(file){return new Promise((res,rej)=>{const r=new FileReade
 
 
 
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js")
+      .catch(error => console.error("Service Worker Error:", error));
+  });
+}
+</script>
 </body>
 </html>
