@@ -236,12 +236,33 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 .daily-btn{width:100%;padding:13px;border-radius:12px;font-size:13px;font-weight:700;border:none;cursor:pointer;margin-top:10px;transition:all .1s ease;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .daily-btn.available{background:linear-gradient(135deg,var(--yellow3),var(--yellow));color:#000}
 .daily-btn.claimed{background:var(--card2);color:var(--red);border:1px solid var(--bred);cursor:default}
-/* TX */
-.tx-item{background:var(--card);border-radius:10px;padding:10px;margin-bottom:6px;font-size:11px}
-.tx-item .tx-amount{font-weight:700;font-size:13px}
-.tx-status.pending{color:var(--yellow)}
-.tx-status.approved{color:#0f0}
-.tx-status.rejected{color:var(--red)}
+/* TRANSACTION HISTORY — premium neon cards */
+.tx-history-heading{display:flex;align-items:center;gap:10px;margin:18px 0 12px;font-size:18px;font-weight:850;letter-spacing:.1px;color:#fff}
+.tx-history-heading .tx-heading-icon{width:30px;height:30px;display:grid;place-items:center;color:var(--yellow);filter:drop-shadow(0 0 8px rgba(255,215,0,.7))}
+.tx-tabs{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px}
+.tx-tab{min-height:48px;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 8px;border-radius:17px;cursor:pointer;font-size:15px;font-weight:800;background:#050505;color:#aaa;border:2px solid #454545;transition:background .18s,border-color .18s,color .18s,box-shadow .18s;touch-action:manipulation}
+.tx-tab.active{background:linear-gradient(135deg,#ffe500,#ffbf00);color:#080808;border-color:#fff08a;box-shadow:0 0 12px rgba(255,215,0,.5),inset 0 0 8px rgba(255,255,255,.25)}
+.tx-list{display:flex;flex-direction:column;gap:10px;padding-bottom:12px}
+.tx-item{--tx-accent:#00e85b;--tx-glow:rgba(0,232,91,.22);position:relative;display:grid;grid-template-columns:54px minmax(0,1fr) 1px minmax(94px,.62fr);align-items:center;gap:10px;min-height:104px;padding:12px 10px;border:1.5px solid var(--tx-accent);border-radius:20px;background:radial-gradient(ellipse at 12% 50%,var(--tx-glow),transparent 46%),linear-gradient(112deg,#101010 0%,#080808 67%,#030303 100%);box-shadow:0 0 9px var(--tx-glow),inset 0 0 14px rgba(255,255,255,.025);overflow:hidden}
+.tx-item::after{content:"";position:absolute;z-index:0;top:-35%;bottom:-35%;left:58%;width:18%;transform:skewX(-34deg);background:linear-gradient(90deg,transparent,var(--tx-glow),transparent);pointer-events:none}
+.tx-item>*{position:relative;z-index:1;min-width:0}
+.tx-item.tx-blue{--tx-accent:#078dff;--tx-glow:rgba(0,105,255,.28)}
+.tx-item.tx-purple{--tx-accent:#d21cff;--tx-glow:rgba(174,0,255,.28)}
+.tx-item.tx-red{--tx-accent:#ff4949;--tx-glow:rgba(255,40,40,.22)}
+.tx-item.tx-green{--tx-accent:#20ed59;--tx-glow:rgba(0,255,72,.22)}
+.tx-icon{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;font-size:25px;background:var(--tx-glow);border:1px solid var(--tx-accent);box-shadow:0 0 15px var(--tx-glow)}
+.tx-info{display:flex;flex-direction:column;gap:3px}
+.tx-title{font-size:14px;font-weight:850;color:#fff;line-height:1.2;overflow-wrap:anywhere}
+.tx-desc{font-size:11px;color:#c5c5c5;line-height:1.3;overflow-wrap:anywhere}
+.tx-date{font-size:10px;color:#aaa;line-height:1.3}
+.tx-divider{height:55px;width:1px;background:rgba(255,255,255,.65)}
+.tx-value{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center}
+.tx-item .tx-amount{font-size:20px;font-weight:900;line-height:1.1;white-space:nowrap;color:var(--tx-accent)}
+.tx-status{font-size:10px;font-weight:800;text-transform:capitalize;padding:4px 9px;border-radius:20px;border:1px solid currentColor;white-space:nowrap}
+.tx-status.pending{color:var(--yellow);background:rgba(255,215,0,.08)}
+.tx-status.approved{color:#22ed65;background:rgba(0,255,72,.08)}
+.tx-status.rejected{color:#ff5555;background:rgba(255,0,0,.08)}
+@media(max-width:360px){.tx-item{grid-template-columns:42px minmax(0,1fr) 1px minmax(78px,.58fr);gap:7px;padding:10px 8px;min-height:94px;border-radius:16px}.tx-icon{width:39px;height:39px;font-size:21px}.tx-title{font-size:12px}.tx-desc{font-size:10px}.tx-date{font-size:9px}.tx-item .tx-amount{font-size:17px}.tx-status{font-size:9px;padding:3px 6px}}
 /* LEADERBOARD */
 .podium{display:flex;align-items:flex-end;justify-content:center;gap:10px;margin:16px 0 10px;padding-bottom:8px}
 .podium-item{display:flex;flex-direction:column;align-items:center;text-align:center}
@@ -746,13 +767,13 @@ textarea.form-input{resize:none;min-height:80px}
         <div class="wallet-amount yellow" style="display:flex;align-items:center;gap:6px;"><span style="font-size:26px;" class="coin-3d">🪙</span><span id="wCoins">0</span></div>
         <button class="daily-btn available" id="dailyBtn" onclick="dailyClaim()" style="display:flex;align-items:center;justify-content:center;gap:7px;">🪙 Daily Claim (+10 Coins)</button>
       </div>
-      <div class="section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><polyline points="3 6 4 7 6 5"/><polyline points="3 12 4 13 6 11"/><polyline points="3 18 4 19 6 17"/></svg> Transaction History</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-        <div id="txTabMoney" onclick="switchTxTab('money')" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;border-radius:12px;cursor:pointer;font-size:13px;font-weight:700;background:var(--yellow);color:#000;border:2px solid var(--yellow);transition:all .1s ease;touch-action:manipulation;">₹ Money</div>
-        <div id="txTabCoins" onclick="switchTxTab('coins')" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:12px;border-radius:12px;cursor:pointer;font-size:13px;font-weight:700;background:transparent;color:var(--dim);border:2px solid #333;transition:all .1s ease;touch-action:manipulation;">🪙 Coins</div>
+      <div class="tx-history-heading"><span class="tx-heading-icon">☷</span><span>Transaction History</span></div>
+      <div class="tx-tabs" role="tablist" aria-label="Transaction type">
+        <button type="button" class="tx-tab active" id="txTabMoney" role="tab" aria-selected="true" onclick="switchTxTab('money')">▣ ₹ Money</button>
+        <button type="button" class="tx-tab" id="txTabCoins" role="tab" aria-selected="false" onclick="switchTxTab('coins')">🪙 Coins</button>
       </div>
-      <div id="moneyHistory"><div class="empty-state"><div class="msg">No transactions</div></div></div>
-      <div id="coinHistory" style="display:none;"><div class="empty-state"><div class="msg">No transactions</div></div></div>
+      <div id="moneyHistory" class="tx-list"><div class="empty-state"><div class="msg">No transactions</div></div></div>
+      <div id="coinHistory" class="tx-list" style="display:none;"><div class="empty-state"><div class="msg">No transactions</div></div></div>
     </div>
 
     <!-- RANK -->
@@ -2230,15 +2251,16 @@ async function dailyClaim(){
 function switchTxTab(tab){
   const mt=document.getElementById('txTabMoney'),ct=document.getElementById('txTabCoins');
   const mh=document.getElementById('moneyHistory'),ch=document.getElementById('coinHistory');
-  if(tab==='money'){
-    mt.style.background='var(--yellow)';mt.style.color='#000';mt.style.borderColor='var(--yellow)';
-    ct.style.background='transparent';ct.style.color='var(--dim)';ct.style.borderColor='#333';
-    mh.style.display='';ch.style.display='none';
-  }else{
-    ct.style.background='var(--yellow)';ct.style.color='#000';ct.style.borderColor='var(--yellow)';
-    mt.style.background='transparent';mt.style.color='var(--dim)';mt.style.borderColor='#333';
-    ch.style.display='';mh.style.display='none';
-  }
+  const money=tab==='money';
+  mt.classList.toggle('active',money);ct.classList.toggle('active',!money);
+  mt.setAttribute('aria-selected',String(money));ct.setAttribute('aria-selected',String(!money));
+  mh.style.display=money?'':'none';ch.style.display=money?'none':'';
+}
+function txSafe(value){return String(value==null?'':value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+function txDateTime(ts){
+  if(!ts)return 'Date unavailable';
+  const d=new Date(ts);if(Number.isNaN(d.getTime()))return 'Date unavailable';
+  return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})+' · '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
 }
 function loadTxHistory(){
   if(!U)return;
@@ -2250,29 +2272,33 @@ function loadTxHistory(){
     if(s1.exists())s1.forEach(c=>{const v=c.val();all.push({...v,txType:'add'});});
     if(s2.exists())s2.forEach(c=>{const v=c.val();all.push({...v,txType:'withdraw'});});
     all.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
-    if(!all.length){document.getElementById('moneyHistory').innerHTML='<div class="empty-state"><div class="msg">No transactions</div></div>';return;}
-    document.getElementById('moneyHistory').innerHTML=all.map(tx=>`
-      <div class="tx-item">
-        <div class="tx-amount" style="color:${tx.txType==='add'?'var(--yellow)':'var(--red)'}">
-          ${tx.txType==='add'?'+':'-'}₹${tx.amount||0}
-        </div>
-        <div class="tx-status ${tx.status||'pending'}">${tx.status||'pending'}</div>
-        <div style="font-size:10px;color:var(--dim2)">${fmtDate(tx.createdAt)}</div>
-      </div>`).join('');
-  }).catch(e=>console.error(e));
+    document.getElementById('moneyHistory').innerHTML=all.length?all.map(tx=>{
+      const add=tx.txType==='add',status=String(tx.status||'pending').toLowerCase();
+      const amount=Number(tx.amount)||0;
+      const desc=add?(tx.description||tx.reason||tx.source||'Wallet deposit'):(tx.description||tx.reason||'Withdraw Request / Payment');
+      const title=add?'Money Added':'Money Deducted';
+      const statusHtml=`<span class="tx-status ${txSafe(status)}">${txSafe(status)}</span>`;
+      return `<article class="tx-item ${add?'tx-green':'tx-red'}">
+        <div class="tx-icon">${add?'▣':'↗'}</div>
+        <div class="tx-info"><div class="tx-title">${title}</div><div class="tx-desc">${txSafe(desc)}</div><div class="tx-date">▦ ${txDateTime(tx.createdAt)}</div></div>
+        <div class="tx-divider"></div><div class="tx-value"><div class="tx-amount" style="color:${add?'#20ed59':'#ff4949'}">${add?'+':'−'}₹${amount.toLocaleString('en-IN')}</div>${statusHtml}</div>
+      </article>`;
+    }).join(''):'<div class="empty-state"><div class="msg">No transactions</div></div>';
+  }).catch(e=>{console.error('money history error',e);document.getElementById('moneyHistory').innerHTML='<div class="empty-state"><div class="msg">Unable to load transactions.</div></div>';});
 
   db.ref('coinHistory').orderByChild('uid').equalTo(U.uid).limitToLast(30).once('value').then(snap=>{
     const arr=[];
     if(snap.exists())snap.forEach(c=>arr.push(c.val()));
     arr.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
     const typeLabels={daily_claim:'Daily Claim',voucher:'Voucher Redeemed',referral:'Referral Reward',tournament:'Tournament Reward',admin_adjustment:'Admin Adjustment'};
-    document.getElementById('coinHistory').innerHTML=arr.length?arr.map(c=>{
-      const isNeg=(c.amount||0)<0;
-      return `<div class="tx-item">
-        <div class="tx-amount" style="color:${isNeg?'var(--red)':'var(--yellow)'}">${isNeg?'':'+'}${c.amount||0} 🪙</div>
-        <div style="font-size:10px;color:var(--dim)">${typeLabels[c.type]||c.type||'Coins'}</div>
-        <div style="font-size:10px;color:var(--dim2)">${fmtDate(c.createdAt)}</div>
-      </div>`;
+    document.getElementById('coinHistory').innerHTML=arr.length?arr.map((c,i)=>{
+      const amount=Number(c.amount)||0,isNeg=amount<0,label=typeLabels[c.type]||c.type||'Coin Transaction';
+      const colors=['tx-purple','tx-blue'];
+      return `<article class="tx-item ${colors[i%2]}">
+        <div class="tx-icon">▣</div>
+        <div class="tx-info"><div class="tx-title">${txSafe(label)}</div><div class="tx-desc">${txSafe(c.description|| (c.type==='daily_claim'?'Daily login reward':'Coin transaction'))}</div><div class="tx-date">▦ ${txDateTime(c.createdAt)}</div></div>
+        <div class="tx-divider"></div><div class="tx-value"><div class="tx-amount" style="color:${isNeg?'#ff4949':'#00e88a'}">${isNeg?'':'+'}${amount.toLocaleString('en-IN')} 🪙</div></div>
+      </article>`;
     }).join(''):'<div class="empty-state"><div class="msg">No coin transactions found.</div></div>';
   }).catch(e=>{
     console.error('coin history error',e);
