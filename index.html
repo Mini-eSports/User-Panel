@@ -2194,7 +2194,7 @@ async function loadDailyClaimReward(){
       if(error) throw error;
       const raw=data?.value;
       const configured=typeof raw==='number'?raw:(typeof raw==='string'?Number(raw):Number(raw?.value ?? raw?.dailyCoins));
-      if(Number.isFinite(configured)&&configured>0) dailyClaimReward=Math.floor(configured);
+      if(Number.isSafeInteger(configured)&&configured>=0) dailyClaimReward=configured;
     }catch(e){ console.warn('Could not load daily claim reward setting:',e?.message||e); }
     finally{ dailyClaimRewardLoad=null; }
     return dailyClaimReward;
