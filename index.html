@@ -1069,7 +1069,7 @@ class DbRef {
 
   async set(val){
     const i=this._info();
-    if(i.isSettings){const{error}=await _sb.from('app_settings').upsert({key:i.key,value:val});if(error)throw error;return;}
+    if(i.isSettings){throw new Error('User Panel is read-only for application settings.');}
     if(i.id && !i.subPath){
       if(typeof val==='object'&&val!==null){
         const snake=toSnake(val);
@@ -1101,10 +1101,7 @@ class DbRef {
   async update(data){
     const i=this._info();
     if(i.isSettings){
-      const{data:ex}=await _sb.from('app_settings').select('value').eq('key',i.key).single();
-      const{error}=await _sb.from('app_settings').upsert({key:i.key,value:{...(ex?.value||{}),...data}});
-      if(error)throw error;
-      return;
+      throw new Error('User Panel is read-only for application settings.');
     }
     if(!i.id)return;
     const hasPaths=Object.keys(data).some(k=>k.includes('/'));
