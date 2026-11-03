@@ -2262,23 +2262,31 @@ function txDateTime(ts){
 function loadTxHistory(){
   if(!U)return;
   Promise.all([
+    _sb.from('money_history').select('*').eq('uid',U.uid).order('created_at',{ascending:false}).limit(30),
     db.ref('addMoneyRequests').orderByChild('uid').equalTo(U.uid).limitToLast(15).once('value'),
     db.ref('withdrawRequests').orderByChild('uid').equalTo(U.uid).limitToLast(15).once('value')
-  ]).then(([s1,s2])=>{
+  ]).then(([ledgerRes,s1,s2])=>{
+    if(ledgerRes.error) throw ledgerRes.error;
     const all=[];
-    if(s1.exists())s1.forEach(c=>{const v=c.val();all.push({...v,txType:'add'});});
-    if(s2.exists())s2.forEach(c=>{const v=c.val();all.push({...v,txType:'withdraw'});});
+    (ledgerRes.data||[]).forEach(v=>all.push({...v,txType:'ledger',createdAt:Number(v.created_at)||0}));
+    // Keep pending/rejected requests visible; approved wallet movements are represented by the ledger.
+    if(s1.exists())s1.forEach(c=>{const v=c.val();if(['pending','rejected'].includes(String(v.status||'').toLowerCase()))all.push({...v,txType:'add'});});
+    if(s2.exists())s2.forEach(c=>{const v=c.val();if(['pending','rejected'].includes(String(v.status||'').toLowerCase()))all.push({...v,txType:'withdraw'});});
     all.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+    const walletNames={deposited:'Deposited Wallet',winnings:'Winnings Wallet',bonus:'Bonus Wallet',coinToMoney:'Coin Conversion',referralEarnings:'Referral Wallet',referral_earnings:'Referral Wallet',referral:'Referral Wallet'};
     document.getElementById('moneyHistory').innerHTML=all.length?all.map(tx=>{
-      const add=tx.txType==='add',status=String(tx.status||'pending').toLowerCase();
-      const amount=Number(tx.amount)||0;
-      const desc=add?(tx.description||tx.reason||tx.source||'Wallet deposit'):(tx.description||tx.reason||'Withdraw Request / Payment');
-      const title=add?'Money Added':'Money Deducted';
-      const statusHtml=`<span class="tx-status ${txSafe(status)}">${txSafe(status)}</span>`;
+      const ledger=tx.txType==='ledger';
+      const add=ledger?Number(tx.amount)>=0:tx.txType==='add';
+      const status=String(tx.status||'pending').toLowerCase();
+      const amount=Math.abs(Number(ledger?tx.amount:tx.amount)||0);
+      const desc=ledger?(walletNames[tx.wallet]||tx.wallet||'Wallet'):(tx.description||tx.reason||tx.source||(tx.txType==='add'?'Wallet deposit':'Withdraw Request / Payment'));
+      const title=ledger?(add?'Money Credited':'Money Debited'):(tx.txType==='add'?'Money Add Request':'Withdrawal Request');
+      const statusHtml=ledger?'':`<span class="tx-status ${txSafe(status)}">${txSafe(status)}</span>`;
+      const when=ledger?tx.createdAt:tx.createdAt;
       return `<article class="tx-item ${add?'tx-green':'tx-red'}">
         <div class="tx-icon">${add?'▣':'↗'}</div>
-        <div class="tx-info"><div class="tx-title">${title}</div><div class="tx-desc">${txSafe(desc)}</div><div class="tx-date">▦ ${txDateTime(tx.createdAt)}</div></div>
-        <div class="tx-divider"></div><div class="tx-value"><div class="tx-amount" style="color:${add?'#20ed59':'#ff4949'}">${add?'+':'−'}₹${amount.toLocaleString('en-IN')}</div>${statusHtml}</div>
+        <div class="tx-info"><div class="tx-title">${title}</div><div class="tx-desc">${txSafe(desc)}</div><div class="tx-date">▦ ${txDateTime(when)}</div></div>
+        <div class="tx-divider"></div><div class="tx-value"><div class="tx-amount" style="color:${add?'#20ed59':'#ff4949'}">${add?'+':'−'}₹${amount.toLocaleString('en-IN',{maximumFractionDigits:2})}</div>${statusHtml}</div>
       </article>`;
     }).join(''):'<div class="empty-state"><div class="msg">No transactions</div></div>';
   }).catch(e=>{console.error('money history error',e);document.getElementById('moneyHistory').innerHTML='<div class="empty-state"><div class="msg">Unable to load transactions.</div></div>';});
