@@ -2729,15 +2729,27 @@ function openWithdraw(){
   `);
 }
 async function submitWithdraw(maxAmt,minAmt,max2){
-  const amt=parseInt(document.getElementById('wdAmount')?.value||'0');
+  const amt=Number(document.getElementById('wdAmount')?.value||0);
   const upi=(document.getElementById('wdUpi')?.value||'').trim();
-  if(!amt||amt<minAmt){toast('Minimum ₹'+minAmt,'error');return;}
+  if(!Number.isInteger(amt)||amt<minAmt){toast('Minimum ₹'+minAmt,'error');return;}
   if(amt>maxAmt){toast('Insufficient winnings balance','error');return;}
-  if(!upi||!upi.includes('@')){toast('Enter valid UPI ID (e.g. name@upi)','error');return;}
+  if(!/^[a-zA-Z0-9._-]{2,256}@[a-zA-Z]{2,64}$/.test(upi)){toast('Enter a valid UPI ID.','error');return;}
   try{
-    await db.ref('withdrawRequests').push({uid:U.uid,amount:amt,userUpiId:upi,status:'pending',createdAt:Date.now()});
+    const {data,error}=await _sb.rpc('create_withdraw_request',{p_amount:amt,p_user_upi_id:upi});
+    if(error)throw error;if(!data)throw new Error('Withdrawal request was not confirmed.');
     closeModal();toast('Withdraw request submitted!','success');
-  }catch(e){toast('Error: '+e.message,'error');}
+  }catch(e){toast('Error: '+(e.message||'Could not submit request'),'error');}
+}
+
+async function submitReferCode(){
+  const input=document.getElementById('friendRefCode');
+  const code=(input?.value||'').trim().toUpperCase();
+  if(!code){toast('Enter a referral code.','error');return;}
+  try{
+    const {data,error}=await _sb.rpc('apply_referral_code',{p_code:code});
+    if(error)throw error;if(!data)throw new Error('Referral code could not be applied.');
+    toast('Referral code submitted for approval!','success');if(input)input.value='';
+  }catch(e){toast(e.message||'Invalid referral code.','error');}
 }
 
 // ====== JOIN TOURNAMENT ======
