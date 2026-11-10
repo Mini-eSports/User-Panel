@@ -934,7 +934,7 @@ textarea.form-input{resize:none;min-height:80px}
 </div>
 <div class="toast-container" id="toastContainer"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
 // ====== SUPABASE ======
 const SUPABASE_URL = 'https://qgmgaouvjavpzbbjuqye.supabase.co';
@@ -1024,11 +1024,13 @@ class DbRef {
     const i=this._info();
     try{
       if(i.isSettings){
-        const{data}=await _sb.from('app_settings').select('value').eq('key',i.key).single();
+        const {data,error}=await _sb.from('app_settings').select('value').eq('key',i.key).maybeSingle();
+        if(error) throw error;
         return{exists:()=>!!data,val:()=>data?data.value:null};
       }
       if(i.isConfig){
-        const{data}=await _sb.from('app_config').select('*');
+        const {data,error}=await _sb.from('app_config').select('*');
+        if(error) throw error;
         const o={}; (data||[]).forEach(r=>{o[r.key]=r.value;});
         return{exists:()=>Object.keys(o).length>0, val:()=>o, forEach:(cb)=>(data||[]).forEach(r=>cb({key:r.key,val:()=>r.value}))};
       }
@@ -1041,11 +1043,13 @@ class DbRef {
         }
         q=q.order('created_at',{ascending:false});
         if(this._lim) q=q.limit(this._lim);
-        const{data}=await q;
+        const {data,error}=await q;
+        if(error) throw error;
         return makeSnap(data||[]);
       }
       if(i.subPath){
-        const{data}=await _sb.from(i.table).select('*').eq('id',i.id).single();
+        const {data,error}=await _sb.from(i.table).select('*').eq('id',i.id).maybeSingle();
+        if(error) throw error;
         if(!data)return{exists:()=>false,val:()=>null};
         const camel=toCamel(data);
         const pts=i.subPath.split('/');
@@ -1053,19 +1057,26 @@ class DbRef {
         for(const p of pts) val=val?.[p];
         return{exists:()=>val!=null,val:()=>val};
       }
-      const{data}=await _sb.from(i.table).select('*').eq('id',i.id).single();
+      const {data,error}=await _sb.from(i.table).select('*').eq('id',i.id).maybeSingle();
+      if(error) throw error;
       if(!data)return{exists:()=>false,val:()=>null};
       return{exists:()=>true,val:()=>toCamel(data),key:i.id};
-    }catch(e){console.error('db.once err',e,this.path);return{exists:()=>false,val:()=>null,forEach:()=>{}};}
+    }catch(e){console.error('db.once err',e,this.path);throw e;}
   }
-
   on(type,cb){
-    this.once(type).then(s=>cb(s));
-    const iv=setInterval(()=>this.once(type).then(s=>cb(s)),8000);
-    this._ivals.push(iv);
+    if(this._ivals.some(x=>x.callback===cb)) return cb;
+    const deliver=()=>this.once(type).then(s=>cb(s)).catch(err=>console.error('DbRef listener failed:',this.path,err));
+    deliver();
+    const iv=setInterval(deliver,8000);
+    this._ivals.push({iv,callback:cb});
     return cb;
   }
-  off(t,cb){this._ivals.forEach(i=>clearInterval(i));}
+  off(t,cb){
+    this._ivals=this._ivals.filter(x=>{
+      if(!cb||x.callback===cb){clearInterval(x.iv);return false;}
+      return true;
+    });
+  }
 
   async set(val){
     const i=this._info();
@@ -1239,9 +1250,9 @@ async function isMaintenanceModeEnabled(){
     if(value && typeof value==='object') return value.enabled===true || value.maintenanceMode===true;
     return false;
   }catch(err){
-    // Fail open on config-read errors so a temporary policy/network issue does not lock everyone out.
-    console.warn('Maintenance setting could not be checked:',err?.message||err);
-    return false;
+    // Fail closed: never silently bypass an active maintenance gate on a config-read failure.
+    console.error('Maintenance setting could not be checked; access is temporarily blocked:',err?.message||err);
+    return true;
   }
 }
 function setMaintenanceScreen(enabled){
@@ -1606,20 +1617,20 @@ async function searchPlayersNow(){
     const {data,error}=await _sb.rpc('search_public_player',{p_query:q});
     if(error)throw error;if(seq!==_playerSearchSeq)return;
     const rows=Array.isArray(data)?data:[];
-    if(!rows.length){box.innerHTML='<div class="player-search-state">🔍 No Player Found<br><small>Check the FF UID, exact IGN, App User ID or email.</small></div>';return;}
+    if(!rows.length){box.innerHTML='<div class="player-search-state">🔍 No Player Found<br><small>Check the FF UID, exact IGN or App User ID.</small></div>';return;}
     box.innerHTML=rows.map((r,i)=>{const avatar=r.photo_url?`<img class="player-search-avatar" src="${esc(r.photo_url)}" alt="" onerror="this.outerHTML='<div class=&quot;player-search-avatar&quot;>${esc((r.ign||'P').slice(0,1).toUpperCase())}</div>'">`:`<div class="player-search-avatar">${esc((r.ign||'P').slice(0,1).toUpperCase())}</div>`;return `<button type="button" class="player-search-hit" onclick="openPublicPlayer(${i})">${avatar}<span style="min-width:0;flex:1"><strong style="font-size:15px">${esc(r.ign||'Player')}</strong><span class="player-search-sub">FF UID: ${esc(r.ffuid||'Not set')}</span></span><span style="color:#00c878;font-size:12px;font-weight:800;white-space:nowrap">✓ Verified</span></button>`;}).join('');
     window._playerSearchRows=rows;
   }catch(e){if(seq!==_playerSearchSeq)return;box.innerHTML=`<div class="player-search-state" style="color:#ff7777">Search failed: ${esc(e?.message||'Please try again.')}</div>`;}
 }
 function openPublicPlayer(index){
   const p=(window._playerSearchRows||[])[index];if(!p)return;
-  const stats=p.stats&&typeof p.stats==='object'?p.stats:{};const money=p.real_money&&typeof p.real_money==='object'?p.real_money:{};
-  const num=v=>Number(v)||0;const cash=v=>'₹'+num(v).toLocaleString('en-IN');
+  const stats=p.stats&&typeof p.stats==='object'?p.stats:{};
+  const num=v=>Number(v)||0;
   const levelInfo=typeof getLevelInfo==='function'?getLevelInfo(num(p.xp)):null;
   const level=levelInfo?.level||1;const wins=num(stats.wins),kills=num(stats.kills),matches=num(stats.matches),winRate=matches?Math.round(wins/matches*100):0;
-  const earnings=num(stats.earnings);const deposited=num(money.deposited),bonus=num(money.bonus),converted=num(money.coinToMoney),withdrawn=num(money.withdrawal||money.withdrawals);
+  const earnings=num(stats.earnings);
   const avatar=p.photo_url?`<img src="${esc(p.photo_url)}" style="width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid #ffd21c;box-shadow:0 0 18px #ffd21c55" onerror="this.style.display='none'">`:`<div style="width:88px;height:88px;border-radius:50%;border:3px solid #ffd21c;display:flex;align-items:center;justify-content:center;font-size:36px;color:#ffd21c;font-weight:900">${esc((p.ign||'P').slice(0,1).toUpperCase())}</div>`;
-  openModal(`<div style="max-height:78vh;overflow:auto;background:linear-gradient(160deg,#080a0a,#111008);color:#fff;border:1px solid #ffd21c;border-radius:18px;padding:15px;box-shadow:0 0 24px #ffd21c22"><div style="text-align:center;border-bottom:1px solid #5c4b12;padding:5px 0 14px;margin-bottom:13px"><div style="font-size:19px;font-weight:900;color:#ffd21c">🎮 PLAYER PROFILE</div><div style="font-size:11px;color:#aaa;letter-spacing:2px;margin-top:4px">MINI ESPORTS · PUBLIC PROFILE</div></div><div style="display:flex;align-items:center;gap:13px;padding:12px;background:#080d0b;border:1px solid #5d4a13;border-radius:14px">${avatar}<div style="min-width:0;flex:1"><div style="font-size:21px;font-weight:900;overflow-wrap:anywhere">${esc(p.ign||'Player')} <span style="color:#00d68f;font-size:12px">✓ VERIFIED</span></div><div style="color:#ccc;font-size:12px;margin-top:8px;overflow-wrap:anywhere">FF UID: <b>${esc(p.ffuid||'Not set')}</b></div><div style="color:#aaa;font-size:11px;margin-top:5px;overflow-wrap:anywhere">App User ID: ${esc(String(p.id||'').slice(0,8))}••••••</div><div style="color:#888;font-size:11px;margin-top:5px">🔒 Email hidden for privacy</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0"><div style="border:1px solid #6a5315;border-radius:12px;padding:12px"><div style="color:#aaa;font-size:12px">Level</div><b style="font-size:23px;color:#ffd21c">${level}</b></div><div style="border:1px solid #6a5315;border-radius:12px;padding:12px"><div style="color:#aaa;font-size:12px">XP</div><b style="font-size:23px">${num(p.xp).toLocaleString('en-IN')}</b></div></div><div style="border:1px solid #5d4a13;border-radius:13px;padding:12px;margin-bottom:10px"><div style="color:#ffd21c;font-weight:900;margin-bottom:9px">👤 PLAYER OVERVIEW</div><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;text-align:center"><div style="background:#111;border-radius:9px;padding:9px 3px"><div style="font-size:18px">🏆</div><b>${wins}</b><div style="font-size:10px;color:#aaa">Total Wins</div></div><div style="background:#111;border-radius:9px;padding:9px 3px"><div style="font-size:18px">💀</div><b>${kills}</b><div style="font-size:10px;color:#aaa">Total Kills</div></div><div style="background:#111;border-radius:9px;padding:9px 3px"><div style="font-size:18px">📊</div><b>${winRate}%</b><div style="font-size:10px;color:#aaa">Win Rate</div></div></div><div style="font-size:12px;color:#bbb;margin-top:10px">Account Status: <b style="color:#00d68f">Approved</b></div><div style="font-size:12px;color:#bbb;margin-top:4px">Joined: ${p.created_at?new Date(Number(p.created_at)).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—'}</div></div><div style="border:1px solid #5d4a13;border-radius:13px;padding:12px;margin-bottom:12px"><div style="color:#ffd21c;font-weight:900;margin-bottom:9px">💰 EARNINGS SUMMARY</div><div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px"><div style="background:#062017;border:1px solid #087e53;border-radius:9px;padding:10px"><div style="font-size:11px;color:#8deac1">Match Earnings</div><b style="color:#00d68f">${cash(earnings||money.winnings)}</b></div><div style="background:#071a28;border:1px solid #1768a0;border-radius:9px;padding:10px"><div style="font-size:11px;color:#8dcfff">Referral Earnings</div><b>${cash(money.referral||money.referralEarnings)}</b></div><div style="background:#200c2b;border:1px solid #8130a0;border-radius:9px;padding:10px"><div style="font-size:11px;color:#e2a2ff">Bonus Earnings</div><b>${cash(bonus)}</b></div><div style="background:#211b06;border:1px solid #9b7b12;border-radius:9px;padding:10px"><div style="font-size:11px;color:#ffe36a">Coin to Money</div><b>${cash(converted)}</b></div><div style="background:#210b16;border:1px solid #9c315b;border-radius:9px;padding:10px;grid-column:1/-1"><div style="font-size:11px;color:#ff9cbd">Withdrawal Earnings</div><b>${cash(withdrawn)}</b></div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button onclick="closeModal();sendTeamRequestFromPublicProfile('${String(p.ffuid||'').replace(/[^0-9]/g,'')}')" style="padding:12px 6px;border:1px solid #ffd21c;border-radius:10px;background:#ffd21c;color:#080808;font-weight:900;font-size:11px">👥 SEND TEAM REQUEST</button><button onclick="toast('Public stats are shown above.','info')" style="padding:12px 6px;border:1px solid #6b5515;border-radius:10px;background:#0b0b0b;color:#ffd21c;font-weight:900;font-size:11px">📊 VIEW PUBLIC STATS</button></div></div>`);
+  openModal(`<div style="max-height:78vh;overflow:auto;background:linear-gradient(160deg,#080a0a,#111008);color:#fff;border:1px solid #ffd21c;border-radius:18px;padding:15px;box-shadow:0 0 24px #ffd21c22"><div style="text-align:center;border-bottom:1px solid #5c4b12;padding:5px 0 14px;margin-bottom:13px"><div style="font-size:19px;font-weight:900;color:#ffd21c">🎮 PLAYER PROFILE</div><div style="font-size:11px;color:#aaa;letter-spacing:2px;margin-top:4px">MINI ESPORTS · PUBLIC PROFILE</div></div><div style="display:flex;align-items:center;gap:13px;padding:12px;background:#080d0b;border:1px solid #5d4a13;border-radius:14px">${avatar}<div style="min-width:0;flex:1"><div style="font-size:21px;font-weight:900;overflow-wrap:anywhere">${esc(p.ign||'Player')} <span style="color:#00d68f;font-size:12px">✓ VERIFIED</span></div><div style="color:#ccc;font-size:12px;margin-top:8px;overflow-wrap:anywhere">FF UID: <b>${esc(p.ffuid||'Not set')}</b></div><div style="color:#aaa;font-size:11px;margin-top:5px;overflow-wrap:anywhere">App User ID: ${esc(String(p.id||'').slice(0,8))}••••••</div><div style="color:#888;font-size:11px;margin-top:5px">🔒 Email and wallet details are private</div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0"><div style="border:1px solid #6a5315;border-radius:12px;padding:12px"><div style="color:#aaa;font-size:12px">Level</div><b style="font-size:23px;color:#ffd21c">${level}</b></div><div style="border:1px solid #6a5315;border-radius:12px;padding:12px"><div style="color:#aaa;font-size:12px">XP</div><b style="font-size:23px">${num(p.xp).toLocaleString('en-IN')}</b></div></div><div style="border:1px solid #5d4a13;border-radius:13px;padding:12px;margin-bottom:10px"><div style="color:#ffd21c;font-weight:900;margin-bottom:9px">👤 PLAYER OVERVIEW</div><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;text-align:center"><div style="background:#111;border-radius:9px;padding:9px 3px"><div style="font-size:18px">🏆</div><b>${wins}</b><div style="font-size:10px;color:#aaa">Total Wins</div></div><div style="background:#111;border-radius:9px;padding:9px 3px"><div style="font-size:18px">💀</div><b>${kills}</b><div style="font-size:10px;color:#aaa">Total Kills</div></div><div style="background:#111;border-radius:9px;padding:9px 3px"><div style="font-size:18px">📊</div><b>${winRate}%</b><div style="font-size:10px;color:#aaa">Win Rate</div></div></div><div style="font-size:12px;color:#bbb;margin-top:10px">Account Status: <b style="color:#00d68f">Approved</b></div><div style="font-size:12px;color:#bbb;margin-top:4px">Joined: ${p.created_at?new Date(Number(p.created_at)).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—'}</div></div><div style="border:1px solid #5d4a13;border-radius:13px;padding:12px;margin-bottom:12px"><div style="color:#ffd21c;font-weight:900;margin-bottom:9px">📊 PUBLIC MATCH STATS</div><div style="font-size:13px;color:#ddd">Matches played: <b>${matches}</b></div><div style="font-size:13px;color:#ddd;margin-top:5px">Verified match earnings: <b>₹${earnings.toLocaleString('en-IN')}</b></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button onclick="closeModal();sendTeamRequestFromPublicProfile('${String(p.ffuid||'').replace(/[^0-9]/g,'')}')" style="padding:12px 6px;border:1px solid #ffd21c;border-radius:10px;background:#ffd21c;color:#080808;font-weight:900;font-size:11px">👥 SEND TEAM REQUEST</button><button onclick="toast('Public stats are shown above.','info')" style="padding:12px 6px;border:1px solid #6b5515;border-radius:10px;background:#0b0b0b;color:#ffd21c;font-weight:900;font-size:11px">📊 VIEW PUBLIC STATS</button></div></div>`);
 }
 function sendTeamRequestFromPublicProfile(ffuid){
   if(!ffuid){toast('Player FF UID unavailable','error');return;}
@@ -3081,13 +3092,12 @@ function selectLeaderboardCategory(category){
 function lbMoney(v){return '₹'+Math.max(0,Number(v)||0).toLocaleString('en-IN',{maximumFractionDigits:2});}
 function lbCategoryValue(u,category){
   const s=u.stats&&typeof u.stats==='object'?u.stats:{};
-  const rm=u.real_money&&typeof u.real_money==='object'?u.real_money:{};
   const first=(...vals)=>{for(const v of vals){if(v!==undefined&&v!==null&&v!==''&&Number.isFinite(Number(v)))return Math.max(0,Number(v));}return 0;};
-  const match=first(s.matchEarnings,s.match_earnings)||first(s.earnings,u.earnings,rm.winnings);
-  const referral=first(s.referralEarnings,s.referral_earnings,s.referralsEarnings,s.referral_earnings_total)||first(rm.referralEarnings,rm.referral_earnings,rm.referral);
-  const bonus=first(s.bonusEarnings,s.bonus_earnings)||first(rm.bonus);
-  const convert=first(s.coinToMoneyEarnings,s.coin_to_money_earnings,s.convertedMoneyEarnings,s.converted_money_earnings)||first(rm.coinToMoney,rm.coin_to_money);
-  const withdrawal=first(s.withdrawalEarnings,s.withdrawal_earnings,s.withdrawnEarnings,s.withdrawn_earnings)||first(rm.withdrawal,rm.withdrawals);
+  const match=first(s.matchEarnings,s.match_earnings,s.earnings);
+  const referral=first(s.referralEarnings,s.referral_earnings,s.referralsEarnings,s.referral_earnings_total);
+  const bonus=first(s.bonusEarnings,s.bonus_earnings);
+  const convert=first(s.coinToMoneyEarnings,s.coin_to_money_earnings,s.convertedMoneyEarnings,s.converted_money_earnings);
+  const withdrawal=first(s.withdrawalEarnings,s.withdrawal_earnings,s.withdrawnEarnings,s.withdrawn_earnings);
   // Total earnings exclude deposits and withdrawals; count actual earned categories only.
   const all=match+referral+bonus+convert;
   return ({total:all,match,referral,bonus,convert,withdrawal})[category]||0;
@@ -3296,7 +3306,6 @@ async function submitFirstTimeProfile(ign,ffuid){
       if(btn){btn.disabled=false;btn.innerHTML=origHTML;}
       return;
     }
-    await db.ref('users/'+U.uid).update({ign,ffuid,profileUpdatePending:true});
     await db.ref('profileRequests').push({uid:U.uid,displayName:UD?.displayName||'Player_'+U.uid.slice(0,6),email:UD?.email||'',ign,ffuid,status:'pending',createdAt:Date.now()});
     closeModal();toast('Profile submitted! Waiting for admin approval.','success');
   }catch(e){toast('Error: '+e.message,'error');}
@@ -3334,7 +3343,6 @@ async function submitProfileUpdate(){
       return;
     }
     await db.ref('profileUpdateRequests').push({uid:U.uid,displayName:UD?.displayName||'',currentIGN:UD?.ign||'',newIGN:ign,newFFUID:UD?.ffuid||'',status:'pending',createdAt:Date.now()});
-    await db.ref('users/'+U.uid).update({profileUpdatePending:true});
     closeModal();toast('Profile update request submitted!','success');
   }catch(e){toast('Error: '+e.message,'error');}
   finally{ _submittingProfileUpdate=false; if(btn){btn.disabled=false;btn.innerHTML=origHTML;} }
