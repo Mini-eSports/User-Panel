@@ -8,7 +8,8 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>Mini eSports</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
 <!-- Firebase 9 compat -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -26,11 +27,9 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 ::-webkit-scrollbar{display:none}
 .app-wrap{max-width:480px;margin:0 auto;height:100%;position:relative;overflow:hidden;background:#000}
 /* SPLASH */
-#splash{position:fixed;inset:0;z-index:9999;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .4s}
+#splash{position:fixed;inset:0;z-index:9999;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden;transition:opacity .4s}
 #splash.hide{opacity:0;pointer-events:none}
-#splash .logo-fire{font-size:60px;animation:pulse-fire 1.5s infinite}
-#splash .logo-text{font-size:28px;font-weight:900;color:var(--yellow);margin-top:12px;text-shadow:0 0 20px rgba(255,215,0,0.5)}
-#splash .loader{width:40px;height:40px;border:3px solid #333;border-top-color:var(--yellow);border-radius:50%;animation:spin 1s linear infinite;margin-top:24px}
+#splash .splash-art{display:block;width:100%;height:100%;object-fit:cover;object-position:center;background:#000}
 @keyframes spin{to{transform:rotate(360deg)}}
 .btn-spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(0,0,0,0.25);border-top-color:currentColor;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:4px;}
 @keyframes pulse-fire{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
@@ -619,10 +618,8 @@ textarea.form-input{resize:none;min-height:80px}
 <body>
 
 <!-- SPLASH -->
-<div id="splash">
-  <div class="logo-fire">🏆</div>
-  <div class="logo-text">Mini eSports</div>
-  <div class="loader"></div>
+<div id="splash" role="img" aria-label="Mini eSports loading screen">
+  <img class="splash-art" src="./assets/splash-screen.png" alt="Mini eSports — Play, Compete, Win" fetchpriority="high">
 </div>
 
 <!-- AUTH LOADING -->
@@ -3899,7 +3896,7 @@ function fileToBase64(file){return new Promise((res,rej)=>{const r=new FileReade
 </script>
 
 <!-- Mini eSports Silent Update Manager: bump this build ID whenever publishing a new panel file. -->
-<meta name="mini-esports-build" content="mini-esports-user-build-20261021-1">
+<meta name="mini-esports-build" content="mini-esports-user-build-20261112-1">
 <script id="mini-esports-live-update-manager">
 (function () {
   'use strict';
