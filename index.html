@@ -29,7 +29,7 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 /* SPLASH */
 #splash{position:fixed;inset:0;z-index:9999;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden;transition:opacity .4s}
 #splash.hide{opacity:0;pointer-events:none}
-#splash .splash-art{display:block;width:100%;height:100%;object-fit:cover;object-position:center;background:#000}
+#splash .splash-art{display:block;width:100%;height:100%;object-fit:contain;object-position:center;background:#000}
 #splash .splash-progress{position:absolute;z-index:2;left:12%;right:12%;bottom:max(28px,env(safe-area-inset-bottom));height:4px;border-radius:99px;background:rgba(255,255,255,.22);overflow:hidden;box-shadow:0 0 10px rgba(0,0,0,.55)}
 #splash .splash-progress-fill{height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,#b87900,#ffd700,#fff1a6);box-shadow:0 0 12px rgba(255,215,0,.85);animation:splashProgress 3s linear forwards}
 @keyframes splashProgress{from{width:0}to{width:100%}}
@@ -39,10 +39,10 @@ html,body{height:100%;overflow:hidden;background:#000;color:#fff;font-family:-ap
 /* LOGIN — full-screen Mini eSports artwork with a real Google sign-in hit area */
 #loginScreen{position:fixed;inset:0;z-index:9998;background:#030201;display:none;align-items:center;justify-content:center;overflow:hidden;padding:0}
 #loginScreen.show{display:flex}#loginScreen.hide{display:none}
-#loginScreen .login-screen-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;display:block}
-#loginScreen .login-art-login-hitbox{position:absolute;z-index:2;top:59.35%;left:calc(50% - 21.86vh);width:43.01vh;height:7.1%;min-height:42px;max-height:76px;padding:0;border:0;border-radius:999px;background:transparent;opacity:.01;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#loginScreen .login-screen-art{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;display:block;background:#030201}
+#loginScreen .login-art-login-hitbox{position:absolute;z-index:2;top:60%;left:11%;width:78%;height:5%;min-height:44px;max-height:68px;padding:0;border:0;border-radius:999px;background:transparent;opacity:.01;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 #loginScreen .login-art-login-hitbox:focus-visible{opacity:1;outline:3px solid #ffd700;outline-offset:4px;background:rgba(255,215,0,.12)}
-@media(max-height:560px){#loginScreen .login-screen-art{object-position:center}#loginScreen .login-art-login-hitbox{top:59.35%;min-height:34px}}
+@media(max-height:560px){#loginScreen .login-screen-art{object-fit:contain;object-position:center}#loginScreen .login-art-login-hitbox{top:60%;min-height:38px;max-height:54px}}
 /* Loading overlay for auth */
 #authLoading{position:fixed;inset:0;z-index:9997;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;flex-direction:column;gap:16px}
 #authLoading.show{display:flex}
