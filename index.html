@@ -605,7 +605,23 @@ textarea.form-input{resize:none;min-height:80px}
 
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#000000">
-</head>
+<style id="reference-match-container-style">
+.t-card{border-radius:20px!important;padding:15px!important;background:linear-gradient(145deg,#0b0b08,#090909 65%)!important;box-shadow:0 0 0 1px #ffd21a30,0 4px 18px #000!important}
+.reference-match-top{display:flex;align-items:center;gap:9px;margin-bottom:15px;min-width:0}
+.reference-match-heading{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.reference-match-heading strong{font-size:clamp(14px,3.8vw,21px);font-weight:800;color:#f4f0e7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reference-match-heading span{font-size:13px;font-weight:800;color:#f04a4a}
+.reference-match-actions{display:flex;flex-direction:row;align-items:center;gap:7px;flex-shrink:0}
+.reference-match-actions>div{font-size:13px!important;padding:7px 11px!important}
+.reference-rules-btn{border:2px solid #ff1744;border-radius:22px;background:transparent;color:#ff1744;font-size:clamp(14px,3.7vw,21px);font-weight:900;padding:5px 12px;line-height:1.1}
+.reference-match-info{display:grid;grid-template-columns:1fr 1fr;border:1px solid #242424;border-radius:13px;background:#080808;overflow:hidden;margin-bottom:11px}
+.reference-match-info>div{min-height:67px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px 4px;text-align:center}
+.reference-match-info>div+div{border-left:1px solid #242424}
+.reference-match-info small{font-size:10px;font-weight:900;letter-spacing:.5px;color:#42c77a}
+.reference-match-info>div+div small{color:#b48bff}
+.reference-match-info strong{font-size:17px;color:#fff}
+@media(max-width:390px){.t-card{padding:11px!important}.reference-match-top{gap:5px}.reference-match-actions{gap:4px}.reference-match-actions>div{font-size:10px!important;padding:5px 7px!important}.reference-rules-btn{padding:5px 8px}.reference-match-heading strong{font-size:13px}.reference-match-heading span{font-size:11px}}
+</style></head>
 <body>
 
 <!-- SPLASH -->
@@ -1777,23 +1793,11 @@ function tournamentCard(t,special=false,elig=null){
     '</div>';
   }).join('');
 
-  // ── INFO ROW
+  // ── INFO ROW — reference layout (entry fee + start time only)
   const infoRow=
-    '<div style="display:flex;background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.07);border-radius:10px;overflow:hidden;margin-bottom:9px;">'+
-      '<div style="flex:1;padding:7px 4px;text-align:center;">'+
-        '<div style="font-size:8px;font-weight:800;color:#2ecc71;letter-spacing:0.5px;margin-bottom:3px;">&#128203; ENTRY FEE</div>'+
-        '<div style="font-size:13px;font-weight:900;color:#fff;">'+entryLabel+'</div>'+
-      '</div>'+
-      (t.killReward>0?
-        '<div style="flex:1;padding:7px 4px;text-align:center;border-left:1px solid rgba(255,255,255,0.07);border-right:1px solid rgba(255,255,255,0.07);">'+
-          '<div style="font-size:8px;font-weight:800;color:#ff5050;letter-spacing:0.5px;margin-bottom:3px;">&#127919; PER KILL</div>'+
-          '<div style="font-size:13px;font-weight:900;color:#fff;">&#8377;'+t.killReward+'/Kill</div>'+
-        '</div>':
-        '<div style="flex:1;border-left:1px solid rgba(255,255,255,0.07);border-right:1px solid rgba(255,255,255,0.07);"></div>')+
-      '<div style="flex:1;padding:7px 4px;text-align:center;">'+
-        '<div style="font-size:8px;font-weight:800;color:#a970ff;letter-spacing:0.5px;margin-bottom:3px;">&#9200; '+(liveStatus==='upcoming'?'STARTS IN':'START TIME')+'</div>'+
-        '<div style="font-size:12px;font-weight:900;color:#fff;">'+esc(startTimeLabel)+'</div>'+
-      '</div>'+
+    '<div class="reference-match-info">'+
+      '<div><small>▣ ENTRY FEE</small><strong>'+entryLabel+'</strong></div>'+
+      '<div><small>⏰ START TIME</small><strong>'+esc(startTimeLabel)+'</strong></div>'+
     '</div>';
 
   // ── SLOTS
@@ -1822,21 +1826,16 @@ function tournamentCard(t,special=false,elig=null){
   return '<div class="t-card'+(special?' t-card-special':'')+'" data-name="'+esc(t.name||'')+'" '+
     'style="background:linear-gradient(160deg,'+th.bg+' 0%,#0d0d0d 40%);'+
     'border:1.5px solid '+th.b+';'+
-    'border-radius:16px;padding:12px;margin-bottom:10px;overflow:hidden;'+
+    'border-radius:20px;padding:15px;margin:12px 0 14px;overflow:hidden;'+
     'box-shadow:0 2px 16px '+th.dim+';">'+
 
-    // TOP
-    '<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;">'+
+    // TOP — category title, map, match type and rules action
+    '<div class="reference-match-top">'+
       badgeSvg+
-      '<div style="flex:1;min-width:0;padding-top:2px;">'+
-        '<div style="font-size:15px;font-weight:900;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;">'+esc(t.name||'Tournament')+'</div>'+
-        '<div style="display:flex;align-items:center;gap:4px;">'+
-          '<span style="font-size:16px;line-height:1;">&#128506;</span>'+
-          '<span style="font-size:13px;font-weight:800;color:#ff3030;">'+esc(t.map||'Bermuda')+'</span>'+
-        '</div>'+
-      '</div>'+
-      '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;padding-top:2px;">'+
-        modePill+statusPill+
+      '<div class="reference-match-heading"><strong>'+esc(t.matchCategory||'Battle Royale')+'</strong>'+
+        '<span>🗺️ '+esc(t.map||'Bermuda')+'</span></div>'+
+      '<div class="reference-match-actions">'+modePill+
+        '<button type="button" onclick="viewTournament(\''+t.id+'\');" class="reference-rules-btn">Rules</button>'+
       '</div>'+
     '</div>'+
 
