@@ -488,7 +488,7 @@ textarea.form-input{resize:none;min-height:80px}
  #header .h-icon{width:38px;height:38px;border-radius:11px;border:0;background:transparent}
  #header .h-icon svg{width:24px;height:24px}
  #header .chip{min-height:35px;padding:5px 8px;font-size:clamp(11px,2.9vw,15px);gap:4px}
- #header .coin-3d{font-size:15px}
+ #header .coin-3d{width:17px;height:17px;flex:0 0 17px}
  #header .ticker-wrap{height:36px;margin:0 8px 5px;padding-left:8px;padding-right:8px;border-radius:0 0 14px 14px}
  #header .ticker-content{font-size:13px;font-weight:700}
  .home-match-cards{gap:10px;margin:12px 0 16px;padding:0 1px}
@@ -508,12 +508,12 @@ textarea.form-input{resize:none;min-height:80px}
  #header .header-left .brand{font-size:17px}
  #header .header-right{gap:2px}
  #header .chip{padding:4px 6px;font-size:10px}
- #header .coin-3d{display:none}
+ #header .coin-3d{display:inline-block;width:15px;height:15px;flex:0 0 15px}
  .home-match-card{min-height:150px}
  .home-card-title{font-size:17px}
  .home-card-sub{font-size:11px}
 }
-/* Header + ticker matched to the supplied reference; no other UI changes */
+/* Header coin uses a vector asset so it renders consistently across device emoji fonts */\n#header .coin-icon-svg{display:inline-block;width:18px;height:18px;flex:0 0 18px;vertical-align:middle;filter:drop-shadow(0 1px 3px rgba(255,190,0,.65));transform:none;animation:none}\n/* Header + ticker matched to the supplied reference; no other UI changes */
 #header{background:#000!important;border-bottom:1px solid rgba(255,255,255,.035)!important;box-shadow:none!important}
 #header .header-row{background:#000!important;box-shadow:none!important}
 #header .header-left .brand{text-shadow:none!important}
@@ -614,13 +614,13 @@ textarea.form-input{resize:none;min-height:80px}
 .reference-match-actions{display:flex;flex-direction:row;align-items:center;gap:7px;flex-shrink:0}
 .reference-match-actions>div{font-size:13px!important;padding:7px 11px!important}
 .reference-rules-btn{border:2px solid #ff1744;border-radius:22px;background:transparent;color:#ff1744;font-size:clamp(14px,3.7vw,21px);font-weight:900;padding:5px 12px;line-height:1.1}
-.reference-match-info{display:grid;grid-template-columns:1fr 1fr;border:1px solid #242424;border-radius:13px;background:#080808;overflow:hidden;margin-bottom:11px}
+.reference-match-info{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid #242424;border-radius:13px;background:#080808;overflow:hidden;margin-bottom:11px}
 .reference-match-info>div{min-height:67px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px 4px;text-align:center}
 .reference-match-info>div+div{border-left:1px solid #242424}
 .reference-match-info small{font-size:10px;font-weight:900;letter-spacing:.5px;color:#42c77a}
 .reference-match-info>div+div small{color:#b48bff}
 .reference-match-info strong{font-size:17px;color:#fff}
-@media(max-width:390px){.t-card{padding:11px!important}.reference-match-top{gap:5px}.reference-match-actions{gap:4px}.reference-match-actions>div{font-size:10px!important;padding:5px 7px!important}.reference-rules-btn{padding:5px 8px}.reference-match-heading strong{font-size:13px}.reference-match-heading span{font-size:11px}}
+@media(max-width:390px){.reference-match-info>div{padding:7px 2px;gap:5px}.reference-match-info small{font-size:8px;letter-spacing:0}.reference-match-info strong{font-size:14px}.t-card{padding:11px!important}.reference-match-top{gap:5px}.reference-match-actions{gap:4px}.reference-match-actions>div{font-size:10px!important;padding:5px 7px!important}.reference-rules-btn{padding:5px 8px}.reference-match-heading strong{font-size:13px}.reference-match-heading span{font-size:11px}}
 </style></head>
 <body>
 
@@ -663,7 +663,7 @@ textarea.form-input{resize:none;min-height:80px}
       </div>
       <div class="header-right">
         <div class="h-icon" onclick="toggleSearch()" style="color:var(--yellow)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
-        <div class="chip coin-chip" onclick="go('wallet')"><span class="coin-3d" aria-hidden="true">🪙</span> <span id="hCoins">0</span></div>
+        <div class="chip coin-chip" onclick="go('wallet')"><svg class="coin-3d coin-icon-svg" aria-hidden="true" viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="12" r="10" fill="#FFD83D" stroke="#B8860B" stroke-width="1.4"/><circle cx="12" cy="12" r="7.2" fill="none" stroke="#FFF1A6" stroke-width="1.1"/><path d="M14.9 8.7c-.6-.6-1.5-.9-2.6-.9-1.5 0-2.5.7-2.5 1.8 0 2.7 5.1 1.1 5.1 3.8 0 1.2-1.1 2-2.7 2-1.1 0-2.1-.4-2.8-1.1M12.2 6.7v10.6" fill="none" stroke="#8A5A00" stroke-width="1.35" stroke-linecap="round"/></svg> <span id="hCoins">0</span></div>
         <div class="chip money-chip" onclick="go('wallet')"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M21 18v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1h-9a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h9zm-9-2h10V8H12v8zm4-2.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg> ₹<span id="hMoney">0</span></div>
 
       </div>
@@ -1793,10 +1793,12 @@ function tournamentCard(t,special=false,elig=null){
     '</div>';
   }).join('');
 
-  // ── INFO ROW — reference layout (entry fee + start time only)
+  // ── INFO ROW — entry fee, per-kill reward, and start time
+  const perKillLabel='&#8377;'+(Number(t.perKillReward)||0);
   const infoRow=
     '<div class="reference-match-info">'+
       '<div><small>▣ ENTRY FEE</small><strong>'+entryLabel+'</strong></div>'+
+      '<div><small>⚔️ PRICE PER KILL</small><strong>'+perKillLabel+'</strong></div>'+
       '<div><small>⏰ START TIME</small><strong>'+esc(startTimeLabel)+'</strong></div>'+
     '</div>';
 
