@@ -621,6 +621,29 @@ textarea.form-input{resize:none;min-height:80px}
 .reference-match-info>div+div small{color:#b48bff}
 .reference-match-info strong{font-size:17px;color:#fff}
 @media(max-width:390px){.reference-match-info>div{padding:7px 2px;gap:5px}.reference-match-info small{font-size:8px;letter-spacing:0}.reference-match-info strong{font-size:14px}.t-card{padding:11px!important}.reference-match-top{gap:5px}.reference-match-actions{gap:4px}.reference-match-actions>div{font-size:10px!important;padding:5px 7px!important}.reference-rules-btn{padding:5px 8px}.reference-match-heading strong{font-size:13px}.reference-match-heading span{font-size:11px}}
+/* Keep start-time values such as “Match Ended” on a single line on narrow screens. */
+.reference-match-info .reference-start-time-value{white-space:nowrap;font-size:clamp(12px,3.6vw,17px);letter-spacing:-.35px;}
+
+</style>
+<style id="change-4-compact-home-boxes">
+/* Change #4: reduce vertical dimensions by ~20% while preserving all widths. */
+#screen-home .home-filter-panel{padding-top:10px!important;padding-bottom:9px!important;}
+#screen-home .home-filter-heading{margin-bottom:8px!important;}
+#screen-home .home-game-modes .mode-filter-box{min-height:43px!important;padding-top:5px!important;padding-bottom:5px!important;}
+#screen-home #homeModeFilter>div{min-height:43px!important;padding-top:5px!important;padding-bottom:5px!important;}
+#screen-home .t-card{padding-top:12px!important;padding-bottom:12px!important;}
+#screen-home .reference-match-top{margin-bottom:12px!important;}
+#screen-home .reference-match-info>div{min-height:54px!important;padding-top:6px!important;padding-bottom:6px!important;gap:5px!important;}
+#screen-home .reference-match-info{margin-bottom:9px!important;}
+#screen-home .t-card>div[style*="display:flex"][style*="margin-bottom:9px"]>div{padding-top:8px!important;padding-bottom:7px!important;}
+#screen-home .t-card button[onclick*="joinTournament"],
+#screen-home .t-card button[onclick*="viewTournament"]{padding-top:9px!important;padding-bottom:9px!important;}
+#screen-home .t-card [style*="SLOTS FILLED"]{margin-bottom:4px!important;}
+@media(max-width:390px){
+  #screen-home .t-card{padding-top:9px!important;padding-bottom:9px!important;}
+  #screen-home .reference-match-top{margin-bottom:10px!important;}
+  #screen-home .reference-match-info>div{min-height:54px!important;padding-top:5px!important;padding-bottom:5px!important;}
+}
 </style></head>
 <body>
 
@@ -1799,7 +1822,7 @@ function tournamentCard(t,special=false,elig=null){
     '<div class="reference-match-info">'+
       '<div><small>▣ ENTRY FEE</small><strong>'+entryLabel+'</strong></div>'+
       '<div><small>⚔️ PRICE PER KILL</small><strong>'+perKillLabel+'</strong></div>'+
-      '<div><small>⏰ START TIME</small><strong>'+esc(startTimeLabel)+'</strong></div>'+
+      '<div><small>⏰ START TIME</small><strong class="reference-start-time-value">'+esc(startTimeLabel)+'</strong></div>'+
     '</div>';
 
   // ── SLOTS
